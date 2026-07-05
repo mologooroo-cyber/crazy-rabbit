@@ -110,6 +110,7 @@
             transform: scale(0.95);
         }
 
+        /* Сайдбар */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -212,10 +213,6 @@
             font-weight: 600;
         }
 
-        .nav-item:active {
-            background: rgba(129, 216, 208, 0.1);
-        }
-
         .sidebar-footer {
             padding: 20px;
             border-top: 1px solid var(--border);
@@ -305,7 +302,6 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
-            position: relative;
         }
 
         .period-btn.active {
@@ -381,6 +377,11 @@
             text-align: center;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .summary-item:active {
+            transform: scale(0.96);
         }
 
         .summary-item .summary-icon {
@@ -442,7 +443,7 @@
             color: var(--red);
         }
 
-        /* Блоки графиков */
+        /* Графики */
         .chart-block {
             background: var(--bg-card);
             border-radius: 15px;
@@ -497,10 +498,6 @@
             color: white;
         }
 
-        .switch-btn:active {
-            transform: scale(0.95);
-        }
-
         /* График по дням */
         .bar-chart {
             display: flex;
@@ -516,11 +513,9 @@
         .bar-chart::-webkit-scrollbar {
             height: 4px;
         }
-
         .bar-chart::-webkit-scrollbar-track {
             background: transparent;
         }
-
         .bar-chart::-webkit-scrollbar-thumb {
             background: var(--border);
             border-radius: 2px;
@@ -642,6 +637,111 @@
             flex-shrink: 0;
         }
 
+        /* Модальное окно */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-dialog-custom {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: scaleIn 0.2s ease;
+        }
+
+        .modal-header-custom {
+            padding: 20px 20px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header-custom .modal-icon {
+            font-size: 22px;
+        }
+
+        .modal-header-custom .modal-title-custom {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .modal-body-custom {
+            padding: 15px 20px;
+            overflow-y: auto;
+            max-height: 55vh;
+        }
+
+        .modal-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .modal-list-left {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .modal-list-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+
+        .modal-list-detail {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .modal-list-right {
+            font-weight: 700;
+            font-size: 15px;
+            text-align: right;
+        }
+
+        .modal-list-right.green {
+            color: var(--green);
+        }
+        .modal-list-right.red {
+            color: var(--red);
+        }
+        .modal-list-right.accent {
+            color: var(--accent);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -704,6 +804,9 @@
     <main class="main-content" id="mainContent">
         <div class="content-body" id="contentBody"></div>
     </main>
+
+    <!-- Контейнер для модальных окон -->
+    <div id="modalContainer"></div>
 
     <script>
         // ============ БАЗА ДАННЫХ ============
@@ -813,9 +916,181 @@
         function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); }
         function closeSidebarOutside(e) { if (e.target === document.getElementById('sidebar')) closeSidebar(); }
 
+        // ============ МОДАЛЬНЫЕ ОКНА ============
+        const DEMO_NAMES = ['Анна К.', 'Максим П.', 'Ольга В.', 'Дмитрий С.', 'Елена М.', 'Сергей Р.', 'Наталья Т.', 'Игорь К.', 'Мария Ф.', 'Алексей Б.'];
+        const DEMO_PRODUCTS = ['Жидкость 30мл', 'Под 2шт', 'Одноразка', 'Расходники', 'Снюс банка', 'Жидкость 10мл', 'Под 4шт', 'Одноразка XL'];
+
+        function generateBookingData() {
+            const count = 5;
+            const items = [];
+            for (let i = 0; i < count; i++) {
+                items.push({
+                    name: DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)],
+                    product: DEMO_PRODUCTS[Math.floor(Math.random() * DEMO_PRODUCTS.length)]
+                });
+            }
+            return items;
+        }
+
+        function generateDebtData() {
+            const count = 5;
+            const items = [];
+            for (let i = 0; i < count; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - Math.floor(Math.random() * 30));
+                items.push({
+                    name: DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)],
+                    amount: Math.floor(Math.random() * 5000) + 500,
+                    date: d.toISOString().split('T')[0]
+                });
+            }
+            return items;
+        }
+
+        function generateNewClientsData() {
+            const count = 5;
+            const items = [];
+            for (let i = 0; i < count; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - Math.floor(Math.random() * 14));
+                items.push({
+                    name: DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)],
+                    date: d.toISOString().split('T')[0]
+                });
+            }
+            return items;
+        }
+
+        function generateLeavingClientsData() {
+            const count = 5;
+            const items = [];
+            for (let i = 0; i < count; i++) {
+                items.push({
+                    name: DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)],
+                    days: Math.floor(Math.random() * 60) + 31
+                });
+            }
+            return items;
+        }
+
+        function showBookingModal() {
+            const data = generateBookingData();
+            const rows = data.map(item => `
+                <div class="modal-list-item">
+                    <div class="modal-list-left">
+                        <div class="modal-list-name">${item.name}</div>
+                        <div class="modal-list-detail">${item.product}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            const html = `
+                <div class="modal-overlay" onclick="closeModal(event)">
+                    <div class="modal-dialog-custom" onclick="event.stopPropagation()">
+                        <div class="modal-header-custom">
+                            <i class="bi bi-calendar-check modal-icon" style="color:var(--green);"></i>
+                            <h3 class="modal-title-custom" style="color:var(--green);">Бронь</h3>
+                        </div>
+                        <div class="modal-body-custom">
+                            ${rows}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modalContainer').innerHTML = html;
+        }
+
+        function showDebtModal() {
+            const data = generateDebtData();
+            const rows = data.map(item => `
+                <div class="modal-list-item">
+                    <div class="modal-list-left">
+                        <div class="modal-list-name">${item.name}</div>
+                        <div class="modal-list-detail">${item.date}</div>
+                    </div>
+                    <div class="modal-list-right red">${fmtNum(item.amount)}₽</div>
+                </div>
+            `).join('');
+
+            const html = `
+                <div class="modal-overlay" onclick="closeModal(event)">
+                    <div class="modal-dialog-custom" onclick="event.stopPropagation()">
+                        <div class="modal-header-custom">
+                            <i class="bi bi-cash-coin modal-icon" style="color:var(--red);"></i>
+                            <h3 class="modal-title-custom" style="color:var(--red);">Долг</h3>
+                        </div>
+                        <div class="modal-body-custom">
+                            ${rows}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modalContainer').innerHTML = html;
+        }
+
+        function showNewClientsModal() {
+            const data = generateNewClientsData();
+            const rows = data.map(item => `
+                <div class="modal-list-item">
+                    <div class="modal-list-left">
+                        <div class="modal-list-name">${item.name}</div>
+                    </div>
+                    <div class="modal-list-right accent">${item.date}</div>
+                </div>
+            `).join('');
+
+            const html = `
+                <div class="modal-overlay" onclick="closeModal(event)">
+                    <div class="modal-dialog-custom" onclick="event.stopPropagation()">
+                        <div class="modal-header-custom">
+                            <i class="bi bi-person-plus modal-icon" style="color:var(--accent);"></i>
+                            <h3 class="modal-title-custom" style="color:var(--accent);">Новые клиенты</h3>
+                        </div>
+                        <div class="modal-body-custom">
+                            ${rows}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modalContainer').innerHTML = html;
+        }
+
+        function showLeavingClientsModal() {
+            const data = generateLeavingClientsData();
+            const rows = data.map(item => `
+                <div class="modal-list-item">
+                    <div class="modal-list-left">
+                        <div class="modal-list-name">${item.name}</div>
+                    </div>
+                    <div class="modal-list-right red">${item.days} дн.</div>
+                </div>
+            `).join('');
+
+            const html = `
+                <div class="modal-overlay" onclick="closeModal(event)">
+                    <div class="modal-dialog-custom" onclick="event.stopPropagation()">
+                        <div class="modal-header-custom">
+                            <i class="bi bi-person-dash modal-icon" style="color:var(--accent);"></i>
+                            <h3 class="modal-title-custom" style="color:var(--accent);">Уходящие клиенты</h3>
+                        </div>
+                        <div class="modal-body-custom">
+                            ${rows}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modalContainer').innerHTML = html;
+        }
+
+        function closeModal(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                document.getElementById('modalContainer').innerHTML = '';
+            }
+        }
+
         // ============ СТАТИСТИКА ============
         let currentPeriod = 'today';
-        let currentCategoryMode = 'sum'; // 'sum' или 'count'
+        let currentCategoryMode = 'sum';
         let customStartDate = null;
         let customEndDate = null;
 
@@ -875,7 +1150,6 @@
             const pProf = prevSales.reduce((s, x) => s + x.profit, 0);
             const pCnt = prevSales.length;
 
-            // Демо-данные для сводки
             const booking = Math.floor(Math.random() * 30000) + 5000;
             const debt = Math.floor(Math.random() * 15000) + 1000;
             const newClients = Math.floor(Math.random() * 20) + 1;
@@ -980,7 +1254,7 @@
 
             const periodBtns = ['today','week','month','all','custom'].map(p => `
                 <button class="period-btn ${period === p ? 'active' : ''}" data-period="${p}" onclick="renderStatistics('${p}')" title="${p==='today'?'Сегодня':p==='week'?'Неделя':p==='month'?'Месяц':p==='all'?'Всё время':'Период'}">
-                    <i class="bi bi-calendar${p==='today'?'-day':p==='week'?'-week':p==='month'?'-month':p==='all'?'':'-range'}${p==='all'?' bi-infinity':''}"></i>
+                    <i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i>
                 </button>`).join('');
 
             const dateRangeHtml = period === 'custom' ? `
@@ -1027,23 +1301,23 @@
                 </div>
 
                 <div class="summary-row">
-                    <div class="summary-item booking">
+                    <div class="summary-item booking" onclick="showBookingModal()">
                         <div class="summary-icon"><i class="bi bi-calendar-check"></i></div>
                         <div class="summary-label">Бронь</div>
                         <div class="summary-value">${fmtNum(stats.booking)}₽</div>
                     </div>
-                    <div class="summary-item debt">
+                    <div class="summary-item debt" onclick="showDebtModal()">
                         <div class="summary-icon"><i class="bi bi-cash-coin"></i></div>
                         <div class="summary-label">Долг</div>
                         <div class="summary-value">${fmtNum(stats.debt)}₽</div>
                     </div>
-                    <div class="summary-item new-clients">
+                    <div class="summary-item new-clients" onclick="showNewClientsModal()">
                         <div class="summary-icon"><i class="bi bi-person-plus"></i></div>
                         <div class="summary-label">Новые</div>
                         <div class="summary-value">${stats.newClients} чел.</div>
                         ${period!=='all'&&stats.newClientsPercent!==null?`<div class="summary-percent">${fmtPct(stats.newClientsPercent)}</div>`:''}
                     </div>
-                    <div class="summary-item leaving-clients">
+                    <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()">
                         <div class="summary-icon"><i class="bi bi-person-dash"></i></div>
                         <div class="summary-label">Уходящие</div>
                         <div class="summary-value">${stats.leavingClients} чел.</div>
@@ -1058,12 +1332,10 @@
 
             document.getElementById('contentBody').innerHTML = html;
 
-            // Анимация цифр
             setTimeout(() => {
                 animVal('rv', stats.revenue, '₽');
                 animVal('pv', stats.profit, '₽');
                 animCnt('cv', stats.count);
-                // Столбцы
                 document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(b => {
                     const h = b.getAttribute('data-height');
                     b.style.height = '0%';
@@ -1082,8 +1354,7 @@
             const start = performance.now();
             function step(t) {
                 const p = Math.min((t - start) / 800, 1);
-                const v = Math.round(target * (1 - Math.pow(1 - p, 3)));
-                el.textContent = fmtNum(v) + suffix;
+                el.textContent = fmtNum(Math.round(target * (1 - Math.pow(1 - p, 3)))) + suffix;
                 if (p < 1) requestAnimationFrame(step);
             }
             requestAnimationFrame(step);
