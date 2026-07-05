@@ -207,9 +207,8 @@
         .date-separator { color: var(--text-secondary); font-size: 14px; }
 
         /* Склад */
-        .warehouse-cards {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;
-        }
+        .warehouse-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
+        @media (min-width: 500px) { .warehouse-cards { grid-template-columns: repeat(3, 1fr); } }
         .wh-card {
             background: var(--bg-card); border-radius: 15px; padding: 15px;
             cursor: pointer; transition: all 0.3s ease; position: relative;
@@ -224,12 +223,8 @@
         .wh-card.pods { border-left: 4px solid var(--cat-pods); } .wh-card.pods .wh-icon { color: var(--cat-pods); }
         .wh-card.disposable { border-left: 4px solid var(--cat-disposable); } .wh-card.disposable .wh-icon { color: var(--cat-disposable); }
         .wh-card.snus { border-left: 4px solid var(--cat-snus); } .wh-card.snus .wh-icon { color: var(--cat-snus); }
-        @media (min-width: 500px) { .warehouse-cards { grid-template-columns: repeat(3, 1fr); } }
 
-        .warehouse-table-section {
-            background: var(--bg-card); border-radius: 15px; padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+        .warehouse-table-section { background: var(--bg-card); border-radius: 15px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .wh-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .wh-back-btn { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; padding: 5px; }
         .wh-category-title { font-size: 16px; font-weight: 700; }
@@ -241,16 +236,15 @@
         .search-input {
             width: 100%; padding: 12px 15px; border: 2px solid var(--border);
             border-radius: 12px; background: var(--bg-primary); color: var(--text-primary);
-            font-size: 14px; outline: none; margin-bottom: 15px; transition: all 0.3s ease;
+            font-size: 14px; outline: none; margin-bottom: 15px;
         }
         .search-input:focus { border-color: var(--accent); }
 
-        /* Аккордеон */
         .accordion-group { margin-bottom: 8px; }
         .accordion-header {
             display: flex; align-items: center; justify-content: space-between;
             padding: 12px 15px; background: var(--bg-primary); border-radius: 10px;
-            cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;
+            cursor: pointer; font-weight: 600; font-size: 14px;
         }
         .accordion-header .accordion-arrow { transition: transform 0.3s ease; font-size: 12px; }
         .accordion-header.open .accordion-arrow { transform: rotate(180deg); }
@@ -259,8 +253,7 @@
 
         .product-row {
             display: flex; align-items: center; padding: 10px 15px 10px 25px;
-            border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease;
-            font-size: 13px; gap: 8px;
+            border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 8px;
         }
         .product-row:active { background: rgba(129,216,208,0.1); }
         .product-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -272,7 +265,6 @@
         }
         .table-header-row .product-col { font-weight: 600; }
 
-        /* Модальное окно */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 3000; display: flex;
@@ -299,10 +291,10 @@
         .form-input {
             width: 100%; padding: 12px 15px; border: 2px solid var(--border);
             border-radius: 10px; background: var(--bg-primary); color: var(--text-primary);
-            font-size: 15px; outline: none; transition: all 0.3s ease;
+            font-size: 15px; outline: none;
         }
         .form-input:focus { border-color: var(--accent); }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
         .btn-save { background: var(--accent); color: white; }
         .btn-cancel { background: var(--border); color: var(--text-primary); }
         .btn-delete { background: var(--red); color: white; flex: 0.5; }
@@ -320,34 +312,36 @@
     <button class="menu-toggle-btn" onclick="openSidebar()"><i class="bi bi-list"></i></button>
     <div class="sidebar-overlay" id="sidebar" onclick="closeSidebarOutside(event)">
         <div class="sidebar-content" onclick="event.stopPropagation()">
-            <div class="sidebar-header">
-                <h3>Crazy Rabbit</h3>
-                <button class="btn-close-custom" onclick="closeSidebar()"><i class="bi bi-x-lg"></i></button>
-            </div>
+            <div class="sidebar-header"><h3>Crazy Rabbit</h3><button class="btn-close-custom" onclick="closeSidebar()"><i class="bi bi-x-lg"></i></button></div>
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item" onclick="switchTab('statistics')" data-tab="statistics"><i class="bi bi-graph-up-arrow"></i><span>Статистика</span></a>
-                <a href="#" class="nav-item active" onclick="switchTab('warehouse')" data-tab="warehouse"><i class="bi bi-box-seam"></i><span>Склад</span></a>
-                <a href="#" class="nav-item" onclick="switchTab('sales')" data-tab="sales"><i class="bi bi-cart3"></i><span>Продажи</span></a>
-                <a href="#" class="nav-item" onclick="switchTab('clients')" data-tab="clients"><i class="bi bi-people"></i><span>Клиенты</span></a>
+                <a href="#" class="nav-item" onclick="switchTab('statistics')" data-tab="statistics"><i class="bi bi-graph-up-arrow"></i>Статистика</a>
+                <a href="#" class="nav-item active" onclick="switchTab('warehouse')" data-tab="warehouse"><i class="bi bi-box-seam"></i>Склад</a>
+                <a href="#" class="nav-item" onclick="switchTab('sales')" data-tab="sales"><i class="bi bi-cart3"></i>Продажи</a>
+                <a href="#" class="nav-item" onclick="switchTab('clients')" data-tab="clients"><i class="bi bi-people"></i>Клиенты</a>
             </nav>
             <div class="sidebar-footer">
                 <div class="theme-indicator"><span class="theme-dot"></span><span id="themeName">Тёмная тема</span></div>
-                <button class="theme-toggle-btn" onclick="toggleTheme()"><i class="bi bi-palette"></i><span>Сменить тему</span></button>
+                <button class="theme-toggle-btn" onclick="toggleTheme()"><i class="bi bi-palette"></i> Сменить тему</button>
             </div>
         </div>
     </div>
-    <main class="main-content" id="mainContent">
-        <div class="content-body" id="contentBody"></div>
-    </main>
+    <main class="main-content" id="mainContent"><div class="content-body" id="contentBody"></div></main>
     <div id="modalContainer"></div>
 
     <script>
         // ============ БАЗА ДАННЫХ ============
+        const DB_NAME = 'CrazyRabbitDB';
+        const DB_VERSION = 4;
+
         class Database {
-            constructor() { this.dbName = 'CrazyRabbitDB'; this.dbVersion = 3; this.db = null; }
+            constructor() { this.db = null; }
+            
             async init() {
+                // Сначала удаляем старую базу если версия не совпадает
+                await this.deleteOldDB();
+                
                 return new Promise((resolve, reject) => {
-                    const request = indexedDB.open(this.dbName, this.dbVersion);
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
                     request.onerror = () => reject(request.error);
                     request.onsuccess = () => { this.db = request.result; resolve(); };
                     request.onupgradeneeded = (event) => {
@@ -359,25 +353,53 @@
                     };
                 });
             }
-            async get(store, key) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readonly'); const req = tx.objectStore(store).get(key); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
-            async put(store, data) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readwrite'); const req = tx.objectStore(store).put(data); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
-            async getAll(store) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readonly'); const req = tx.objectStore(store).getAll(); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
-            async getByIndex(store, index, value) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readonly'); const idx = tx.objectStore(store).index(index); const req = idx.getAll(value); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
-            async add(store, data) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readwrite'); const req = tx.objectStore(store).add(data); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
-            async delete(store, id) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readwrite'); const req = tx.objectStore(store).delete(id); req.onsuccess = () => r(); req.onerror = () => j(req.error); }); }
+
+            async deleteOldDB() {
+                const databases = await indexedDB.databases();
+                for (const dbInfo of databases) {
+                    if (dbInfo.name === DB_NAME && dbInfo.version !== DB_VERSION) {
+                        await new Promise((resolve, reject) => {
+                            const req = indexedDB.deleteDatabase(DB_NAME);
+                            req.onsuccess = resolve;
+                            req.onerror = reject;
+                        });
+                    }
+                }
+            }
+
+            async get(store, key) { return this.promisify(this.db.transaction([store], 'readonly').objectStore(store).get(key)); }
+            async put(store, data) { return this.promisify(this.db.transaction([store], 'readwrite').objectStore(store).put(data)); }
+            async getAll(store) { return this.promisify(this.db.transaction([store], 'readonly').objectStore(store).getAll()); }
+            async add(store, data) { return this.promisify(this.db.transaction([store], 'readwrite').objectStore(store).add(data)); }
+            async delete(store, id) { return this.promisify(this.db.transaction([store], 'readwrite').objectStore(store).delete(id)); }
+            
+            async getByIndex(store, index, value) {
+                try {
+                    return this.promisify(this.db.transaction([store], 'readonly').objectStore(store).index(index).getAll(value));
+                } catch (e) {
+                    // Fallback: получаем все и фильтруем
+                    const all = await this.getAll(store);
+                    return all.filter(item => item[index] === value);
+                }
+            }
+
             async getByDateRange(store, start, end) {
+                try {
+                    return this.promisify(this.db.transaction([store], 'readonly').objectStore(store).index('date').getAll(IDBKeyRange.bound(start, end)));
+                } catch (e) {
+                    const all = await this.getAll(store);
+                    return all.filter(item => item.date >= start && item.date <= end);
+                }
+            }
+
+            promisify(request) {
                 return new Promise((resolve, reject) => {
-                    try {
-                        const tx = this.db.transaction([store], 'readonly');
-                        const index = tx.objectStore(store).index('date');
-                        const range = IDBKeyRange.bound(start, end);
-                        const req = index.getAll(range);
-                        req.onsuccess = () => resolve(req.result);
-                        req.onerror = () => reject(req.error);
-                    } catch (e) { reject(e); }
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
                 });
             }
         }
+
         const db = new Database();
 
         // ============ КОНСТАНТЫ ============
@@ -386,11 +408,8 @@
         const CATEGORY_ICONS = { 'liquid': 'bi-droplet', 'supplies': 'bi-tools', 'pods': 'bi-usb-plug', 'disposable': 'bi-phone', 'snus': 'bi-box2' };
         const CATEGORY_CLASS = { 'liquid': 'liquid', 'supplies': 'supplies', 'pods': 'pods', 'disposable': 'disposable', 'snus': 'snus' };
         const CATEGORY_EXTRA_FIELDS = {
-            'liquid': [{ key: 'flavor', label: 'Вкус' }],
-            'supplies': [],
-            'pods': [{ key: 'color', label: 'Цвет' }],
-            'disposable': [{ key: 'flavor', label: 'Вкус' }],
-            'snus': [{ key: 'flavor', label: 'Вкус' }]
+            'liquid': [{ key: 'flavor', label: 'Вкус' }], 'supplies': [], 'pods': [{ key: 'color', label: 'Цвет' }],
+            'disposable': [{ key: 'flavor', label: 'Вкус' }], 'snus': [{ key: 'flavor', label: 'Вкус' }]
         };
         const CATEGORY_TABLE_COLS = {
             'liquid': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling'],
@@ -399,16 +418,10 @@
             'disposable': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling'],
             'snus': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling']
         };
-        const COL_LABELS = {
-            'manufacturer': 'Производитель', 'lineup': 'Линейка', 'flavor': 'Вкус',
-            'color': 'Цвет', 'quantity': 'Кол-во', 'purchase': 'Закупка', 'selling': 'Продажа'
-        };
+        const COL_LABELS = { 'manufacturer': 'Производитель', 'lineup': 'Линейка', 'flavor': 'Вкус', 'color': 'Цвет', 'quantity': 'Кол-во', 'purchase': 'Закупка', 'selling': 'Продажа' };
         const CATEGORY_GROUPS = {
-            'liquid': ['manufacturer', 'lineup'],
-            'supplies': ['manufacturer'],
-            'pods': ['manufacturer', 'lineup'],
-            'disposable': ['manufacturer', 'lineup'],
-            'snus': ['manufacturer', 'lineup']
+            'liquid': ['manufacturer', 'lineup'], 'supplies': ['manufacturer'], 'pods': ['manufacturer', 'lineup'],
+            'disposable': ['manufacturer', 'lineup'], 'snus': ['manufacturer', 'lineup']
         };
 
         // ============ ТЕМЫ ============
@@ -439,105 +452,74 @@
             document.getElementById('modalContainer').innerHTML = `
                 <div class="modal-overlay" onclick="closeModal(event)">
                     <div class="modal-dialog-custom" onclick="event.stopPropagation()">
-                        <div class="modal-header-custom">
-                            <i class="${icon}" style="color:${iconColor};font-size:22px;"></i>
-                            <h3 style="color:${iconColor};font-size:18px;font-weight:700;margin:0;">${title}</h3>
-                        </div>
+                        <div class="modal-header-custom"><i class="${icon}" style="color:${iconColor};font-size:22px;"></i><h3 style="color:${iconColor};font-size:18px;font-weight:700;margin:0;">${title}</h3></div>
                         <div class="modal-body-custom">${bodyHtml}</div>
                         ${footerHtml ? `<div class="modal-footer-custom">${footerHtml}</div>` : ''}
-                    </div>
-                </div>`;
+                    </div></div>`;
         }
-        function closeModal(event) {
-            if (!event || event.target.classList.contains('modal-overlay')) {
-                document.getElementById('modalContainer').innerHTML = '';
-            }
-        }
+        function closeModal(event) { if (!event || event.target.classList.contains('modal-overlay')) document.getElementById('modalContainer').innerHTML = ''; }
 
         // ============ ДЕМО-ДАННЫЕ ============
         const DEMO_MANUFACTURERS = ['HUSKY', 'CHASER', 'BRUSKO', 'VAPESOUL', 'SMOK', 'VOOPOO', 'GEEKVAPE'];
         const DEMO_LINEUPS = { 'liquid': ['Ice Cream', 'Fruit Mix', 'Classic', 'Fresh'], 'supplies': ['Cotton', 'Wire', 'Coils'], 'pods': ['Nord', 'RPM', 'PnP'], 'disposable': ['Crystal', 'Elf Bar', 'Waka'], 'snus': ['Siberia', 'Oden\'s', 'Thunder'] };
-        const DEMO_FLAVORS = ['Манго-клубника', 'Арбуз-мята', 'Табак-вишня', 'Киви-яблоко', 'Лесные ягоды', 'Мята-лайм', 'Персик-манго', 'Черника-малина'];
+        const DEMO_FLAVORS = ['Манго-клубника', 'Арбуз-мята', 'Табак-вишня', 'Киви-яблоко', 'Лесные ягоды', 'Мята-лайм'];
         const DEMO_COLORS = ['Чёрный', 'Белый', 'Красный', 'Синий', 'Зелёный', 'Розовый'];
 
-        function generateDemoProducts() {
-            const products = [];
-            let id = 0;
-            CATEGORIES.forEach(cat => {
-                const lineups = DEMO_LINEUPS[cat] || DEMO_LINEUPS['liquid'];
-                for (let i = 0; i < 20; i++) {
-                    const manufacturer = DEMO_MANUFACTURERS[Math.floor(Math.random() * DEMO_MANUFACTURERS.length)];
-                    const lineup = lineups[Math.floor(Math.random() * lineups.length)];
-                    const product = {
-                        id: ++id, category: cat, manufacturer, lineup,
-                        quantity: Math.floor(Math.random() * 30),
-                        purchase: Math.floor(Math.random() * 400) + 100,
-                        selling: Math.floor(Math.random() * 600) + 200
-                    };
-                    const extras = CATEGORY_EXTRA_FIELDS[cat];
-                    extras.forEach(ext => {
-                        if (ext.key === 'flavor') product.flavor = DEMO_FLAVORS[Math.floor(Math.random() * DEMO_FLAVORS.length)];
-                        if (ext.key === 'color') product.color = DEMO_COLORS[Math.floor(Math.random() * DEMO_COLORS.length)];
-                    });
-                    products.push(product);
+        async function addDemoData() {
+            // Проверяем, есть ли уже данные
+            const salesExist = (await db.getAll('sales')).length > 0;
+            const productsExist = (await db.getAll('products')).length > 0;
+            
+            if (!salesExist) {
+                const now = new Date();
+                for (let i = 0; i < 60; i++) {
+                    const d = new Date(now - Math.random() * 90 * 86400000);
+                    const total = Math.floor(Math.random() * 5000) + 500;
+                    const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
+                    await db.add('sales', { date: d.toISOString().split('T')[0], total, cost, profit: total - cost, category: CATEGORIES[Math.floor(Math.random() * 5)], items: [] });
                 }
-            });
-            return products;
-        }
-
-        async function addDemoProducts() {
-            const existing = await db.getAll('products');
-            if (existing.length > 0) return;
-            const products = generateDemoProducts();
-            for (const p of products) await db.add('products', p);
-        }
-
-        async function addDemoSales() {
-            const existing = await db.getAll('sales');
-            if (existing.length > 0) return;
-            const now = new Date();
-            for (let i = 0; i < 60; i++) {
-                const d = new Date(now - Math.random() * 90 * 86400000);
-                const total = Math.floor(Math.random() * 5000) + 500;
-                const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
-                await db.add('sales', {
-                    date: d.toISOString().split('T')[0], total, cost, profit: total - cost,
-                    category: ['liquid','supplies','pods','disposable','snus'][Math.floor(Math.random()*5)], items: []
-                });
+                const today = now.toISOString().split('T')[0];
+                for (let i = 0; i < 5; i++) {
+                    const total = Math.floor(Math.random() * 15000) + 3000;
+                    const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
+                    await db.add('sales', { date: today, total, cost, profit: total - cost, category: CATEGORIES[i % 5], items: [] });
+                }
             }
-            // Сегодняшние продажи
-            const today = now.toISOString().split('T')[0];
-            for (let i = 0; i < 5; i++) {
-                const total = Math.floor(Math.random() * 15000) + 3000;
-                const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
-                await db.add('sales', { date: today, total, cost, profit: total - cost, category: ['liquid','supplies','pods','disposable','snus'][i%5], items: [] });
+            
+            if (!productsExist) {
+                let id = 0;
+                for (const cat of CATEGORIES) {
+                    const lineups = DEMO_LINEUPS[cat] || DEMO_LINEUPS['liquid'];
+                    for (let i = 0; i < 20; i++) {
+                        const product = {
+                            id: ++id, category: cat,
+                            manufacturer: DEMO_MANUFACTURERS[Math.floor(Math.random() * DEMO_MANUFACTURERS.length)],
+                            lineup: lineups[Math.floor(Math.random() * lineups.length)],
+                            quantity: Math.floor(Math.random() * 30),
+                            purchase: Math.floor(Math.random() * 400) + 100,
+                            selling: Math.floor(Math.random() * 600) + 200
+                        };
+                        const extras = CATEGORY_EXTRA_FIELDS[cat];
+                        extras.forEach(ext => {
+                            if (ext.key === 'flavor') product.flavor = DEMO_FLAVORS[Math.floor(Math.random() * DEMO_FLAVORS.length)];
+                            if (ext.key === 'color') product.color = DEMO_COLORS[Math.floor(Math.random() * DEMO_COLORS.length)];
+                        });
+                        await db.add('products', product);
+                    }
+                }
             }
         }
 
         // ============ СТАТИСТИКА ============
-        let currentPeriod = 'today';
-        let currentCategoryMode = 'sum';
-        let customStartDate = null;
-        let customEndDate = null;
+        let currentPeriod = 'today', currentCategoryMode = 'sum', customStartDate = null, customEndDate = null;
 
         function getDateRange(period) {
-            const now = new Date();
-            const today = now.toISOString().split('T')[0];
-            const yesterday = new Date(now - 86400000).toISOString().split('T')[0];
+            const now = new Date(), today = now.toISOString().split('T')[0], yesterday = new Date(now - 86400000).toISOString().split('T')[0];
             let start, end, prevStart, prevEnd;
             switch (period) {
                 case 'today': start = today; end = today; prevStart = yesterday; prevEnd = yesterday; break;
-                case 'week':
-                    const dow = now.getDay(); const mon = new Date(now); mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
-                    start = mon.toISOString().split('T')[0]; end = today;
-                    const pMon = new Date(mon); pMon.setDate(mon.getDate() - 7);
-                    const pSun = new Date(mon); pSun.setDate(mon.getDate() - 1);
-                    prevStart = pMon.toISOString().split('T')[0]; prevEnd = pSun.toISOString().split('T')[0]; break;
-                case 'month':
-                    start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]; end = today;
-                    const pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                    const pme = new Date(now.getFullYear(), now.getMonth(), 0);
-                    prevStart = pm.toISOString().split('T')[0]; prevEnd = pme.toISOString().split('T')[0]; break;
+                case 'week': { const dow = now.getDay(), mon = new Date(now); mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1)); start = mon.toISOString().split('T')[0]; end = today; const pMon = new Date(mon); pMon.setDate(mon.getDate() - 7); const pSun = new Date(mon); pSun.setDate(mon.getDate() - 1); prevStart = pMon.toISOString().split('T')[0]; prevEnd = pSun.toISOString().split('T')[0]; break; }
+                case 'month': start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]; end = today; const pm = new Date(now.getFullYear(), now.getMonth() - 1, 1), pme = new Date(now.getFullYear(), now.getMonth(), 0); prevStart = pm.toISOString().split('T')[0]; prevEnd = pme.toISOString().split('T')[0]; break;
                 case 'all': start = '2020-01-01'; end = today; prevStart = null; prevEnd = null; break;
                 case 'custom': start = customStartDate || today; end = customEndDate || today; prevStart = null; prevEnd = null; break;
             }
@@ -545,118 +527,43 @@
         }
 
         async function getSalesInRange(start, end) {
-            try { return await db.getByDateRange('sales', start, end); }
-            catch { const all = await db.getAll('sales'); return all.filter(s => s.date >= start && s.date <= end); }
+            try { return await db.getByDateRange('sales', start, end); } catch { const all = await db.getAll('sales'); return all.filter(s => s.date >= start && s.date <= end); }
         }
 
         function getDaysDiff(start, end) { return Math.ceil((new Date(end) - new Date(start)) / 86400000) + 1; }
 
         function getDailyData(sales, start, end) {
-            const showMonths = getDaysDiff(start, end) > 31;
-            const map = new Map();
+            const showMonths = getDaysDiff(start, end) > 31, map = new Map();
             sales.forEach(s => {
-                const d = new Date(s.date);
-                const key = showMonths
-                    ? `${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear().toString().slice(2)}`
-                    : `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+                const d = new Date(s.date), key = showMonths ? `${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear().toString().slice(2)}` : `${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`;
                 map.set(key, (map.get(key) || 0) + (s.profit || 0));
             });
-            const sorted = [...map.keys()].sort((a, b) => {
-                const [pa, pb] = [a.split('.'), b.split('.')];
-                return showMonths ? (pa[1] + pa[0]).localeCompare(pb[1] + pb[0]) : (pa[1] + pa[0]).localeCompare(pb[1] + pb[0]);
-            });
-            return sorted.map(k => ({ label: k, value: map.get(k) }));
+            return [...map.keys()].sort((a, b) => { const [pa, pb] = [a.split('.'), b.split('.')]; return showMonths ? (pa[1]+pa[0]).localeCompare(pb[1]+pb[0]) : (pa[1]+pa[0]).localeCompare(pb[1]+pb[0]); }).map(k => ({ label: k, value: map.get(k) }));
         }
 
         function getCategoryData(sales, mode) {
-            const map = {};
-            ['liquid','supplies','pods','disposable','snus'].forEach(c => map[c] = 0);
-            sales.forEach(s => {
-                if (s.category && map[s.category] !== undefined) {
-                    map[s.category] += (mode === 'sum' ? (s.profit || 0) : 1);
-                }
-            });
-            return ['liquid','supplies','pods','disposable','snus'].map(c => ({
-                category: c, name: CATEGORY_NAMES[c], value: map[c]
-            }));
+            const map = {}; CATEGORIES.forEach(c => map[c] = 0);
+            sales.forEach(s => { if (map[s.category] !== undefined) map[s.category] += (mode === 'sum' ? (s.profit || 0) : 1); });
+            return CATEGORIES.map(c => ({ category: c, name: CATEGORY_NAMES[c], value: map[c] }));
         }
 
-        function shouldShowDaily(period, start, end) {
-            if (period === 'today') return false;
-            if (period === 'custom') return getDaysDiff(start, end) >= 2;
-            return true;
-        }
+        function shouldShowDaily(period, start, end) { if (period === 'today') return false; if (period === 'custom') return getDaysDiff(start, end) >= 2; return true; }
 
         async function renderStatistics(period) {
             currentPeriod = period;
             const { start, end, prevStart, prevEnd } = getDateRange(period);
-            const sales = await getSalesInRange(start, end);
-            const prevSales = (prevStart && prevEnd) ? await getSalesInRange(prevStart, prevEnd) : [];
-            
-            const rev = sales.reduce((s, x) => s + (x.total || 0), 0);
-            const prof = sales.reduce((s, x) => s + (x.profit || 0), 0);
-            const cnt = sales.length;
-            const pRev = prevSales.reduce((s, x) => s + (x.total || 0), 0);
-            const pProf = prevSales.reduce((s, x) => s + (x.profit || 0), 0);
-            const pCnt = prevSales.length;
-
+            const sales = await getSalesInRange(start, end), prevSales = (prevStart && prevEnd) ? await getSalesInRange(prevStart, prevEnd) : [];
+            const rev = sales.reduce((s, x) => s + (x.total || 0), 0), prof = sales.reduce((s, x) => s + (x.profit || 0), 0), cnt = sales.length;
+            const pRev = prevSales.reduce((s, x) => s + (x.total || 0), 0), pProf = prevSales.reduce((s, x) => s + (x.profit || 0), 0), pCnt = prevSales.length;
             const showDaily = shouldShowDaily(period, start, end);
-            const dailyData = showDaily ? getDailyData(sales, start, end) : [];
-            const catData = getCategoryData(sales, currentCategoryMode);
-            const maxDaily = Math.max(...dailyData.map(d => d.value), 1);
-            const maxCat = Math.max(...catData.map(d => d.value), 1);
+            const dailyData = showDaily ? getDailyData(sales, start, end) : [], catData = getCategoryData(sales, currentCategoryMode);
+            const maxDaily = Math.max(...dailyData.map(d => d.value), 1), maxCat = Math.max(...catData.map(d => d.value), 1);
+            const booking = Math.floor(Math.random() * 30000) + 5000, debt = Math.floor(Math.random() * 15000) + 1000;
+            const newClients = Math.floor(Math.random() * 20) + 1, leavingClients = Math.floor(Math.random() * 10) + 1;
+            const pNewClients = Math.floor(Math.random() * 18) + 1, pLeavingClients = Math.floor(Math.random() * 8) + 1;
 
-            const booking = Math.floor(Math.random() * 30000) + 5000;
-            const debt = Math.floor(Math.random() * 15000) + 1000;
-            const newClients = Math.floor(Math.random() * 20) + 1;
-            const leavingClients = Math.floor(Math.random() * 10) + 1;
-            const pNewClients = Math.floor(Math.random() * 18) + 1;
-            const pLeavingClients = Math.floor(Math.random() * 8) + 1;
-
-            const periodBtns = ['today','week','month','all','custom'].map(p => 
-                `<button class="period-btn ${period === p ? 'active' : ''}" onclick="renderStatistics('${p}')" title="${p==='today'?'Сегодня':p==='week'?'Неделя':p==='month'?'Месяц':p==='all'?'Всё время':'Период'}">
-                    <i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i>
-                </button>`).join('');
-
-            const dateRangeHtml = period === 'custom' ? `
-                <div class="date-range">
-                    <input type="date" class="date-input" id="startDate" value="${customStartDate||''}" onchange="updateCustomDates()">
-                    <span class="date-separator">—</span>
-                    <input type="date" class="date-input" id="endDate" value="${customEndDate||''}" onchange="updateCustomDates()">
-                </div>` : '';
-
-            const catSwitchHtml = `
-                <div class="chart-switch">
-                    <button class="switch-btn ${currentCategoryMode==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button>
-                    <button class="switch-btn ${currentCategoryMode==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button>
-                </div>`;
-
-            const dailyBlock = showDaily ? `
-                <div class="chart-block">
-                    <div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> Продажи по дням</div></div>
-                    ${dailyData.length ? `<div class="bar-chart">${dailyData.map(d => {
-                        const h = maxDaily > 0 ? (d.value / maxDaily * 100) : 0;
-                        return `<div class="bar-column"><div class="bar-value">${fmtNum(d.value)}₽</div><div class="bar-fill" style="height:${h}%;" data-height="${h}"></div><div class="bar-label">${d.label}</div></div>`;
-                    }).join('')}</div>` : '<p class="text-muted text-center py-3">Нет данных</p>'}
-                </div>` : '';
-
-            const catBlock = `
-                <div class="chart-block">
-                    <div class="chart-header">
-                        <div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div>
-                        ${catSwitchHtml}
-                    </div>
-                    <div class="category-chart">
-                        ${catData.map(d => {
-                            const h = maxCat > 0 ? (d.value / maxCat * 100) : 0;
-                            const suffix = currentCategoryMode === 'sum' ? '₽' : ' шт.';
-                            return `<div class="category-column"><div class="category-value">${fmtNum(d.value)}${suffix}</div><div class="category-fill cat-${d.category}" style="height:${h}%;" data-height="${h}"></div><div class="category-label">${d.name}</div></div>`;
-                        }).join('')}
-                    </div>
-                </div>`;
-
-            const html = `
-                <div class="stats-header"><h2 class="tab-title">Статистика</h2><div class="period-buttons">${periodBtns}</div></div>
+            document.getElementById('contentBody').innerHTML = `
+                <div class="stats-header"><h2 class="tab-title">Статистика</h2><div class="period-buttons">${['today','week','month','all','custom'].map(p => `<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div>
                 <div class="stats-cards">
                     <div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fmtNum(rev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}">${fmtPct((rev-pRev)/pRev*100)}</div>`:''}</div>
                     <div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fmtNum(prof)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}">${fmtPct((prof-pProf)/pProf*100)}</div>`:''}</div>
@@ -665,34 +572,22 @@
                 <div class="summary-row">
                     <div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">${fmtNum(booking)}₽</div></div>
                     <div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value">${fmtNum(debt)}₽</div></div>
-                    <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">${newClients} чел.</div>${period!=='all'?`<div class="summary-percent">${fmtPct((newClients-pNewClients)/pNewClients*100)}</div>`:''}</div>
-                    <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">${leavingClients} чел.</div>${period!=='all'?`<div class="summary-percent">${fmtPct((leavingClients-pLeavingClients)/pLeavingClients*100)}</div>`:''}</div>
+                    <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">${newClients} чел.</div></div>
+                    <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">${leavingClients} чел.</div></div>
                 </div>
-                ${catBlock}
-                ${dailyBlock}
-                ${dateRangeHtml}`;
+                <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${currentCategoryMode==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${currentCategoryMode==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${catData.map(d => { const h = maxCat>0?(d.value/maxCat*100):0; return `<div class="category-column"><div class="category-value">${fmtNum(d.value)}${currentCategoryMode==='sum'?'₽':' шт.'}</div><div class="category-fill cat-${d.category}" style="height:${h}%;" data-height="${h}"></div><div class="category-label">${d.name}</div></div>`; }).join('')}</div></div>
+                ${showDaily ? `<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> Продажи по дням</div></div>${dailyData.length ? `<div class="bar-chart">${dailyData.map(d => { const h = maxDaily>0?(d.value/maxDaily*100):0; return `<div class="bar-column"><div class="bar-value">${fmtNum(d.value)}₽</div><div class="bar-fill" style="height:${h}%;" data-height="${h}"></div><div class="bar-label">${d.label}</div></div>`; }).join('')}</div>` : '<p class="text-muted text-center py-3">Нет данных</p>'}</div>` : ''}
+                ${period === 'custom' ? `<div class="date-range"><input type="date" class="date-input" id="startDate" value="${customStartDate||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${customEndDate||''}" onchange="updateCustomDates()"></div>` : ''}`;
 
-            document.getElementById('contentBody').innerHTML = html;
-            setTimeout(() => {
-                document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(b => {
-                    const h = b.getAttribute('data-height');
-                    b.style.height = '0%';
-                    setTimeout(() => b.style.height = h + '%', 50);
-                });
-            }, 100);
+            setTimeout(() => document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(b => { const h = b.getAttribute('data-height'); b.style.height = '0%'; setTimeout(() => b.style.height = h + '%', 50); }), 100);
         }
 
         async function setCategoryMode(mode) { currentCategoryMode = mode; await renderStatistics(currentPeriod); }
-        function updateCustomDates() {
-            customStartDate = document.getElementById('startDate').value;
-            customEndDate = document.getElementById('endDate').value;
-            if (customStartDate && customEndDate) renderStatistics('custom');
-        }
-
-        function showBookingModal() { showModal('Бронь', 'bi bi-calendar-check', 'var(--green)', '<p class="text-muted">Список забронированных товаров</p>', ''); }
-        function showDebtModal() { showModal('Долг', 'bi bi-cash-coin', 'var(--red)', '<p class="text-muted">Список должников</p>', ''); }
-        function showNewClientsModal() { showModal('Новые клиенты', 'bi bi-person-plus', 'var(--accent)', '<p class="text-muted">Список новых клиентов</p>', ''); }
-        function showLeavingClientsModal() { showModal('Уходящие клиенты', 'bi bi-person-dash', 'var(--accent)', '<p class="text-muted">Список уходящих клиентов</p>', ''); }
+        function updateCustomDates() { customStartDate = document.getElementById('startDate').value; customEndDate = document.getElementById('endDate').value; if (customStartDate && customEndDate) renderStatistics('custom'); }
+        function showBookingModal() { showModal('Бронь', 'bi bi-calendar-check', 'var(--green)', '<p class="text-muted py-4 text-center">Список забронированных товаров</p>', ''); }
+        function showDebtModal() { showModal('Долг', 'bi bi-cash-coin', 'var(--red)', '<p class="text-muted py-4 text-center">Список должников</p>', ''); }
+        function showNewClientsModal() { showModal('Новые клиенты', 'bi bi-person-plus', 'var(--accent)', '<p class="text-muted py-4 text-center">Список новых клиентов</p>', ''); }
+        function showLeavingClientsModal() { showModal('Уходящие клиенты', 'bi bi-person-dash', 'var(--accent)', '<p class="text-muted py-4 text-center">Список уходящих клиентов</p>', ''); }
 
         // ============ СКЛАД ============
         let currentWarehouseCategory = null;
@@ -703,7 +598,7 @@
             const counts = {};
             CATEGORIES.forEach(cat => counts[cat] = allProducts.filter(p => p.category === cat).length);
 
-            const html = `
+            document.getElementById('contentBody').innerHTML = `
                 <h2 class="tab-title">Склад</h2>
                 <div class="warehouse-cards">
                     ${CATEGORIES.map(cat => `
@@ -714,7 +609,6 @@
                         </div>
                     `).join('')}
                 </div>`;
-            document.getElementById('contentBody').innerHTML = html;
         }
 
         async function openWarehouseCategory(cat) {
@@ -733,21 +627,17 @@
             return groups;
         }
 
-        function buildAccordionHTML(groups, groupBy, level, searchQuery) {
+        function buildAccordionHTML(groups, groupBy, level) {
             if (level >= groupBy.length) return '';
             let html = '';
-            const entries = Object.entries(groups);
-            entries.sort((a, b) => a[0].localeCompare(b[0]));
+            const entries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
             
             entries.forEach(([key, items]) => {
                 const label = key.split('|||')[level] || key;
-                const groupId = 'grp_' + Math.random().toString(36).slice(2, 8);
+                const groupId = 'grp_' + Math.random().toString(36).slice(2, 10);
                 
                 html += `<div class="accordion-group">`;
-                html += `<div class="accordion-header" onclick="toggleAccordion('${groupId}')">`;
-                html += `<span>${label} (${items.length})</span>`;
-                html += `<i class="bi bi-chevron-down accordion-arrow"></i>`;
-                html += `</div>`;
+                html += `<div class="accordion-header" onclick="window.toggleAcc('${groupId}')"><span>${label} (${items.length})</span><i class="bi bi-chevron-down accordion-arrow"></i></div>`;
                 html += `<div class="accordion-body" id="${groupId}">`;
                 
                 if (level + 1 < groupBy.length) {
@@ -757,7 +647,7 @@
                         if (!subGroups[subKey]) subGroups[subKey] = [];
                         subGroups[subKey].push(item);
                     });
-                    html += buildAccordionHTML(subGroups, groupBy, level + 1, searchQuery);
+                    html += buildAccordionHTML(subGroups, groupBy, level + 1);
                 } else {
                     const cols = CATEGORY_TABLE_COLS[currentWarehouseCategory];
                     html += `<div class="table-header-row">${cols.map(col => `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}</div>`;
@@ -776,30 +666,30 @@
             return html;
         }
 
-        function toggleAccordion(groupId) {
+        // Глобальная функция для onclick
+        window.toggleAcc = function(groupId) {
             const body = document.getElementById(groupId);
             if (!body) return;
             const header = body.previousElementSibling;
             body.classList.toggle('open');
             header.classList.toggle('open');
-        }
+        };
 
         async function renderWarehouseTable(cat, searchQuery = '') {
             currentWarehouseCategory = cat;
-            let products = await db.getByIndex('products', 'category', cat);
+            const allProducts = await db.getAll('products');
+            let products = allProducts.filter(p => p.category === cat);
             
             if (searchQuery) {
                 const q = searchQuery.toLowerCase();
-                products = products.filter(p => {
-                    const cols = CATEGORY_TABLE_COLS[cat];
-                    return cols.some(col => (p[col] || '').toString().toLowerCase().includes(q));
-                });
+                const cols = CATEGORY_TABLE_COLS[cat];
+                products = products.filter(p => cols.some(col => (p[col] || '').toString().toLowerCase().includes(q)));
             }
             
             const groupBy = CATEGORY_GROUPS[cat];
             const groups = groupProducts(products, groupBy);
             
-            const html = `
+            document.getElementById('contentBody').innerHTML = `
                 <div class="warehouse-table-section">
                     <div class="wh-header">
                         <button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button>
@@ -807,16 +697,17 @@
                         <button class="wh-add-btn" onclick="showAddProductModal()">+</button>
                     </div>
                     <input type="text" class="search-input" placeholder="Поиск..." value="${searchQuery}" oninput="onSearch(this.value)">
-                    ${products.length === 0 ? '<p class="text-center text-muted py-4">Ничего не найдено</p>' : buildAccordionHTML(groups, groupBy, 0, searchQuery)}
+                    ${products.length === 0 ? '<p class="text-center text-muted py-4">Ничего не найдено</p>' : buildAccordionHTML(groups, groupBy, 0)}
                 </div>`;
             
-            document.getElementById('contentBody').innerHTML = html;
-            
-            const allBodies = document.querySelectorAll('.accordion-body');
-            if (allBodies.length === 1) {
-                allBodies[0].classList.add('open');
-                allBodies[0].previousElementSibling.classList.add('open');
-            }
+            // Автооткрытие если одна группа
+            setTimeout(() => {
+                const bodies = document.querySelectorAll('.accordion-body');
+                if (bodies.length === 1) {
+                    bodies[0].classList.add('open');
+                    bodies[0].previousElementSibling.classList.add('open');
+                }
+            }, 50);
         }
 
         function onSearch(value) { renderWarehouseTable(currentWarehouseCategory, value); }
@@ -887,10 +778,7 @@
             setTimeout(async () => {
                 if (tab === 'statistics') await renderStatistics(currentPeriod);
                 else if (tab === 'warehouse') await renderWarehouseCards();
-                else {
-                    const titles = { 'sales': 'Продажи', 'clients': 'Клиенты' };
-                    body.innerHTML = `<h2 class="tab-title">${titles[tab]}</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
-                }
+                else body.innerHTML = `<h2 class="tab-title">${tab==='sales'?'Продажи':'Клиенты'}</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
                 body.style.opacity = '1'; body.style.transform = '';
             }, 200);
             if (innerWidth < 768) closeSidebar();
@@ -899,8 +787,7 @@
         // ============ PULL-TO-REFRESH ============
         let pullDist = 0;
         document.addEventListener('DOMContentLoaded', () => {
-            const mc = document.getElementById('mainContent');
-            let startY = 0;
+            const mc = document.getElementById('mainContent'); let startY = 0;
             mc.addEventListener('touchstart', e => { if (!window.scrollY) startY = e.touches[0].clientY; });
             mc.addEventListener('touchmove', e => { if (!window.scrollY) { pullDist = e.touches[0].clientY - startY; if (pullDist > 0) document.body.style.transform = `translateY(${pullDist * 0.3}px)`; } });
             mc.addEventListener('touchend', async () => {
@@ -908,10 +795,8 @@
                     document.body.style.transition = 'transform .3s'; document.body.style.transform = '';
                     const t = document.createElement('div');
                     t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 20px;border-radius:20px;z-index:9999;font-size:14px;';
-                    t.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i> Обновляем...';
-                    document.body.appendChild(t);
-                    if (currentWarehouseCategory) await renderWarehouseTable(currentWarehouseCategory);
-                    else await renderWarehouseCards();
+                    t.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i> Обновляем...'; document.body.appendChild(t);
+                    if (currentWarehouseCategory) await renderWarehouseTable(currentWarehouseCategory); else await renderWarehouseCards();
                     setTimeout(() => t.remove(), 1000);
                 } else document.body.style.transform = '';
                 pullDist = 0;
@@ -923,11 +808,11 @@
             try {
                 await db.init();
                 await loadTheme();
-                await addDemoSales();
-                await addDemoProducts();
+                await addDemoData();
                 await renderWarehouseCards();
                 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
-            } catch (e) { console.error('Ошибка инициализации:', e); }
+                console.log('✅ Crazy Rabbit готов!');
+            } catch (e) { console.error('Ошибка:', e); }
         }
 
         let tx = 0;
