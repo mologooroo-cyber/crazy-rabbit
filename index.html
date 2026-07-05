@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" data-bs-theme="dark">
+<html lang="ru" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -8,115 +8,517 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Crazy Rabbit</title>
     
-    <!-- Bootstrap 5.3 CSS -->
+    <!-- Bootstrap 5.3 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link href="styles.css" rel="stylesheet">
-    
-    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
+    
+    <style>
+        :root {
+            --bg-primary: #2C3E50;
+            --bg-secondary: #34495E;
+            --bg-sidebar: #1a252f;
+            --text-primary: #FFFFFF;
+            --text-secondary: #BDC3C7;
+            --accent: #81D8D0;
+            --accent-hover: #6ECBC3;
+            --border: #4A6274;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #F8F9FA;
+            --bg-secondary: #FFFFFF;
+            --bg-sidebar: #E9ECEF;
+            --text-primary: #2C3E50;
+            --text-secondary: #6C757D;
+            --accent: #81D8D0;
+            --accent-hover: #6ECBC3;
+            --border: #DEE2E6;
+        }
+
+        [data-theme="pink"] {
+            --bg-primary: #FFF0F3;
+            --bg-secondary: #FFFFFF;
+            --bg-sidebar: #FFE0E6;
+            --text-primary: #FF69B4;
+            --text-secondary: #FFB6C1;
+            --accent: #FF69B4;
+            --accent-hover: #FF1493;
+            --border: #FFB6C1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+            margin: 0;
+            padding: 0;
+        }
+
+        .menu-toggle-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1000;
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .menu-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+            transition: left 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            left: 0;
+        }
+
+        .sidebar-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar-overlay.active::before {
+            opacity: 1;
+        }
+
+        .sidebar-content {
+            position: relative;
+            width: 280px;
+            height: 100%;
+            background: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            z-index: 1;
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h3 {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .btn-close-custom {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-close-custom:active {
+            transform: rotate(90deg);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            margin: 5px 0;
+            font-size: 16px;
+        }
+
+        .nav-item i {
+            font-size: 20px;
+            margin-right: 15px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-item.active {
+            background: rgba(129, 216, 208, 0.15);
+            border-left-color: var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .nav-item:active {
+            background: rgba(129, 216, 208, 0.1);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Кнопка смены темы */
+        .theme-toggle-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-toggle-btn:active {
+            transform: scale(0.97);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .theme-toggle-btn i {
+            font-size: 20px;
+        }
+
+        .theme-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .theme-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: inline-block;
+        }
+
+        .main-content {
+            padding: 80px 20px 20px;
+            min-height: 100vh;
+        }
+
+        .tab-title {
+            display: inline-block;
+            font-weight: 700;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--accent);
+            margin-bottom: 30px;
+        }
+
+        .content-body {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 20px;
+            min-height: 300px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .content-body {
+            animation: fadeInUp 0.4s ease;
+        }
+    </style>
 </head>
 <body>
     <!-- Кнопка меню -->
-    <button id="menuToggle" class="menu-toggle-btn">
+    <button class="menu-toggle-btn" onclick="openSidebar()">
         <i class="bi bi-list"></i>
     </button>
 
-    <!-- Сайдбар (overlay) -->
-    <div id="sidebar" class="sidebar-overlay">
-        <div class="sidebar-content">
+    <!-- Сайдбар -->
+    <div class="sidebar-overlay" id="sidebar" onclick="closeSidebarOutside(event)">
+        <div class="sidebar-content" onclick="event.stopPropagation()">
             <div class="sidebar-header">
-                <h3 class="mb-0">Crazy Rabbit</h3>
-                <button id="closeSidebar" class="btn-close-custom">
+                <h3>Crazy Rabbit</h3>
+                <button class="btn-close-custom" onclick="closeSidebar()">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
             
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-tab="statistics">
+                <a href="#" class="nav-item active" onclick="switchTab('statistics')" data-tab="statistics">
                     <i class="bi bi-graph-up-arrow"></i>
                     <span>Статистика</span>
                 </a>
-                <a href="#" class="nav-item" data-tab="warehouse">
+                <a href="#" class="nav-item" onclick="switchTab('warehouse')" data-tab="warehouse">
                     <i class="bi bi-box-seam"></i>
                     <span>Склад</span>
                 </a>
-                <a href="#" class="nav-item" data-tab="sales">
+                <a href="#" class="nav-item" onclick="switchTab('sales')" data-tab="sales">
                     <i class="bi bi-cart3"></i>
                     <span>Продажи</span>
                 </a>
-                <a href="#" class="nav-item" data-tab="clients">
+                <a href="#" class="nav-item" onclick="switchTab('clients')" data-tab="clients">
                     <i class="bi bi-people"></i>
                     <span>Клиенты</span>
                 </a>
             </nav>
             
             <div class="sidebar-footer">
-                <!-- Селектор тем -->
-                <div class="theme-selector">
-                    <label class="theme-label">
-                        <i class="bi bi-palette"></i> Тема оформления
-                    </label>
-                    <div class="theme-buttons">
-                        <button class="theme-btn active" data-theme="dark">
-                            <i class="bi bi-moon-stars"></i>
-                            <span>Тёмная</span>
-                        </button>
-                        <button class="theme-btn" data-theme="light">
-                            <i class="bi bi-sun"></i>
-                            <span>Светлая</span>
-                        </button>
-                        <button class="theme-btn" data-theme="pink">
-                            <i class="bi bi-heart"></i>
-                            <span>Девчачья</span>
-                        </button>
-                    </div>
+                <div class="theme-indicator">
+                    <span class="theme-dot"></span>
+                    <span id="themeName">Тёмная тема</span>
                 </div>
-                
-                <!-- Установка PWA -->
-                <button id="installBtn" class="install-btn" style="display: none;">
-                    <i class="bi bi-download"></i>
-                    Установить приложение
+                <button class="theme-toggle-btn" onclick="toggleTheme()">
+                    <i class="bi bi-palette"></i>
+                    <span>Сменить тему</span>
                 </button>
             </div>
         </div>
     </div>
 
     <!-- Основной контент -->
-    <main id="mainContent" class="main-content">
-        <header class="content-header">
-            <h2 id="currentTabTitle" class="tab-title">Статистика</h2>
-        </header>
-        
+    <main class="main-content">
+        <h2 class="tab-title" id="currentTabTitle">Статистика</h2>
         <div class="content-body" id="contentBody">
-            <!-- Контент вкладок будет здесь -->
+            <p class="text-center text-muted py-5">Добро пожаловать в Crazy Rabbit!</p>
         </div>
     </main>
 
-    <!-- Модальное окно -->
-    <div class="modal fade" id="exampleModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Модальное окно</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Здесь будет содержимое модального окна.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                    <button type="button" class="btn btn-primary">Сохранить</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script>
+        // ============ БАЗА ДАННЫХ ============
+        class Database {
+            constructor() {
+                this.dbName = 'CrazyRabbitDB';
+                this.dbVersion = 1;
+                this.db = null;
+            }
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Application JS -->
-    <script src="app.js"></script>
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, this.dbVersion);
+
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve();
+                    };
+
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('settings')) {
+                            db.createObjectStore('settings', { keyPath: 'key' });
+                        }
+                    };
+                });
+            }
+
+            async get(storeName, key) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([storeName], 'readonly');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.get(key);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async put(storeName, data) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.put(data);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+        }
+
+        const db = new Database();
+
+        // ============ УПРАВЛЕНИЕ ТЕМАМИ ============
+        const themes = ['dark', 'light', 'pink'];
+        const themeNames = {
+            'dark': 'Тёмная тема',
+            'light': 'Светлая тема',
+            'pink': 'Розовая тема'
+        };
+        const themeIcons = {
+            'dark': 'bi-moon-stars',
+            'light': 'bi-sun',
+            'pink': 'bi-heart'
+        };
+        
+        let currentThemeIndex = 0;
+
+        async function toggleTheme() {
+            // Переключаем на следующую тему
+            currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+            const theme = themes[currentThemeIndex];
+            
+            // Применяем тему
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            // Обновляем индикатор
+            document.getElementById('themeName').textContent = themeNames[theme];
+            
+            // Сохраняем в БД
+            try {
+                await db.put('settings', { key: 'theme', value: theme });
+            } catch (e) {
+                console.error('Ошибка сохранения темы:', e);
+            }
+        }
+
+        async function loadTheme() {
+            try {
+                const settings = await db.get('settings', 'theme');
+                if (settings) {
+                    const theme = settings.value;
+                    document.documentElement.setAttribute('data-theme', theme);
+                    currentThemeIndex = themes.indexOf(theme);
+                    document.getElementById('themeName').textContent = themeNames[theme];
+                }
+            } catch (e) {
+                // Тема по умолчанию (dark)
+                document.getElementById('themeName').textContent = 'Тёмная тема';
+            }
+        }
+
+        // ============ УПРАВЛЕНИЕ САЙДБАРОМ ============
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('active');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('active');
+        }
+
+        function closeSidebarOutside(event) {
+            if (event.target === document.getElementById('sidebar')) {
+                closeSidebar();
+            }
+        }
+
+        // ============ ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ============
+        function switchTab(tabName) {
+            const titles = {
+                'statistics': 'Статистика',
+                'warehouse': 'Склад',
+                'sales': 'Продажи',
+                'clients': 'Клиенты'
+            };
+            
+            document.getElementById('currentTabTitle').textContent = titles[tabName];
+            
+            // Обновляем активный пункт меню
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.tab === tabName) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Обновляем контент с анимацией
+            const contentBody = document.getElementById('contentBody');
+            contentBody.style.opacity = '0';
+            contentBody.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                contentBody.innerHTML = `<p class="text-center text-muted py-5">Вкладка "${titles[tabName]}" пока пустая</p>`;
+                contentBody.style.opacity = '1';
+                contentBody.style.transform = 'translateY(0)';
+            }, 200);
+            
+            // Закрываем сайдбар
+            if (window.innerWidth < 768) {
+                closeSidebar();
+            }
+        }
+
+        // ============ ИНИЦИАЛИЗАЦИЯ ============
+        async function init() {
+            try {
+                await db.init();
+                await loadTheme();
+                console.log('Crazy Rabbit готов к работе! 🐰');
+            } catch (e) {
+                console.error('Ошибка инициализации:', e);
+            }
+            
+            // Регистрация Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW зарегистрирован'))
+                    .catch(err => console.log('SW ошибка:', err));
+            }
+        }
+
+        // Закрытие сайдбара по свайпу
+        let touchStartX = 0;
+        document.getElementById('sidebar').addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        document.getElementById('sidebar').addEventListener('touchend', (e) => {
+            const diff = touchStartX - e.changedTouches[0].clientX;
+            if (diff > 100) closeSidebar();
+        });
+
+        // Запуск
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
-  </html>
+</html>
