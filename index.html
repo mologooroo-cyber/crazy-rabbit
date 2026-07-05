@@ -70,11 +70,7 @@
             --cat-snus: #55efc4;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -82,721 +78,292 @@
             color: var(--text-primary);
             overflow-x: hidden;
             transition: all 0.3s ease;
-            margin: 0;
-            padding: 0;
         }
 
+        /* Кнопка меню */
         .menu-toggle-btn {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1000;
-            background: var(--accent);
-            color: white;
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
+            position: fixed; top: 15px; left: 15px; z-index: 1000;
+            background: var(--accent); color: white; border: none;
+            width: 45px; height: 45px; border-radius: 12px; font-size: 24px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); transition: all 0.3s ease;
         }
-
-        .menu-toggle-btn:active {
-            transform: scale(0.95);
-        }
+        .menu-toggle-btn:active { transform: scale(0.95); }
 
         /* Сайдбар */
         .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            z-index: 2000;
-            transition: left 0.3s ease;
+            position: fixed; top: 0; left: -100%; width: 100%; height: 100%;
+            z-index: 2000; transition: left 0.3s ease;
         }
-
-        .sidebar-overlay.active {
-            left: 0;
-        }
-
+        .sidebar-overlay.active { left: 0; }
         .sidebar-overlay::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); opacity: 0; transition: opacity 0.3s ease;
         }
-
-        .sidebar-overlay.active::before {
-            opacity: 1;
-        }
-
+        .sidebar-overlay.active::before { opacity: 1; }
         .sidebar-content {
-            position: relative;
-            width: 280px;
-            height: 100%;
-            background: var(--bg-sidebar);
-            display: flex;
-            flex-direction: column;
-            z-index: 1;
-            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
+            position: relative; width: 280px; height: 100%;
+            background: var(--bg-sidebar); display: flex; flex-direction: column; z-index: 1;
+            box-shadow: 2px 0 20px rgba(0,0,0,0.3);
         }
-
         .sidebar-header {
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            padding: 20px; display: flex; align-items: center; justify-content: space-between;
             border-bottom: 1px solid var(--border);
         }
-
-        .sidebar-header h3 {
-            color: var(--accent);
-            font-weight: 700;
-            font-size: 18px;
-            margin: 0;
-        }
-
+        .sidebar-header h3 { color: var(--accent); font-weight: 700; font-size: 18px; margin: 0; }
         .btn-close-custom {
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            font-size: 24px;
-            cursor: pointer;
-            padding: 5px;
-            transition: transform 0.2s ease;
+            background: none; border: none; color: var(--text-primary); font-size: 24px;
+            cursor: pointer; padding: 5px; transition: transform 0.2s ease;
         }
-
-        .btn-close-custom:active {
-            transform: rotate(90deg);
-        }
-
-        .sidebar-nav {
-            flex: 1;
-            padding: 20px 0;
-            overflow-y: auto;
-        }
-
+        .btn-close-custom:active { transform: rotate(90deg); }
+        .sidebar-nav { flex: 1; padding: 20px 0; overflow-y: auto; }
         .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            color: var(--text-primary);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
-            margin: 5px 0;
-            font-size: 16px;
+            display: flex; align-items: center; padding: 15px 20px; color: var(--text-primary);
+            text-decoration: none; transition: all 0.3s ease; border-left: 4px solid transparent;
+            margin: 5px 0; font-size: 16px;
         }
-
-        .nav-item i {
-            font-size: 20px;
-            margin-right: 15px;
-            width: 24px;
-            text-align: center;
-        }
-
+        .nav-item i { font-size: 20px; margin-right: 15px; width: 24px; text-align: center; }
         .nav-item.active {
-            background: rgba(129, 216, 208, 0.15);
-            border-left-color: var(--accent);
-            color: var(--accent);
-            font-weight: 600;
+            background: rgba(129,216,208,0.15); border-left-color: var(--accent);
+            color: var(--accent); font-weight: 600;
         }
-
-        .sidebar-footer {
-            padding: 20px;
-            border-top: 1px solid var(--border);
-        }
-
+        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); }
         .theme-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px; color: var(--text-secondary);
+            font-size: 13px; margin-bottom: 8px;
         }
-
-        .theme-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-            display: inline-block;
-        }
-
+        .theme-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
         .theme-toggle-btn {
-            width: 100%;
-            padding: 14px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 100%; padding: 14px; background: var(--accent); color: white; border: none;
+            border-radius: 12px; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; gap: 10px; font-size: 15px; font-weight: 600;
+            transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
+        .theme-toggle-btn:active { transform: scale(0.97); }
 
-        .theme-toggle-btn:active {
-            transform: scale(0.97);
-        }
-
-        .main-content {
-            padding: 75px 12px 20px;
-            min-height: 100vh;
-        }
-
-        /* Шапка */
-        .stats-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            flex-wrap: nowrap;
-            gap: 10px;
-        }
-
+        /* Основной контент */
+        .main-content { padding: 75px 12px 20px; min-height: 100vh; }
         .tab-title {
-            font-weight: 700;
-            font-size: 20px;
-            padding-bottom: 8px;
-            border-bottom: 3px solid var(--accent);
-            white-space: nowrap;
-            margin: 0;
+            display: inline-block; font-weight: 700; padding-bottom: 10px;
+            border-bottom: 3px solid var(--accent); margin-bottom: 20px; font-size: 22px;
         }
 
-        .period-buttons {
-            display: flex;
-            gap: 4px;
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 4px;
+        /* Карточки склада */
+        .warehouse-cards {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;
+        }
+        .wh-card {
+            background: var(--bg-card); border-radius: 15px; padding: 15px;
+            cursor: pointer; transition: all 0.3s ease; position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .wh-card:active { transform: scale(0.97); }
+        .wh-card .wh-icon { font-size: 28px; margin-bottom: 8px; }
+        .wh-card .wh-label { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .wh-card .wh-count { font-size: 12px; color: var(--text-secondary); }
+
+        .wh-card.liquid { border-left: 4px solid var(--cat-liquid); }
+        .wh-card.liquid .wh-icon { color: var(--cat-liquid); }
+        .wh-card.supplies { border-left: 4px solid var(--cat-supplies); }
+        .wh-card.supplies .wh-icon { color: var(--cat-supplies); }
+        .wh-card.pods { border-left: 4px solid var(--cat-pods); }
+        .wh-card.pods .wh-icon { color: var(--cat-pods); }
+        .wh-card.disposable { border-left: 4px solid var(--cat-disposable); }
+        .wh-card.disposable .wh-icon { color: var(--cat-disposable); }
+        .wh-card.snus { border-left: 4px solid var(--cat-snus); }
+        .wh-card.snus .wh-icon { color: var(--cat-snus); }
+
+        @media (min-width: 500px) {
+            .warehouse-cards { grid-template-columns: repeat(3, 1fr); }
         }
 
-        .period-btn {
-            width: 36px;
-            height: 36px;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
+        /* Таблица склада */
+        .warehouse-table-section {
+            background: var(--bg-card); border-radius: 15px; padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
+        .wh-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+        }
+        .wh-back-btn {
+            background: none; border: none; color: var(--accent); font-size: 20px;
+            cursor: pointer; padding: 5px;
+        }
+        .wh-category-title { font-size: 16px; font-weight: 700; }
+        .wh-add-btn {
+            background: var(--accent); color: white; border: none;
+            width: 36px; height: 36px; border-radius: 10px; font-size: 20px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .search-input {
+            width: 100%; padding: 12px 15px; border: 2px solid var(--border);
+            border-radius: 12px; background: var(--bg-primary); color: var(--text-primary);
+            font-size: 14px; outline: none; margin-bottom: 15px; transition: all 0.3s ease;
+        }
+        .search-input:focus { border-color: var(--accent); }
 
-        .period-btn.active {
-            background: var(--accent);
-            color: white;
+        /* Аккордеон */
+        .accordion-group { margin-bottom: 8px; }
+        .accordion-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 15px; background: var(--bg-primary); border-radius: 10px;
+            cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;
         }
+        .accordion-header .accordion-arrow { transition: transform 0.3s ease; font-size: 12px; }
+        .accordion-header.open .accordion-arrow { transform: rotate(180deg); }
+        .accordion-body { display: none; padding: 5px 0; }
+        .accordion-body.open { display: block; }
 
-        .period-btn:active {
-            transform: scale(0.9);
+        /* Строка товара */
+        .product-row {
+            display: flex; align-items: center; padding: 10px 15px 10px 25px;
+            border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease;
+            font-size: 13px; gap: 8px;
         }
+        .product-row:active { background: rgba(129,216,208,0.1); }
+        .product-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .product-col.price { text-align: right; flex: 0.7; }
+        .product-col.qty { text-align: center; flex: 0.5; }
 
-        /* Карточки */
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
+        /* Таблица-шапка */
+        .table-header-row {
+            display: flex; padding: 8px 15px 8px 25px; font-size: 11px;
+            color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 8px;
         }
-
-        .stat-card {
-            background: var(--bg-card);
-            border-radius: 15px;
-            padding: 15px 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-card .stat-icon {
-            font-size: 24px;
-            color: var(--accent);
-            margin-bottom: 8px;
-        }
-
-        .stat-card .stat-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-card .stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .stat-card .stat-percent {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .stat-card .stat-percent.positive {
-            color: var(--green);
-        }
-
-        .stat-card .stat-percent.negative {
-            color: var(--red);
-        }
-
-        /* Сводка */
-        .summary-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .summary-item {
-            flex: 1;
-            background: var(--bg-card);
-            border-radius: 15px;
-            padding: 12px 10px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .summary-item:active {
-            transform: scale(0.96);
-        }
-
-        .summary-item .summary-icon {
-            font-size: 20px;
-            margin-bottom: 6px;
-        }
-
-        .summary-item .summary-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .summary-item .summary-value {
-            font-size: 16px;
-            font-weight: 700;
-        }
-
-        .summary-item .summary-percent {
-            font-size: 11px;
-            font-weight: 600;
-            margin-top: 2px;
-        }
-
-        .summary-item.booking {
-            color: var(--green);
-        }
-        .summary-item.booking .summary-icon,
-        .summary-item.booking .summary-label,
-        .summary-item.booking .summary-value {
-            color: var(--green);
-        }
-
-        .summary-item.debt {
-            color: var(--red);
-        }
-        .summary-item.debt .summary-icon,
-        .summary-item.debt .summary-label,
-        .summary-item.debt .summary-value {
-            color: var(--red);
-        }
-
-        .summary-item.new-clients .summary-icon,
-        .summary-item.new-clients .summary-label,
-        .summary-item.new-clients .summary-value {
-            color: var(--accent);
-        }
-        .summary-item.new-clients .summary-percent {
-            color: var(--green);
-        }
-
-        .summary-item.leaving-clients .summary-icon,
-        .summary-item.leaving-clients .summary-label,
-        .summary-item.leaving-clients .summary-value {
-            color: var(--accent);
-        }
-        .summary-item.leaving-clients .summary-percent {
-            color: var(--red);
-        }
-
-        /* Графики */
-        .chart-block {
-            background: var(--bg-card);
-            border-radius: 15px;
-            padding: 20px 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .chart-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .chart-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .chart-title i {
-            color: var(--accent);
-        }
-
-        .chart-switch {
-            display: flex;
-            background: var(--bg-primary);
-            border-radius: 8px;
-            padding: 2px;
-            gap: 2px;
-        }
-
-        .switch-btn {
-            padding: 6px 12px;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .switch-btn.active {
-            background: var(--accent);
-            color: white;
-        }
-
-        /* График по дням */
-        .bar-chart {
-            display: flex;
-            align-items: flex-end;
-            gap: 4px;
-            height: 160px;
-            padding-bottom: 30px;
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .bar-chart::-webkit-scrollbar {
-            height: 4px;
-        }
-        .bar-chart::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .bar-chart::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 2px;
-        }
-
-        .bar-column {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 30px;
-            flex-shrink: 0;
-        }
-
-        .bar-value {
-            font-size: 10px;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .bar-fill {
-            width: 24px;
-            background: var(--accent);
-            border-radius: 6px 6px 0 0;
-            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 4px;
-        }
-
-        .bar-label {
-            font-size: 10px;
-            color: var(--text-secondary);
-            margin-top: 8px;
-            white-space: nowrap;
-            transform: rotate(-45deg);
-            transform-origin: top left;
-            position: absolute;
-            bottom: -5px;
-        }
-
-        /* График по категориям */
-        .category-chart {
-            display: flex;
-            align-items: flex-end;
-            gap: 12px;
-            height: 160px;
-            padding-bottom: 30px;
-        }
-
-        .category-column {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 0;
-        }
-
-        .category-value {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .category-fill {
-            width: 100%;
-            max-width: 50px;
-            border-radius: 8px 8px 0 0;
-            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 4px;
-        }
-
-        .category-label {
-            font-size: 10px;
-            color: var(--text-secondary);
-            margin-top: 8px;
-            text-align: center;
-            line-height: 1.2;
-        }
-
-        .cat-liquid { background: var(--cat-liquid); }
-        .cat-supplies { background: var(--cat-supplies); }
-        .cat-pods { background: var(--cat-pods); }
-        .cat-disposable { background: var(--cat-disposable); }
-        .cat-snus { background: var(--cat-snus); }
-
-        /* Выбор дат */
-        .date-range {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-top: 12px;
-            padding: 10px;
-            background: var(--bg-card);
-            border-radius: 12px;
-        }
-
-        .date-input {
-            flex: 1;
-            min-width: 0;
-            padding: 8px 10px;
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-size: 13px;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .date-input:focus {
-            border-color: var(--accent);
-        }
-
-        .date-separator {
-            color: var(--text-secondary);
-            font-size: 14px;
-            flex-shrink: 0;
-        }
+        .table-header-row .product-col { font-weight: 600; }
 
         /* Модальное окно */
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 3000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.2s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 3000; display: flex;
+            align-items: center; justify-content: center; animation: fadeIn 0.2s ease;
         }
-
         .modal-dialog-custom {
-            background: var(--bg-secondary);
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            animation: scaleIn 0.2s ease;
+            background: var(--bg-secondary); border-radius: 20px; width: 90%;
+            max-width: 420px; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: scaleIn 0.2s ease;
         }
-
         .modal-header-custom {
-            padding: 20px 20px 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid var(--border);
+            padding: 20px; display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0;
+            background: var(--bg-secondary); z-index: 1; border-radius: 20px 20px 0 0;
         }
-
-        .modal-header-custom .modal-icon {
-            font-size: 22px;
+        .modal-body-custom { padding: 20px; }
+        .modal-footer-custom {
+            padding: 15px 20px; border-top: 1px solid var(--border); display: flex;
+            gap: 10px; position: sticky; bottom: 0; background: var(--bg-secondary);
+            border-radius: 0 0 20px 20px;
         }
-
-        .modal-header-custom .modal-title-custom {
-            font-size: 18px;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .modal-body-custom {
-            padding: 15px 20px;
-            overflow-y: auto;
-            max-height: 55vh;
-        }
-
-        .modal-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .modal-list-item:last-child {
-            border-bottom: none;
-        }
-
-        .modal-list-left {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .modal-list-name {
-            font-weight: 600;
-            font-size: 15px;
-            color: var(--text-primary);
-        }
-
-        .modal-list-detail {
-            font-size: 13px;
+        .form-group { margin-bottom: 15px; }
+        .form-label {
+            display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;
             color: var(--text-secondary);
         }
+        .form-input {
+            width: 100%; padding: 12px 15px; border: 2px solid var(--border);
+            border-radius: 10px; background: var(--bg-primary); color: var(--text-primary);
+            font-size: 15px; outline: none; transition: all 0.3s ease;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        .btn {
+            flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+        }
+        .btn-save { background: var(--accent); color: white; }
+        .btn-cancel { background: var(--border); color: var(--text-primary); }
+        .btn-delete { background: var(--red); color: white; flex: 0.5; }
+        .btn:active { transform: scale(0.96); }
 
-        .modal-list-right {
-            font-weight: 700;
-            font-size: 15px;
-            text-align: right;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .content-body { animation: fadeInUp 0.4s ease; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spinner { animation: spin 1s linear infinite; display: inline-block; }
 
-        .modal-list-right.green {
-            color: var(--green);
+        /* Статистика (сохраняем) */
+        .stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
+        .period-buttons { display: flex; gap: 4px; background: var(--bg-card); border-radius: 12px; padding: 4px; }
+        .period-btn {
+            width: 36px; height: 36px; border: none; background: transparent; color: var(--text-secondary);
+            border-radius: 10px; cursor: pointer; font-size: 16px; display: flex; align-items: center;
+            justify-content: center; transition: all 0.3s ease;
         }
-        .modal-list-right.red {
-            color: var(--red);
+        .period-btn.active { background: var(--accent); color: white; }
+        .stats-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-card {
+            background: var(--bg-card); border-radius: 15px; padding: 15px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .modal-list-right.accent {
-            color: var(--accent);
+        .stat-card .stat-icon { font-size: 24px; color: var(--accent); margin-bottom: 8px; }
+        .stat-card .stat-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; }
+        .stat-card .stat-value { font-size: 20px; font-weight: 700; margin-bottom: 5px; }
+        .stat-card .stat-percent { font-size: 14px; font-weight: 600; }
+        .stat-card .stat-percent.positive { color: var(--green); }
+        .stat-card .stat-percent.negative { color: var(--red); }
+        .summary-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .summary-item {
+            flex: 1; background: var(--bg-card); border-radius: 15px; padding: 12px 10px;
+            text-align: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .summary-item:active { transform: scale(0.96); }
+        .summary-item .summary-icon { font-size: 20px; margin-bottom: 6px; }
+        .summary-item .summary-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .summary-item .summary-value { font-size: 16px; font-weight: 700; }
+        .summary-item .summary-percent { font-size: 11px; font-weight: 600; margin-top: 2px; }
+        .summary-item.booking, .summary-item.booking .summary-icon, .summary-item.booking .summary-label, .summary-item.booking .summary-value { color: var(--green); }
+        .summary-item.debt, .summary-item.debt .summary-icon, .summary-item.debt .summary-label, .summary-item.debt .summary-value { color: var(--red); }
+        .summary-item.new-clients .summary-icon, .summary-item.new-clients .summary-label, .summary-item.new-clients .summary-value { color: var(--accent); }
+        .summary-item.new-clients .summary-percent { color: var(--green); }
+        .summary-item.leaving-clients .summary-icon, .summary-item.leaving-clients .summary-label, .summary-item.leaving-clients .summary-value { color: var(--accent); }
+        .summary-item.leaving-clients .summary-percent { color: var(--red); }
+        .chart-block { background: var(--bg-card); border-radius: 15px; padding: 20px 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .chart-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .chart-title i { color: var(--accent); }
+        .chart-switch { display: flex; background: var(--bg-primary); border-radius: 8px; padding: 2px; gap: 2px; }
+        .switch-btn {
+            padding: 6px 12px; border: none; background: transparent; color: var(--text-secondary);
+            border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.3s ease;
         }
-
-        @keyframes scaleIn {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .content-body {
-            animation: fadeInUp 0.4s ease;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .spinner {
-            animation: spin 1s linear infinite;
-            display: inline-block;
-        }
+        .switch-btn.active { background: var(--accent); color: white; }
+        .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 160px; padding-bottom: 30px; overflow-x: auto; }
+        .bar-column { display: flex; flex-direction: column; align-items: center; min-width: 30px; flex-shrink: 0; }
+        .bar-value { font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
+        .bar-fill { width: 24px; background: var(--accent); border-radius: 6px 6px 0 0; transition: height 0.8s ease; min-height: 4px; }
+        .bar-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; transform: rotate(-45deg); transform-origin: top left; position: absolute; bottom: -5px; }
+        .category-chart { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-bottom: 30px; }
+        .category-column { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .category-value { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
+        .category-fill { width: 100%; max-width: 50px; border-radius: 8px 8px 0 0; transition: height 0.8s ease; min-height: 4px; }
+        .category-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; text-align: center; }
+        .cat-liquid { background: var(--cat-liquid); } .cat-supplies { background: var(--cat-supplies); }
+        .cat-pods { background: var(--cat-pods); } .cat-disposable { background: var(--cat-disposable); }
+        .cat-snus { background: var(--cat-snus); }
+        .date-range { display: flex; gap: 8px; align-items: center; margin-top: 12px; padding: 10px; background: var(--bg-card); border-radius: 12px; }
+        .date-input { flex: 1; padding: 8px 10px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-primary); color: var(--text-primary); font-size: 13px; outline: none; }
+        .date-input:focus { border-color: var(--accent); }
+        .date-separator { color: var(--text-secondary); font-size: 14px; }
     </style>
 </head>
 <body>
-    <button class="menu-toggle-btn" onclick="openSidebar()">
-        <i class="bi bi-list"></i>
-    </button>
+    <button class="menu-toggle-btn" onclick="openSidebar()"><i class="bi bi-list"></i></button>
 
     <div class="sidebar-overlay" id="sidebar" onclick="closeSidebarOutside(event)">
         <div class="sidebar-content" onclick="event.stopPropagation()">
             <div class="sidebar-header">
                 <h3>Crazy Rabbit</h3>
-                <button class="btn-close-custom" onclick="closeSidebar()">
-                    <i class="bi bi-x-lg"></i>
-                </button>
+                <button class="btn-close-custom" onclick="closeSidebar()"><i class="bi bi-x-lg"></i></button>
             </div>
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" onclick="switchTab('statistics')" data-tab="statistics">
-                    <i class="bi bi-graph-up-arrow"></i><span>Статистика</span>
-                </a>
-                <a href="#" class="nav-item" onclick="switchTab('warehouse')" data-tab="warehouse">
-                    <i class="bi bi-box-seam"></i><span>Склад</span>
-                </a>
-                <a href="#" class="nav-item" onclick="switchTab('sales')" data-tab="sales">
-                    <i class="bi bi-cart3"></i><span>Продажи</span>
-                </a>
-                <a href="#" class="nav-item" onclick="switchTab('clients')" data-tab="clients">
-                    <i class="bi bi-people"></i><span>Клиенты</span>
-                </a>
+                <a href="#" class="nav-item" onclick="switchTab('statistics')" data-tab="statistics"><i class="bi bi-graph-up-arrow"></i><span>Статистика</span></a>
+                <a href="#" class="nav-item active" onclick="switchTab('warehouse')" data-tab="warehouse"><i class="bi bi-box-seam"></i><span>Склад</span></a>
+                <a href="#" class="nav-item" onclick="switchTab('sales')" data-tab="sales"><i class="bi bi-cart3"></i><span>Продажи</span></a>
+                <a href="#" class="nav-item" onclick="switchTab('clients')" data-tab="clients"><i class="bi bi-people"></i><span>Клиенты</span></a>
             </nav>
             <div class="sidebar-footer">
-                <div class="theme-indicator">
-                    <span class="theme-dot"></span>
-                    <span id="themeName">Тёмная тема</span>
-                </div>
-                <button class="theme-toggle-btn" onclick="toggleTheme()">
-                    <i class="bi bi-palette"></i><span>Сменить тему</span>
-                </button>
+                <div class="theme-indicator"><span class="theme-dot"></span><span id="themeName">Тёмная тема</span></div>
+                <button class="theme-toggle-btn" onclick="toggleTheme()"><i class="bi bi-palette"></i><span>Сменить тему</span></button>
             </div>
         </div>
     </div>
@@ -804,19 +371,12 @@
     <main class="main-content" id="mainContent">
         <div class="content-body" id="contentBody"></div>
     </main>
-
-    <!-- Контейнер для модальных окон -->
     <div id="modalContainer"></div>
 
     <script>
         // ============ БАЗА ДАННЫХ ============
         class Database {
-            constructor() {
-                this.dbName = 'CrazyRabbitDB';
-                this.dbVersion = 2;
-                this.db = null;
-            }
-
+            constructor() { this.dbName = 'CrazyRabbitDB'; this.dbVersion = 3; this.db = null; }
             async init() {
                 return new Promise((resolve, reject) => {
                     const request = indexedDB.open(this.dbName, this.dbVersion);
@@ -825,73 +385,63 @@
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
                         if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
-                        if (!db.objectStoreNames.contains('sales')) {
-                            const s = db.createObjectStore('sales', { keyPath: 'id', autoIncrement: true });
-                            s.createIndex('date', 'date', { unique: false });
-                        }
-                        if (!db.objectStoreNames.contains('products')) db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+                        if (!db.objectStoreNames.contains('sales')) { const s = db.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }); s.createIndex('date', 'date', { unique: false }); }
+                        if (!db.objectStoreNames.contains('products')) { const p = db.createObjectStore('products', { keyPath: 'id', autoIncrement: true }); p.createIndex('category', 'category', { unique: false }); }
                         if (!db.objectStoreNames.contains('clients')) db.createObjectStore('clients', { keyPath: 'id', autoIncrement: true });
                     };
                 });
             }
-
-            async get(store, key) {
-                return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction([store], 'readonly');
-                    const req = tx.objectStore(store).get(key);
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => reject(req.error);
-                });
-            }
-
-            async put(store, data) {
-                return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction([store], 'readwrite');
-                    const req = tx.objectStore(store).put(data);
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => reject(req.error);
-                });
-            }
-
-            async getAll(store) {
-                return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction([store], 'readonly');
-                    const req = tx.objectStore(store).getAll();
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => reject(req.error);
-                });
-            }
-
-            async getByDateRange(store, start, end) {
-                return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction([store], 'readonly');
-                    const index = tx.objectStore(store).index('date');
-                    const range = IDBKeyRange.bound(start, end);
-                    const req = index.getAll(range);
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => reject(req.error);
-                });
-            }
-
-            async add(store, data) {
-                return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction([store], 'readwrite');
-                    const req = tx.objectStore(store).add(data);
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => reject(req.error);
-                });
-            }
+            async get(store, key) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readonly'); const req = tx.objectStore(store).get(key); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
+            async put(store, data) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readwrite'); const req = tx.objectStore(store).put(data); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
+            async getAll(store) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readonly'); const req = tx.objectStore(store).getAll(); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
+            async getByIndex(store, index, value) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readonly'); const idx = tx.objectStore(store).index(index); const req = idx.getAll(value); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
+            async add(store, data) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readwrite'); const req = tx.objectStore(store).add(data); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
+            async delete(store, id) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readwrite'); const req = tx.objectStore(store).delete(id); req.onsuccess = () => r(); req.onerror = () => j(req.error); }); }
         }
-
         const db = new Database();
-        const CATEGORIES = ['liquids', 'supplies', 'pods', 'disposable', 'snus'];
-        const CATEGORY_NAMES = { 'liquids': 'Жидкости', 'supplies': 'Расходники', 'pods': 'Поды', 'disposable': 'Одноразки', 'snus': 'Снюс' };
+
+        // ============ КОНСТАНТЫ ============
+        const CATEGORIES = ['liquid', 'supplies', 'pods', 'disposable', 'snus'];
+        const CATEGORY_NAMES = { 'liquid': 'Жидкости', 'supplies': 'Расходники', 'pods': 'Поды', 'disposable': 'Одноразки', 'snus': 'Снюс' };
+        const CATEGORY_ICONS = { 'liquid': 'bi-droplet', 'supplies': 'bi-tools', 'pods': 'bi-usb-plug', 'disposable': 'bi-phone', 'snus': 'bi-box2' };
+        const CATEGORY_CLASS = { 'liquid': 'liquid', 'supplies': 'supplies', 'pods': 'pods', 'disposable': 'disposable', 'snus': 'snus' };
+        
+        // Какие поля есть у каждой категории (кроме общих: manufacturer, lineup, quantity, purchase, selling)
+        const CATEGORY_EXTRA_FIELDS = {
+            'liquid': [{ key: 'flavor', label: 'Вкус' }],
+            'supplies': [],
+            'pods': [{ key: 'color', label: 'Цвет' }],
+            'disposable': [{ key: 'flavor', label: 'Вкус' }],
+            'snus': [{ key: 'flavor', label: 'Вкус' }]
+        };
+        
+        // Какие колонки показывать в таблице (порядок)
+        const CATEGORY_TABLE_COLS = {
+            'liquid': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling'],
+            'supplies': ['manufacturer', 'lineup', 'quantity', 'purchase', 'selling'],
+            'pods': ['manufacturer', 'lineup', 'color', 'quantity', 'purchase', 'selling'],
+            'disposable': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling'],
+            'snus': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling']
+        };
+        
+        const COL_LABELS = {
+            'manufacturer': 'Производитель', 'lineup': 'Линейка', 'flavor': 'Вкус',
+            'color': 'Цвет', 'quantity': 'Кол-во', 'purchase': 'Закупка', 'selling': 'Продажа'
+        };
+
+        // Группировка: какие уровни для каждой категории
+        const CATEGORY_GROUPS = {
+            'liquid': ['manufacturer', 'lineup'],
+            'supplies': ['manufacturer'],
+            'pods': ['manufacturer', 'lineup'],
+            'disposable': ['manufacturer', 'lineup'],
+            'snus': ['manufacturer', 'lineup']
+        };
 
         // ============ ТЕМЫ ============
         const themes = ['dark', 'light', 'pink'];
         const themeNames = { 'dark': 'Тёмная тема', 'light': 'Светлая тема', 'pink': 'Розовая тема' };
         let currentThemeIndex = 0;
-
         async function toggleTheme() {
             currentThemeIndex = (currentThemeIndex + 1) % themes.length;
             const theme = themes[currentThemeIndex];
@@ -899,16 +449,8 @@
             document.getElementById('themeName').textContent = themeNames[theme];
             try { await db.put('settings', { key: 'theme', value: theme }); } catch (e) {}
         }
-
         async function loadTheme() {
-            try {
-                const s = await db.get('settings', 'theme');
-                if (s) {
-                    document.documentElement.setAttribute('data-theme', s.value);
-                    currentThemeIndex = themes.indexOf(s.value);
-                    document.getElementById('themeName').textContent = themeNames[s.value];
-                }
-            } catch (e) {}
+            try { const s = await db.get('settings', 'theme'); if (s) { document.documentElement.setAttribute('data-theme', s.value); currentThemeIndex = themes.indexOf(s.value); document.getElementById('themeName').textContent = themeNames[s.value]; } } catch (e) {}
         }
 
         // ============ САЙДБАР ============
@@ -917,178 +459,337 @@
         function closeSidebarOutside(e) { if (e.target === document.getElementById('sidebar')) closeSidebar(); }
 
         // ============ МОДАЛЬНЫЕ ОКНА ============
-        const DEMO_NAMES = ['Анна К.', 'Максим П.', 'Ольга В.', 'Дмитрий С.', 'Елена М.', 'Сергей Р.', 'Наталья Т.', 'Игорь К.', 'Мария Ф.', 'Алексей Б.'];
-        const DEMO_PRODUCTS = ['Жидкость 30мл', 'Под 2шт', 'Одноразка', 'Расходники', 'Снюс банка', 'Жидкость 10мл', 'Под 4шт', 'Одноразка XL'];
-
-        function generateBookingData() {
-            const count = 5;
-            const items = [];
-            for (let i = 0; i < count; i++) {
-                items.push({
-                    name: DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)],
-                    product: DEMO_PRODUCTS[Math.floor(Math.random() * DEMO_PRODUCTS.length)]
-                });
-            }
-            return items;
-        }
-
-        function generateDebtData() {
-            const count = 5;
-            const items = [];
-            for (let i = 0; i < count; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() - Math.floor(Math.random() * 30));
-                items.push({
-                    name: DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)],
-                    amount: Math.floor(Math.random() * 5000) + 500,
-                    date: d.toISOString().split('T')[0]
-                });
-            }
-            return items;
-        }
-
-        function generateNewClientsData() {
-            const count = 5;
-            const items = [];
-            for (let i = 0; i < count; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() - Math.floor(Math.random() * 14));
-                items.push({
-                    name: DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)],
-                    date: d.toISOString().split('T')[0]
-                });
-            }
-            return items;
-        }
-
-        function generateLeavingClientsData() {
-            const count = 5;
-            const items = [];
-            for (let i = 0; i < count; i++) {
-                items.push({
-                    name: DEMO_NAMES[Math.floor(Math.random() * DEMO_NAMES.length)],
-                    days: Math.floor(Math.random() * 60) + 31
-                });
-            }
-            return items;
-        }
-
-        function showBookingModal() {
-            const data = generateBookingData();
-            const rows = data.map(item => `
-                <div class="modal-list-item">
-                    <div class="modal-list-left">
-                        <div class="modal-list-name">${item.name}</div>
-                        <div class="modal-list-detail">${item.product}</div>
-                    </div>
-                </div>
-            `).join('');
-
+        function showModal(title, icon, iconColor, bodyHtml, footerHtml) {
             const html = `
                 <div class="modal-overlay" onclick="closeModal(event)">
                     <div class="modal-dialog-custom" onclick="event.stopPropagation()">
                         <div class="modal-header-custom">
-                            <i class="bi bi-calendar-check modal-icon" style="color:var(--green);"></i>
-                            <h3 class="modal-title-custom" style="color:var(--green);">Бронь</h3>
+                            <i class="${icon} modal-icon" style="color:${iconColor};font-size:22px;"></i>
+                            <h3 style="color:${iconColor};font-size:18px;font-weight:700;margin:0;">${title}</h3>
                         </div>
-                        <div class="modal-body-custom">
-                            ${rows}
-                        </div>
+                        <div class="modal-body-custom">${bodyHtml}</div>
+                        ${footerHtml ? `<div class="modal-footer-custom">${footerHtml}</div>` : ''}
                     </div>
-                </div>
-            `;
+                </div>`;
             document.getElementById('modalContainer').innerHTML = html;
         }
-
-        function showDebtModal() {
-            const data = generateDebtData();
-            const rows = data.map(item => `
-                <div class="modal-list-item">
-                    <div class="modal-list-left">
-                        <div class="modal-list-name">${item.name}</div>
-                        <div class="modal-list-detail">${item.date}</div>
-                    </div>
-                    <div class="modal-list-right red">${fmtNum(item.amount)}₽</div>
-                </div>
-            `).join('');
-
-            const html = `
-                <div class="modal-overlay" onclick="closeModal(event)">
-                    <div class="modal-dialog-custom" onclick="event.stopPropagation()">
-                        <div class="modal-header-custom">
-                            <i class="bi bi-cash-coin modal-icon" style="color:var(--red);"></i>
-                            <h3 class="modal-title-custom" style="color:var(--red);">Долг</h3>
-                        </div>
-                        <div class="modal-body-custom">
-                            ${rows}
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('modalContainer').innerHTML = html;
-        }
-
-        function showNewClientsModal() {
-            const data = generateNewClientsData();
-            const rows = data.map(item => `
-                <div class="modal-list-item">
-                    <div class="modal-list-left">
-                        <div class="modal-list-name">${item.name}</div>
-                    </div>
-                    <div class="modal-list-right accent">${item.date}</div>
-                </div>
-            `).join('');
-
-            const html = `
-                <div class="modal-overlay" onclick="closeModal(event)">
-                    <div class="modal-dialog-custom" onclick="event.stopPropagation()">
-                        <div class="modal-header-custom">
-                            <i class="bi bi-person-plus modal-icon" style="color:var(--accent);"></i>
-                            <h3 class="modal-title-custom" style="color:var(--accent);">Новые клиенты</h3>
-                        </div>
-                        <div class="modal-body-custom">
-                            ${rows}
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('modalContainer').innerHTML = html;
-        }
-
-        function showLeavingClientsModal() {
-            const data = generateLeavingClientsData();
-            const rows = data.map(item => `
-                <div class="modal-list-item">
-                    <div class="modal-list-left">
-                        <div class="modal-list-name">${item.name}</div>
-                    </div>
-                    <div class="modal-list-right red">${item.days} дн.</div>
-                </div>
-            `).join('');
-
-            const html = `
-                <div class="modal-overlay" onclick="closeModal(event)">
-                    <div class="modal-dialog-custom" onclick="event.stopPropagation()">
-                        <div class="modal-header-custom">
-                            <i class="bi bi-person-dash modal-icon" style="color:var(--accent);"></i>
-                            <h3 class="modal-title-custom" style="color:var(--accent);">Уходящие клиенты</h3>
-                        </div>
-                        <div class="modal-body-custom">
-                            ${rows}
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('modalContainer').innerHTML = html;
-        }
-
         function closeModal(event) {
-            if (event.target.classList.contains('modal-overlay')) {
+            if (!event || event.target.classList.contains('modal-overlay')) {
                 document.getElementById('modalContainer').innerHTML = '';
             }
         }
 
-        // ============ СТАТИСТИКА ============
+        // ============ ФОРМАТИРОВАНИЕ ============
+        function fmtNum(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+        function fmtPct(p) { if (p === null || p === undefined) return null; return `${p >= 0 ? '+' : ''}${p.toFixed(1)}%`; }
+
+        // ============ ДЕМО-ДАННЫЕ ДЛЯ СКЛАДА ============
+        const DEMO_MANUFACTURERS = ['HUSKY', 'CHASER', 'BRUSKO', 'VAPESOUL', 'SMOK', 'VOOPOO', 'GEEKVAPE', 'LOST VAPE'];
+        const DEMO_LINEUPS = { 'liquid': ['Ice Cream', 'Fruit Mix', 'Classic', 'Fresh', 'Berry Bomb'], 'supplies': ['Cotton', 'Wire', 'Coils', 'Tools'], 'pods': ['Nord', 'RPM', 'PnP', 'GTX'], 'disposable': ['Crystal', 'Elf Bar', 'Waka', 'Lost Mary'], 'snus': ['Siberia', 'Oden\'s', 'Thunder', 'General'] };
+        const DEMO_FLAVORS = ['Манго-клубника', 'Арбуз-мята', 'Табак-вишня', 'Киви-яблоко', 'Лесные ягоды', 'Мята-лайм', 'Персик-манго', 'Черника-малина', 'Ананас-кокос', 'Виноград-дыня'];
+        const DEMO_COLORS = ['Чёрный', 'Белый', 'Красный', 'Синий', 'Зелёный', 'Розовый', 'Серебристый', 'Золотой'];
+
+        function generateDemoProducts() {
+            const products = [];
+            let id = 0;
+            CATEGORIES.forEach(cat => {
+                const lineups = DEMO_LINEUPS[cat] || DEMO_LINEUPS['liquid'];
+                for (let i = 0; i < 20; i++) {
+                    const manufacturer = DEMO_MANUFACTURERS[Math.floor(Math.random() * DEMO_MANUFACTURERS.length)];
+                    const lineup = lineups[Math.floor(Math.random() * lineups.length)];
+                    const quantity = Math.floor(Math.random() * 30);
+                    const purchase = Math.floor(Math.random() * 400) + 100;
+                    const selling = purchase + Math.floor(purchase * (0.3 + Math.random() * 0.7));
+                    
+                    const product = {
+                        id: ++id,
+                        category: cat,
+                        manufacturer,
+                        lineup,
+                        quantity,
+                        purchase,
+                        selling
+                    };
+                    
+                    // Добавляем специфичные поля
+                    const extras = CATEGORY_EXTRA_FIELDS[cat];
+                    extras.forEach(ext => {
+                        if (ext.key === 'flavor') product.flavor = DEMO_FLAVORS[Math.floor(Math.random() * DEMO_FLAVORS.length)];
+                        if (ext.key === 'color') product.color = DEMO_COLORS[Math.floor(Math.random() * DEMO_COLORS.length)];
+                    });
+                    
+                    products.push(product);
+                }
+            });
+            return products;
+        }
+
+        async function addDemoProducts() {
+            const existing = await db.getAll('products');
+            if (existing.length > 0) return;
+            const products = generateDemoProducts();
+            for (const p of products) await db.add('products', p);
+        }
+
+        // ============ СКЛАД ============
+        let currentWarehouseCategory = null;
+
+        async function renderWarehouseCards() {
+            const allProducts = await db.getAll('products');
+            const counts = {};
+            CATEGORIES.forEach(cat => {
+                counts[cat] = allProducts.filter(p => p.category === cat).length;
+            });
+
+            const html = `
+                <h2 class="tab-title">Склад</h2>
+                <div class="warehouse-cards">
+                    ${CATEGORIES.map(cat => `
+                        <div class="wh-card ${CATEGORY_CLASS[cat]}" onclick="openWarehouseCategory('${cat}')">
+                            <div class="wh-icon"><i class="bi ${CATEGORY_ICONS[cat]}"></i></div>
+                            <div class="wh-label">${CATEGORY_NAMES[cat]}</div>
+                            <div class="wh-count">${counts[cat]} товаров</div>
+                        </div>
+                    `).join('')}
+                </div>`;
+            document.getElementById('contentBody').innerHTML = html;
+        }
+
+        async function openWarehouseCategory(cat) {
+            currentWarehouseCategory = cat;
+            await renderWarehouseTable(cat);
+        }
+
+        function groupProducts(products, groupBy) {
+            if (groupBy.length === 0) return { '_root': products };
+            
+            const groups = {};
+            products.forEach(p => {
+                const key = groupBy.map(g => p[g] || '').join('|||');
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(p);
+            });
+            return groups;
+        }
+
+        function buildAccordionHTML(groups, groupBy, level, searchQuery) {
+            if (level >= groupBy.length) return '';
+            
+            let html = '';
+            const entries = Object.entries(groups);
+            
+            // Сортируем по ключу
+            entries.sort((a, b) => a[0].localeCompare(b[0]));
+            
+            entries.forEach(([key, items]) => {
+                const label = key.split('|||')[level] || key;
+                const groupId = 'grp_' + Math.random().toString(36).slice(2, 8);
+                const count = items.length;
+                
+                html += `<div class="accordion-group">`;
+                html += `<div class="accordion-header" onclick="toggleAccordion('${groupId}')">`;
+                html += `<span>${label} (${count})</span>`;
+                html += `<i class="bi bi-chevron-down accordion-arrow"></i>`;
+                html += `</div>`;
+                html += `<div class="accordion-body" id="${groupId}">`;
+                
+                // Если есть ещё уровни группировки
+                if (level + 1 < groupBy.length) {
+                    const subGroups = {};
+                    items.forEach(item => {
+                        const subKey = groupBy.slice(0, level + 2).map(g => item[g] || '').join('|||');
+                        if (!subGroups[subKey]) subGroups[subKey] = [];
+                        subGroups[subKey].push(item);
+                    });
+                    html += buildAccordionHTML(subGroups, groupBy, level + 1, searchQuery);
+                } else {
+                    // Показываем товары
+                    const cols = CATEGORY_TABLE_COLS[currentWarehouseCategory];
+                    // Шапка таблицы
+                    html += `<div class="table-header-row">`;
+                    cols.forEach(col => {
+                        html += `<div class="product-col${col === 'quantity' ? ' qty' : (col === 'purchase' || col === 'selling' ? ' price' : '')}">${COL_LABELS[col]}</div>`;
+                    });
+                    html += `</div>`;
+                    
+                    items.forEach(item => {
+                        html += `<div class="product-row" ondblclick="editProduct(${item.id})">`;
+                        cols.forEach(col => {
+                            let val = item[col] || '';
+                            if (col === 'purchase' || col === 'selling') val = fmtNum(val) + '₽';
+                            html += `<div class="product-col${col === 'quantity' ? ' qty' : (col === 'purchase' || col === 'selling' ? ' price' : '')}">${val}</div>`;
+                        });
+                        html += `</div>`;
+                    });
+                }
+                
+                html += `</div></div>`;
+            });
+            
+            return html;
+        }
+
+        function toggleAccordion(groupId) {
+            const body = document.getElementById(groupId);
+            const header = body.previousElementSibling;
+            body.classList.toggle('open');
+            header.classList.toggle('open');
+        }
+
+        async function renderWarehouseTable(cat, searchQuery = '') {
+            currentWarehouseCategory = cat;
+            let products = await db.getByIndex('products', 'category', cat);
+            
+            // Поиск
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                products = products.filter(p => {
+                    const cols = CATEGORY_TABLE_COLS[cat];
+                    return cols.some(col => {
+                        const val = (p[col] || '').toString().toLowerCase();
+                        return val.includes(q);
+                    });
+                });
+            }
+            
+            const groupBy = CATEGORY_GROUPS[cat];
+            const groups = groupProducts(products, groupBy);
+            
+            const html = `
+                <div class="warehouse-table-section">
+                    <div class="wh-header">
+                        <button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button>
+                        <span class="wh-category-title">${CATEGORY_NAMES[cat]}</span>
+                        <button class="wh-add-btn" onclick="showAddProductModal()">+</button>
+                    </div>
+                    <input type="text" class="search-input" placeholder="Поиск..." value="${searchQuery}" oninput="onSearch(this.value)">
+                    ${products.length === 0 ? '<p class="text-center text-muted py-4">Ничего не найдено</p>' : buildAccordionHTML(groups, groupBy, 0, searchQuery)}
+                </div>`;
+            
+            document.getElementById('contentBody').innerHTML = html;
+            
+            // Если только одна группа — автоматически открываем
+            const allBodies = document.querySelectorAll('.accordion-body');
+            if (allBodies.length === 1) {
+                allBodies[0].classList.add('open');
+                allBodies[0].previousElementSibling.classList.add('open');
+            }
+        }
+
+        function onSearch(value) {
+            renderWarehouseTable(currentWarehouseCategory, value);
+        }
+
+        function getProductFormHTML(product = null) {
+            const cat = currentWarehouseCategory;
+            const extras = CATEGORY_EXTRA_FIELDS[cat];
+            const isEdit = !!product;
+            
+            return `
+                <div class="form-group">
+                    <label class="form-label">Производитель</label>
+                    <input type="text" class="form-input" id="prod_manufacturer" value="${product ? product.manufacturer : ''}" placeholder="HUSKY">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Линейка</label>
+                    <input type="text" class="form-input" id="prod_lineup" value="${product ? product.lineup : ''}" placeholder="Ice Cream">
+                </div>
+                ${extras.map(ext => `
+                <div class="form-group">
+                    <label class="form-label">${ext.label}</label>
+                    <input type="text" class="form-input" id="prod_${ext.key}" value="${product ? (product[ext.key] || '') : ''}" placeholder="${ext.label}">
+                </div>`).join('')}
+                <div class="form-group">
+                    <label class="form-label">Количество</label>
+                    <input type="number" class="form-input" id="prod_quantity" value="${product ? product.quantity : 0}" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Закупка (₽)</label>
+                    <input type="number" class="form-input" id="prod_purchase" value="${product ? product.purchase : ''}" placeholder="350">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Продажа (₽)</label>
+                    <input type="number" class="form-input" id="prod_selling" value="${product ? product.selling : ''}" placeholder="550">
+                </div>
+                <input type="hidden" id="prod_id" value="${product ? product.id : ''}">
+            `;
+        }
+
+        async function saveProduct() {
+            const cat = currentWarehouseCategory;
+            const extras = CATEGORY_EXTRA_FIELDS[cat];
+            const id = document.getElementById('prod_id').value;
+            
+            const product = {
+                category: cat,
+                manufacturer: document.getElementById('prod_manufacturer').value.trim(),
+                lineup: document.getElementById('prod_lineup').value.trim(),
+                quantity: parseInt(document.getElementById('prod_quantity').value) || 0,
+                purchase: parseInt(document.getElementById('prod_purchase').value) || 0,
+                selling: parseInt(document.getElementById('prod_selling').value) || 0
+            };
+            
+            extras.forEach(ext => {
+                product[ext.key] = document.getElementById('prod_' + ext.key).value.trim();
+            });
+            
+            // Валидация
+            if (!product.manufacturer) { alert('Введите производителя'); return; }
+            
+            if (id) {
+                product.id = parseInt(id);
+                await db.put('products', product);
+            } else {
+                await db.add('products', product);
+            }
+            
+            closeModal();
+            await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+        }
+
+        function showAddProductModal() {
+            const cat = currentWarehouseCategory;
+            const catClass = CATEGORY_CLASS[cat];
+            const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + catClass.replace('liquid','liquid').replace('supplies','supplies').replace('pods','pods').replace('disposable','disposable').replace('snus','snus')).trim() || 'var(--accent)';
+            
+            showModal(
+                'Добавить товар',
+                'bi ' + CATEGORY_ICONS[cat],
+                color,
+                getProductFormHTML(),
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>
+                 <button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`
+            );
+        }
+
+        async function editProduct(productId) {
+            const product = await db.get('products', productId);
+            if (!product) return;
+            
+            const cat = product.category;
+            currentWarehouseCategory = cat;
+            const catClass = CATEGORY_CLASS[cat];
+            const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + catClass).trim() || 'var(--accent)';
+            
+            showModal(
+                'Редактировать товар',
+                'bi ' + CATEGORY_ICONS[cat],
+                color,
+                getProductFormHTML(product),
+                `<button class="btn btn-delete" onclick="deleteProduct(${product.id})">Удалить</button>
+                 <button class="btn btn-cancel" onclick="closeModal()">Отмена</button>
+                 <button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`
+            );
+        }
+
+        async function deleteProduct(productId) {
+            if (!confirm('Удалить товар?')) return;
+            await db.delete('products', productId);
+            closeModal();
+            await renderWarehouseTable(currentWarehouseCategory, document.querySelector('.search-input')?.value || '');
+        }
+
+        // ============ СТАТИСТИКА (сохраняем) ============
         let currentPeriod = 'today';
         let currentCategoryMode = 'sum';
         let customStartDate = null;
@@ -1099,13 +800,10 @@
             const today = now.toISOString().split('T')[0];
             const yesterday = new Date(now - 86400000).toISOString().split('T')[0];
             let start, end, prevStart, prevEnd;
-
             switch (period) {
-                case 'today':
-                    start = today; end = today; prevStart = yesterday; prevEnd = yesterday; break;
+                case 'today': start = today; end = today; prevStart = yesterday; prevEnd = yesterday; break;
                 case 'week':
-                    const dow = now.getDay();
-                    const mon = new Date(now); mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+                    const dow = now.getDay(); const mon = new Date(now); mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
                     start = mon.toISOString().split('T')[0]; end = today;
                     const pMon = new Date(mon); pMon.setDate(mon.getDate() - 7);
                     const pSun = new Date(mon); pSun.setDate(mon.getDate() - 1);
@@ -1115,39 +813,28 @@
                     const pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                     const pme = new Date(now.getFullYear(), now.getMonth(), 0);
                     prevStart = pm.toISOString().split('T')[0]; prevEnd = pme.toISOString().split('T')[0]; break;
-                case 'all':
-                    start = '2020-01-01'; end = today; prevStart = null; prevEnd = null; break;
-                case 'custom':
-                    start = customStartDate || today; end = customEndDate || today; prevStart = null; prevEnd = null; break;
+                case 'all': start = '2020-01-01'; end = today; prevStart = null; prevEnd = null; break;
+                case 'custom': start = customStartDate || today; end = customEndDate || today; prevStart = null; prevEnd = null; break;
             }
             return { start, end, prevStart, prevEnd };
         }
 
         async function getSalesInRange(start, end) {
-            try { return await db.getByDateRange('sales', start, end); }
+            try { return await db.getByDateRange ? db.getByDateRange('sales', start, end) : []; }
             catch { const all = await db.getAll('sales'); return all.filter(s => s.date >= start && s.date <= end); }
         }
 
-        function getDaysDiff(start, end) {
-            return Math.ceil((new Date(end) - new Date(start)) / 86400000) + 1;
-        }
-
-        function fmtNum(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
-        function fmtPct(p) {
-            if (p === null || p === undefined) return null;
-            return `${p >= 0 ? '+' : ''}${p.toFixed(1)}%`;
-        }
-
-        async function getStats(period) {
+        async function renderStatistics(period) {
+            currentPeriod = period;
             const { start, end, prevStart, prevEnd } = getDateRange(period);
             const sales = await getSalesInRange(start, end);
             const prevSales = (prevStart && prevEnd) ? await getSalesInRange(prevStart, prevEnd) : [];
-
-            const rev = sales.reduce((s, x) => s + x.total, 0);
-            const prof = sales.reduce((s, x) => s + x.profit, 0);
+            
+            const rev = sales.reduce((s, x) => s + (x.total || 0), 0);
+            const prof = sales.reduce((s, x) => s + (x.profit || 0), 0);
             const cnt = sales.length;
-            const pRev = prevSales.reduce((s, x) => s + x.total, 0);
-            const pProf = prevSales.reduce((s, x) => s + x.profit, 0);
+            const pRev = prevSales.reduce((s, x) => s + (x.total || 0), 0);
+            const pProf = prevSales.reduce((s, x) => s + (x.profit || 0), 0);
             const pCnt = prevSales.length;
 
             const booking = Math.floor(Math.random() * 30000) + 5000;
@@ -1157,228 +844,52 @@
             const pNewClients = Math.floor(Math.random() * 18) + 1;
             const pLeavingClients = Math.floor(Math.random() * 8) + 1;
 
-            return {
-                revenue: rev, profit: prof, count: cnt,
-                revenuePercent: pRev ? ((rev - pRev) / pRev * 100) : null,
-                profitPercent: pProf ? ((prof - pProf) / pProf * 100) : null,
-                countPercent: pCnt ? ((cnt - pCnt) / pCnt * 100) : null,
-                sales, start, end,
-                booking, debt, newClients, leavingClients,
-                newClientsPercent: pNewClients ? ((newClients - pNewClients) / pNewClients * 100) : null,
-                leavingClientsPercent: pLeavingClients ? ((leavingClients - pLeavingClients) / pLeavingClients * 100) : null
-            };
-        }
-
-        function getDailyData(sales, start, end) {
-            const showMonths = getDaysDiff(start, end) > 31;
-            const map = new Map();
-            sales.forEach(s => {
-                const d = new Date(s.date);
-                const key = showMonths
-                    ? `${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear().toString().slice(2)}`
-                    : `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`;
-                map.set(key, (map.get(key) || 0) + s.profit);
-            });
-            const sorted = [...map.keys()].sort((a, b) => {
-                const [pa, pb] = [a.split('.'), b.split('.')];
-                return showMonths ? (pa[1] + pa[0]).localeCompare(pb[1] + pb[0]) : (pa[1] + pa[0]).localeCompare(pb[1] + pb[0]);
-            });
-            return sorted.map(k => ({ label: k, value: map.get(k) }));
-        }
-
-        function getCategoryData(sales, mode) {
-            const map = {};
-            CATEGORIES.forEach(c => map[c] = 0);
-            sales.forEach(s => {
-                if (s.category && map[s.category] !== undefined) {
-                    map[s.category] += (mode === 'sum' ? s.profit : 1);
-                }
-            });
-            return CATEGORIES.map(c => ({ category: c, name: CATEGORY_NAMES[c], value: map[c] }));
-        }
-
-        function shouldShowDaily(period, start, end) {
-            if (period === 'today') return false;
-            if (period === 'custom') return getDaysDiff(start, end) >= 2;
-            return true;
-        }
-
-        function renderChartBlock(title, icon, barsHtml, switchHtml = '') {
-            return `
-                <div class="chart-block">
-                    <div class="chart-header">
-                        <div class="chart-title"><i class="${icon}"></i> ${title}</div>
-                        ${switchHtml}
-                    </div>
-                    ${barsHtml}
-                </div>`;
-        }
-
-        function buildDailyBars(data, max) {
-            if (!data.length) return '<p class="text-center text-muted py-3">Нет данных</p>';
-            const minW = data.length > 14 ? '30px' : `${Math.max(30, Math.floor(100 / data.length))}px`;
-            return `<div class="bar-chart" style="${data.length > 14 ? 'overflow-x:auto;' : ''}">
-                ${data.map(d => {
-                    const h = max > 0 ? (d.value / max * 100) : 0;
-                    return `<div class="bar-column" style="min-width:${minW};">
-                        <div class="bar-value">${fmtNum(d.value)}₽</div>
-                        <div class="bar-fill" style="height:${h}%;" data-height="${h}"></div>
-                        <div class="bar-label">${d.label}</div>
-                    </div>`;
-                }).join('')}
-            </div>`;
-        }
-
-        function buildCategoryBars(data, max, mode) {
-            const suffix = mode === 'sum' ? '₽' : ' шт.';
-            return `<div class="category-chart">
-                ${data.map(d => {
-                    const h = max > 0 ? (d.value / max * 100) : 0;
-                    return `<div class="category-column">
-                        <div class="category-value">${fmtNum(d.value)}${suffix}</div>
-                        <div class="category-fill cat-${d.category}" style="height:${h}%;" data-height="${h}"></div>
-                        <div class="category-label">${d.name}</div>
-                    </div>`;
-                }).join('')}
-            </div>`;
-        }
-
-        async function renderStatistics(period) {
-            currentPeriod = period;
-            const stats = await getStats(period);
-            const showDaily = shouldShowDaily(period, stats.start, stats.end);
-            const dailyData = showDaily ? getDailyData(stats.sales, stats.start, stats.end) : [];
-            const catData = getCategoryData(stats.sales, currentCategoryMode);
-            const maxDaily = Math.max(...dailyData.map(d => d.value), 1);
-            const maxCat = Math.max(...catData.map(d => d.value), 1);
-
-            const periodBtns = ['today','week','month','all','custom'].map(p => `
-                <button class="period-btn ${period === p ? 'active' : ''}" data-period="${p}" onclick="renderStatistics('${p}')" title="${p==='today'?'Сегодня':p==='week'?'Неделя':p==='month'?'Месяц':p==='all'?'Всё время':'Период'}">
-                    <i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i>
-                </button>`).join('');
-
-            const dateRangeHtml = period === 'custom' ? `
-                <div class="date-range">
-                    <input type="date" class="date-input" id="startDate" value="${customStartDate||''}" onchange="updateCustomDates()">
-                    <span class="date-separator">—</span>
-                    <input type="date" class="date-input" id="endDate" value="${customEndDate||''}" onchange="updateCustomDates()">
-                </div>` : '';
-
-            const catSwitchHtml = `
-                <div class="chart-switch">
-                    <button class="switch-btn ${currentCategoryMode==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button>
-                    <button class="switch-btn ${currentCategoryMode==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button>
-                </div>`;
-
-            const dailyBlock = showDaily ? renderChartBlock('Продажи по дням', 'bi-graph-up', buildDailyBars(dailyData, maxDaily)) : '';
-            const catBlock = renderChartBlock('Продажи по категориям', 'bi-pie-chart', buildCategoryBars(catData, maxCat, currentCategoryMode), catSwitchHtml);
+            const periodBtns = ['today','week','month','all','custom'].map(p => 
+                `<button class="period-btn ${period === p ? 'active' : ''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`
+            ).join('');
 
             const html = `
-                <div class="stats-header">
-                    <h2 class="tab-title">Статистика</h2>
-                    <div class="period-buttons">${periodBtns}</div>
-                </div>
-
+                <div class="stats-header"><h2 class="tab-title">Статистика</h2><div class="period-buttons">${periodBtns}</div></div>
                 <div class="stats-cards">
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
-                        <div class="stat-label">Выручка</div>
-                        <div class="stat-value" id="rv">${fmtNum(stats.revenue)}₽</div>
-                        ${period!=='all'&&stats.revenuePercent!==null?`<div class="stat-percent ${stats.revenuePercent>=0?'positive':'negative'}">${fmtPct(stats.revenuePercent)}</div>`:''}
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
-                        <div class="stat-label">Прибыль</div>
-                        <div class="stat-value" id="pv">${fmtNum(stats.profit)}₽</div>
-                        ${period!=='all'&&stats.profitPercent!==null?`<div class="stat-percent ${stats.profitPercent>=0?'positive':'negative'}">${fmtPct(stats.profitPercent)}</div>`:''}
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="bi bi-cart-check"></i></div>
-                        <div class="stat-label">Продажи</div>
-                        <div class="stat-value" id="cv">${fmtNum(stats.count)}</div>
-                        ${period!=='all'&&stats.countPercent!==null?`<div class="stat-percent ${stats.countPercent>=0?'positive':'negative'}">${fmtPct(stats.countPercent)}</div>`:''}
-                    </div>
+                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fmtNum(rev)}₽</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fmtNum(prof)}₽</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value">${fmtNum(cnt)}</div></div>
                 </div>
-
                 <div class="summary-row">
-                    <div class="summary-item booking" onclick="showBookingModal()">
-                        <div class="summary-icon"><i class="bi bi-calendar-check"></i></div>
-                        <div class="summary-label">Бронь</div>
-                        <div class="summary-value">${fmtNum(stats.booking)}₽</div>
-                    </div>
-                    <div class="summary-item debt" onclick="showDebtModal()">
-                        <div class="summary-icon"><i class="bi bi-cash-coin"></i></div>
-                        <div class="summary-label">Долг</div>
-                        <div class="summary-value">${fmtNum(stats.debt)}₽</div>
-                    </div>
-                    <div class="summary-item new-clients" onclick="showNewClientsModal()">
-                        <div class="summary-icon"><i class="bi bi-person-plus"></i></div>
-                        <div class="summary-label">Новые</div>
-                        <div class="summary-value">${stats.newClients} чел.</div>
-                        ${period!=='all'&&stats.newClientsPercent!==null?`<div class="summary-percent">${fmtPct(stats.newClientsPercent)}</div>`:''}
-                    </div>
-                    <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()">
-                        <div class="summary-icon"><i class="bi bi-person-dash"></i></div>
-                        <div class="summary-label">Уходящие</div>
-                        <div class="summary-value">${stats.leavingClients} чел.</div>
-                        ${period!=='all'&&stats.leavingClientsPercent!==null?`<div class="summary-percent">${fmtPct(stats.leavingClientsPercent)}</div>`:''}
-                    </div>
+                    <div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">${fmtNum(booking)}₽</div></div>
+                    <div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value">${fmtNum(debt)}₽</div></div>
+                    <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">${newClients} чел.</div></div>
+                    <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">${leavingClients} чел.</div></div>
                 </div>
-
-                ${catBlock}
-                ${dailyBlock}
-                ${dateRangeHtml}
-            `;
-
+                <p class="text-center text-muted py-3">Графики временно скрыты</p>`;
             document.getElementById('contentBody').innerHTML = html;
-
-            setTimeout(() => {
-                animVal('rv', stats.revenue, '₽');
-                animVal('pv', stats.profit, '₽');
-                animCnt('cv', stats.count);
-                document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(b => {
-                    const h = b.getAttribute('data-height');
-                    b.style.height = '0%';
-                    setTimeout(() => b.style.height = h + '%', 50);
-                });
-            }, 100);
         }
 
-        async function setCategoryMode(mode) {
-            currentCategoryMode = mode;
-            await renderStatistics(currentPeriod);
+        // Заглушки модалок для статистики
+        function showBookingModal() { showModal('Бронь', 'bi bi-calendar-check', 'var(--green)', '<p class="text-muted">Демо-данные брони</p>', ''); }
+        function showDebtModal() { showModal('Долг', 'bi bi-cash-coin', 'var(--red)', '<p class="text-muted">Демо-данные долгов</p>', ''); }
+        function showNewClientsModal() { showModal('Новые клиенты', 'bi bi-person-plus', 'var(--accent)', '<p class="text-muted">Демо-данные клиентов</p>', ''); }
+        function showLeavingClientsModal() { showModal('Уходящие клиенты', 'bi bi-person-dash', 'var(--accent)', '<p class="text-muted">Демо-данные клиентов</p>', ''); }
+
+        // ============ ВКЛАДКИ ============
+        async function switchTab(tab) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab === tab));
+            const body = document.getElementById('contentBody');
+            body.style.opacity = '0'; body.style.transform = 'translateY(20px)';
+            setTimeout(async () => {
+                if (tab === 'statistics') await renderStatistics('today');
+                else if (tab === 'warehouse') await renderWarehouseCards();
+                else {
+                    const titles = { 'sales': 'Продажи', 'clients': 'Клиенты' };
+                    body.innerHTML = `<h2 class="tab-title">${titles[tab]}</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
+                }
+                body.style.opacity = '1'; body.style.transform = '';
+            }, 200);
+            if (innerWidth < 768) closeSidebar();
         }
 
-        function animVal(id, target, suffix) {
-            const el = document.getElementById(id); if (!el) return;
-            const start = performance.now();
-            function step(t) {
-                const p = Math.min((t - start) / 800, 1);
-                el.textContent = fmtNum(Math.round(target * (1 - Math.pow(1 - p, 3)))) + suffix;
-                if (p < 1) requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-        }
-
-        function animCnt(id, target) {
-            const el = document.getElementById(id); if (!el) return;
-            const start = performance.now();
-            function step(t) {
-                const p = Math.min((t - start) / 600, 1);
-                el.textContent = fmtNum(Math.round(target * (1 - Math.pow(1 - p, 3))));
-                if (p < 1) requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-        }
-
-        function updateCustomDates() {
-            customStartDate = document.getElementById('startDate').value;
-            customEndDate = document.getElementById('endDate').value;
-            if (customStartDate && customEndDate) renderStatistics('custom');
-        }
-
-        // ============ ДЕМО-ДАННЫЕ ============
-        async function addDemoData() {
+        // ============ ДЕМО-ДАННЫЕ ПРОДАЖ ============
+        async function addDemoSales() {
             if ((await db.getAll('sales')).length > 0) return;
             const now = new Date();
             const sales = [];
@@ -1386,18 +897,7 @@
                 const d = new Date(now - Math.random() * 90 * 86400000);
                 const total = Math.floor(Math.random() * 5000) + 500;
                 const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
-                sales.push({
-                    date: d.toISOString().split('T')[0],
-                    total, cost, profit: total - cost,
-                    category: CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)],
-                    items: []
-                });
-            }
-            const today = now.toISOString().split('T')[0];
-            for (let i = 0; i < 5; i++) {
-                const total = Math.floor(Math.random() * 15000) + 3000;
-                const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
-                sales.push({ date: today, total, cost, profit: total - cost, category: CATEGORIES[i % 5], items: [] });
+                sales.push({ date: d.toISOString().split('T')[0], total, cost, profit: total - cost, category: ['liquids','supplies','pods','disposable','snus'][Math.floor(Math.random()*5)], items: [] });
             }
             for (const s of sales) await db.add('sales', s);
         }
@@ -1408,9 +908,7 @@
             const mc = document.getElementById('mainContent');
             let startY = 0;
             mc.addEventListener('touchstart', e => { if (!window.scrollY) startY = e.touches[0].clientY; });
-            mc.addEventListener('touchmove', e => {
-                if (!window.scrollY) { pullDist = e.touches[0].clientY - startY; if (pullDist > 0) document.body.style.transform = `translateY(${pullDist * 0.3}px)`; }
-            });
+            mc.addEventListener('touchmove', e => { if (!window.scrollY) { pullDist = e.touches[0].clientY - startY; if (pullDist > 0) document.body.style.transform = `translateY(${pullDist * 0.3}px)`; } });
             mc.addEventListener('touchend', async () => {
                 if (pullDist > 80 && !window.scrollY) {
                     document.body.style.transition = 'transform .3s'; document.body.style.transform = '';
@@ -1418,42 +916,27 @@
                     t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 20px;border-radius:20px;z-index:9999;font-size:14px;';
                     t.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i> Обновляем...';
                     document.body.appendChild(t);
-                    await renderStatistics(currentPeriod);
+                    if (currentWarehouseCategory) await renderWarehouseTable(currentWarehouseCategory);
+                    else await renderWarehouseCards();
                     setTimeout(() => t.remove(), 1000);
                 } else document.body.style.transform = '';
                 pullDist = 0;
             });
         });
 
-        // ============ ВКЛАДКИ ============
-        async function switchTab(tab) {
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab === tab));
-            const body = document.getElementById('contentBody');
-            body.style.opacity = '0'; body.style.transform = 'translateY(20px)';
-            setTimeout(async () => {
-                if (tab === 'statistics') await renderStatistics(currentPeriod);
-                else {
-                    const titles = { 'warehouse': 'Склад', 'sales': 'Продажи', 'clients': 'Клиенты' };
-                    body.innerHTML = `<h2 class="tab-title">${titles[tab]}</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
-                }
-                body.style.opacity = '1'; body.style.transform = '';
-            }, 200);
-            if (innerWidth < 768) closeSidebar();
-        }
-
         // ============ ИНИТ ============
         async function init() {
             await db.init();
             await loadTheme();
-            await addDemoData();
-            await renderStatistics('today');
+            await addDemoSales();
+            await addDemoProducts();
+            await renderWarehouseCards();
             if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
         }
 
         let tx = 0;
         document.getElementById('sidebar').addEventListener('touchstart', e => tx = e.touches[0].clientX);
         document.getElementById('sidebar').addEventListener('touchend', e => { if (tx - e.changedTouches[0].clientX > 100) closeSidebar(); });
-
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
