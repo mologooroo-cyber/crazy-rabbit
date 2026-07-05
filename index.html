@@ -215,7 +215,7 @@
 
     <script>
         // ============ БАЗА ДАННЫХ ============
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 16;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 17;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -339,11 +339,15 @@
             let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));
             const isLastLevel=(level+1>=groupBy.length);
             entries.forEach(([key,items])=>{
-                const fullKeys=[...parentKeys,key];
+                // ИСПРАВЛЕНИЕ: key из groupProducts — составной ключ "HUSKY|||ICECREAM"
+                // Разбиваем его на части и собираем полный путь
+                const keyParts = key.split('|||');
+                const fullKeys = keyParts.slice(0, level + 1);
+                
                 const gid=getGroupId(cat,level,fullKeys);
                 const fi=items[0];
                 const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;
-                const label=rl||key;
+                const label=rl||keyParts[level]||key;
                 const tab=level>0?'&emsp;&emsp;':'';
                 const ks=fullKeys.join('|||');
                 const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';
@@ -397,7 +401,7 @@
             await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
         }
 
-        // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ С ОТЛАДКОЙ ============
+        // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ ============
         document.addEventListener('click',function(e){
             const btn=e.target.closest('.group-edit-btn');
             if(!btn)return;
@@ -405,61 +409,20 @@
             e.preventDefault();
             const cat=btn.getAttribute('data-cat');
             const keysStr=btn.getAttribute('data-keys');
-            console.log('=== НАЖАТА КНОПКА ГРУППОВОГО РЕДАКТИРОВАНИЯ ===');
-            console.log('cat:', cat);
-            console.log('keysStr:', keysStr);
             if(!cat||!keysStr)return;
             const keys=keysStr.split('|||');
-            console.log('keys:', keys);
             showGroupEditModal(cat,keys);
         });
 
-        async function showGroupEditModal(cat, currentKeys) {
-            console.log('=== showGroupEditModal ===');
-            console.log('cat:', cat);
-            console.log('currentKeys:', currentKeys);
-            
-            const gb = CATEGORY_GROUPS[cat];
-            console.log('groupBy:', gb);
-            
-            const ap = await db.all('products');
-            const cp = ap.filter(p => p.category === cat);
-            console.log('Всего товаров в категории:', cp.length);
-            
-            // Покажем первые 5 товаров
-            cp.slice(0, 5).forEach(p => {
-                console.log('Товар:', {
-                    id: p.id,
-                    manufacturer: p.manufacturer,
-                    lineup: p.lineup,
-                    manufacturer_norm: norm(p.manufacturer),
-                    lineup_norm: norm(p.lineup)
-                });
-            });
-            
-            const filtered = cp.filter(p => {
-                console.log(`\nПроверяем товар id=${p.id}:`);
-                const match = currentKeys.every((key, idx) => {
-                    const fieldName = gb[idx];
-                    const fieldValue = norm(p[fieldName]);
-                    const matches = fieldValue === key;
-                    console.log(`  ${fieldName}: norm("${p[fieldName]}") = "${fieldValue}" === "${key}" ? ${matches}`);
-                    return matches;
-                });
-                console.log(`  РЕЗУЛЬТАТ: ${match ? 'ПОДХОДИТ' : 'НЕ ПОДХОДИТ'}`);
-                return match;
-            });
-            
-            console.log('\nНайдено товаров:', filtered.length);
-            
-            if (filtered.length === 0) {
-                alert('Нет товаров в группе. Проверьте консоль (F12) для отладки.');
-                return;
-            }
-            
-            const gl = currentKeys.join(' → ');
-            const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)';
-            showModal('Изменить цены', 'bi bi-tags', color,
+        async function showGroupEditModal(cat,currentKeys){
+            const gb=CATEGORY_GROUPS[cat];
+            const ap=await db.all('products');
+            const cp=ap.filter(p=>p.category===cat);
+            const filtered=cp.filter(p=>currentKeys.every((key,idx)=>norm(p[gb[idx]])===key));
+            if(filtered.length===0){alert('Нет товаров в группе');return;}
+            const gl=currentKeys.join(' → ');
+            const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';
+            showModal('Изменить цены','bi bi-tags',color,
                 `<p class="text-muted mb-3">Группа: <strong>${gl}</strong> (${filtered.length} шт.)</p>
                 <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="grp_purchase" placeholder="Не менять"></div>
                 <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="grp_selling" placeholder="Не менять"></div>
