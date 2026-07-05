@@ -331,7 +331,7 @@
     <script>
         // ============ БАЗА ДАННЫХ ============
         const DB_NAME = 'CrazyRabbitDB';
-        const DB_VERSION = 5;
+        const DB_VERSION = 6;
 
         class Database {
             constructor() { this.db = null; }
@@ -383,21 +383,36 @@
         const CATEGORY_ICONS = { 'liquid': 'bi-droplet', 'supplies': 'bi-tools', 'pods': 'bi-usb-plug', 'disposable': 'bi-phone', 'snus': 'bi-box2' };
         const CATEGORY_CLASS = { 'liquid': 'liquid', 'supplies': 'supplies', 'pods': 'pods', 'disposable': 'disposable', 'snus': 'snus' };
         const CATEGORY_EXTRA_FIELDS = {
-            'liquid': [{ key: 'flavor', label: 'Вкус' }], 'supplies': [], 'pods': [{ key: 'color', label: 'Цвет' }],
-            'disposable': [{ key: 'flavor', label: 'Вкус' }], 'snus': [{ key: 'flavor', label: 'Вкус' }]
+            'liquid': [{ key: 'flavor', label: 'Вкус' }],
+            'supplies': [],
+            'pods': [{ key: 'color', label: 'Цвет' }],
+            'disposable': [{ key: 'flavor', label: 'Вкус' }],
+            'snus': [{ key: 'flavor', label: 'Вкус' }]
         };
+        // ВИДИМЫЕ колонки в таблице (без manufacturer и lineup — они в заголовках аккордеона)
         const CATEGORY_TABLE_COLS = {
-            'liquid': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling'],
-            'supplies': ['manufacturer', 'lineup', 'quantity', 'purchase', 'selling'],
-            'pods': ['manufacturer', 'lineup', 'color', 'quantity', 'purchase', 'selling'],
-            'disposable': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling'],
-            'snus': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling']
+            'liquid': ['flavor', 'quantity', 'purchase', 'selling'],
+            'supplies': ['lineup', 'quantity', 'purchase', 'selling'],
+            'pods': ['color', 'quantity', 'purchase', 'selling'],
+            'disposable': ['flavor', 'quantity', 'purchase', 'selling'],
+            'snus': ['flavor', 'quantity', 'purchase', 'selling']
         };
-        const COL_LABELS = { 'manufacturer': 'Производитель', 'lineup': 'Линейка', 'flavor': 'Вкус', 'color': 'Цвет', 'quantity': 'Кол-во', 'purchase': 'Закупка', 'selling': 'Продажа' };
+        const COL_LABELS = {
+            'manufacturer': 'Производитель', 'lineup': 'Линейка', 'flavor': 'Вкус',
+            'color': 'Цвет', 'quantity': 'Кол-во', 'purchase': 'Закупка', 'selling': 'Продажа'
+        };
         const CATEGORY_GROUPS = {
-            'liquid': ['manufacturer', 'lineup'], 'supplies': ['manufacturer'], 'pods': ['manufacturer', 'lineup'],
-            'disposable': ['manufacturer', 'lineup'], 'snus': ['manufacturer', 'lineup']
+            'liquid': ['manufacturer', 'lineup'],
+            'supplies': ['manufacturer'],
+            'pods': ['manufacturer', 'lineup'],
+            'disposable': ['manufacturer', 'lineup'],
+            'snus': ['manufacturer', 'lineup']
         };
+
+        // ============ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ============
+        function normalize(str) {
+            return (str || '').trim().toUpperCase();
+        }
 
         // ============ ТЕМЫ ============
         const themes = ['dark', 'light', 'pink'];
@@ -541,7 +556,7 @@
             if (groupBy.length === 0) return { '_root': products };
             const groups = {};
             products.forEach(p => {
-                const key = groupBy.map(g => p[g] || '').join('|||');
+                const key = groupBy.map(g => normalize(p[g])).join('|||');
                 if (!groups[key]) groups[key] = [];
                 groups[key].push(p);
             });
@@ -554,7 +569,10 @@
             const entries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
             
             entries.forEach(([key, items]) => {
-                const label = key.split('|||')[level] || key;
+                // Берём значение из первого товара для отображения (оригинальный регистр)
+                const firstItem = items[0];
+                const rawLabel = groupBy[level] === 'manufacturer' ? firstItem.manufacturer : firstItem.lineup;
+                const label = rawLabel || key;
                 const groupId = 'grp_' + Math.random().toString(36).slice(2, 10);
                 
                 html += `<div class="accordion-group">`;
@@ -564,7 +582,7 @@
                 if (level + 1 < groupBy.length) {
                     const subGroups = {};
                     items.forEach(item => {
-                        const subKey = groupBy.slice(0, level + 2).map(g => item[g] || '').join('|||');
+                        const subKey = groupBy.slice(0, level + 2).map(g => normalize(item[g])).join('|||');
                         if (!subGroups[subKey]) subGroups[subKey] = [];
                         subGroups[subKey].push(item);
                     });
@@ -739,4 +757,4 @@
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
-</html> 
+</html>
