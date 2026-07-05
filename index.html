@@ -250,17 +250,78 @@
 
         /* Основной контент */
         .main-content {
-            padding: 80px 15px 20px;
+            padding: 75px 12px 20px;
             min-height: 100vh;
         }
 
-        .tab-title {
-            display: inline-block;
-            font-weight: 700;
-            padding-bottom: 10px;
-            border-bottom: 3px solid var(--accent);
+        /* Шапка статистики */
+        .stats-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 20px;
-            font-size: 24px;
+            flex-wrap: nowrap;
+            gap: 10px;
+        }
+
+        .tab-title {
+            font-weight: 700;
+            font-size: 20px;
+            padding-bottom: 8px;
+            border-bottom: 3px solid var(--accent);
+            white-space: nowrap;
+            margin: 0;
+        }
+
+        .period-buttons {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 4px;
+        }
+
+        .period-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .period-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .period-btn:active {
+            transform: scale(0.9);
+        }
+
+        /* Всплывающая подсказка */
+        .period-btn[title]:hover::after,
+        .period-btn[title]:active::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-sidebar);
+            color: var(--text-primary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
         }
 
         /* Статистика */
@@ -268,7 +329,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .stat-card {
@@ -294,7 +355,7 @@
         }
 
         .stat-card .stat-value {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--text-primary);
             margin-bottom: 5px;
@@ -313,61 +374,26 @@
             color: var(--red);
         }
 
-        /* Селектор периода */
-        .period-selector {
-            background: var(--bg-card);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-
-        .period-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-
-        .period-btn {
-            padding: 8px 16px;
-            border: 2px solid var(--border);
-            background: transparent;
-            color: var(--text-primary);
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .period-btn.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: white;
-        }
-
-        .period-btn:active {
-            transform: scale(0.95);
-        }
-
         /* Выбор дат */
         .date-range {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
-            flex-wrap: wrap;
+            margin-top: 12px;
+            padding: 10px;
+            background: var(--bg-card);
+            border-radius: 12px;
         }
 
         .date-input {
             flex: 1;
-            min-width: 120px;
-            padding: 10px 12px;
+            min-width: 0;
+            padding: 8px 10px;
             border: 2px solid var(--border);
             border-radius: 10px;
             background: var(--bg-primary);
             color: var(--text-primary);
-            font-size: 14px;
+            font-size: 13px;
             outline: none;
             transition: all 0.3s ease;
         }
@@ -379,67 +405,9 @@
         .date-separator {
             color: var(--text-secondary);
             font-size: 14px;
+            flex-shrink: 0;
         }
 
-        /* Pull-to-refresh индикатор */
-        .pull-indicator {
-            text-align: center;
-            padding: 10px;
-            color: var(--text-secondary);
-            font-size: 14px;
-            display: none;
-            transition: all 0.3s ease;
-        }
-
-        .pull-indicator.refreshing {
-            display: block;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .spinner {
-            animation: spin 1s linear infinite;
-            display: inline-block;
-        }
-
-        /* Адаптивность */
-        @media (max-width: 480px) {
-            .stats-cards {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .stat-card:last-child {
-                grid-column: span 2;
-            }
-            
-            .stat-card .stat-value {
-                font-size: 18px;
-            }
-            
-            .period-buttons {
-                gap: 6px;
-            }
-            
-            .period-btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .stats-cards {
-                grid-template-columns: 1fr;
-            }
-            
-            .stat-card:last-child {
-                grid-column: span 1;
-            }
-        }
-
-        /* Анимация появления */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -453,6 +421,16 @@
 
         .content-body {
             animation: fadeInUp 0.4s ease;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+            display: inline-block;
         }
     </style>
 </head>
@@ -506,7 +484,6 @@
 
     <!-- Основной контент -->
     <main class="main-content" id="mainContent">
-        <h2 class="tab-title" id="currentTabTitle">Статистика</h2>
         <div class="content-body" id="contentBody">
             <!-- Динамический контент -->
         </div>
@@ -747,7 +724,6 @@
             try {
                 return await db.getByDateRange('sales', startDate, endDate);
             } catch (e) {
-                // Если индекс не работает, фильтруем вручную
                 const allSales = await db.getAll('sales');
                 return allSales.filter(s => s.date >= startDate && s.date <= endDate);
             }
@@ -763,41 +739,47 @@
             return `${sign}${percent.toFixed(1)}%`;
         }
 
-        function animateValue(element, start, end, duration) {
-            const startTime = performance.now();
-            const diff = end - start;
-            
-            function update(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const value = start + (diff * progress);
-                element.textContent = formatNumber(Math.round(value)) + '₽';
-                
-                if (progress < 1) {
-                    requestAnimationFrame(update);
-                }
-            }
-            
-            requestAnimationFrame(update);
-        }
-
         async function renderStatistics(period) {
             currentPeriod = period;
-            
-            // Обновляем кнопки периода
-            document.querySelectorAll('.period-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.period === period);
-            });
-            
-            // Показываем/скрываем выбор дат
-            const dateRangeEl = document.getElementById('dateRange');
-            if (dateRangeEl) {
-                dateRangeEl.style.display = period === 'custom' ? 'flex' : 'none';
-            }
-            
             const stats = await getStatsForPeriod(period);
             
+            const periodButtons = `
+                <button class="period-btn ${period === 'today' ? 'active' : ''}" data-period="today" onclick="renderStatistics('today')" title="Сегодня">
+                    <i class="bi bi-calendar-day"></i>
+                </button>
+                <button class="period-btn ${period === 'week' ? 'active' : ''}" data-period="week" onclick="renderStatistics('week')" title="Неделя">
+                    <i class="bi bi-calendar-week"></i>
+                </button>
+                <button class="period-btn ${period === 'month' ? 'active' : ''}" data-period="month" onclick="renderStatistics('month')" title="Месяц">
+                    <i class="bi bi-calendar-month"></i>
+                </button>
+                <button class="period-btn ${period === 'all' ? 'active' : ''}" data-period="all" onclick="renderStatistics('all')" title="Всё время">
+                    <i class="bi bi-infinity"></i>
+                </button>
+                <button class="period-btn ${period === 'custom' ? 'active' : ''}" data-period="custom" onclick="renderStatistics('custom')" title="Период">
+                    <i class="bi bi-calendar-range"></i>
+                </button>
+            `;
+            
+            let dateRangeHtml = '';
+            if (period === 'custom') {
+                dateRangeHtml = `
+                    <div class="date-range" id="dateRange">
+                        <input type="date" class="date-input" id="startDate" value="${customStartDate || ''}" onchange="updateCustomDates()">
+                        <span class="date-separator">—</span>
+                        <input type="date" class="date-input" id="endDate" value="${customEndDate || ''}" onchange="updateCustomDates()">
+                    </div>
+                `;
+            }
+            
             const html = `
+                <div class="stats-header">
+                    <h2 class="tab-title">Статистика</h2>
+                    <div class="period-buttons">
+                        ${periodButtons}
+                    </div>
+                </div>
+                
                 <div class="stats-cards">
                     <div class="stat-card">
                         <div class="stat-icon">
@@ -836,31 +818,7 @@
                     </div>
                 </div>
                 
-                <div class="period-selector">
-                    <div class="period-buttons">
-                        <button class="period-btn ${period === 'today' ? 'active' : ''}" data-period="today" onclick="renderStatistics('today')">
-                            <i class="bi bi-calendar-day"></i> Сегодня
-                        </button>
-                        <button class="period-btn ${period === 'week' ? 'active' : ''}" data-period="week" onclick="renderStatistics('week')">
-                            <i class="bi bi-calendar-week"></i> Неделя
-                        </button>
-                        <button class="period-btn ${period === 'month' ? 'active' : ''}" data-period="month" onclick="renderStatistics('month')">
-                            <i class="bi bi-calendar-month"></i> Месяц
-                        </button>
-                        <button class="period-btn ${period === 'all' ? 'active' : ''}" data-period="all" onclick="renderStatistics('all')">
-                            <i class="bi bi-infinity"></i> Всё время
-                        </button>
-                        <button class="period-btn ${period === 'custom' ? 'active' : ''}" data-period="custom" onclick="renderStatistics('custom')">
-                            <i class="bi bi-calendar-range"></i> Период
-                        </button>
-                    </div>
-                    
-                    <div class="date-range" id="dateRange" style="display: ${period === 'custom' ? 'flex' : 'none'}">
-                        <input type="date" class="date-input" id="startDate" value="${customStartDate || ''}" onchange="updateCustomDates()">
-                        <span class="date-separator">—</span>
-                        <input type="date" class="date-input" id="endDate" value="${customEndDate || ''}" onchange="updateCustomDates()">
-                    </div>
-                </div>
+                ${dateRangeHtml}
             `;
             
             document.getElementById('contentBody').innerHTML = html;
@@ -871,19 +829,40 @@
                 const profitEl = document.getElementById('profitValue');
                 const countEl = document.getElementById('countValue');
                 
-                if (revenueEl) animateValue(revenueEl, 0, stats.revenue, 800);
-                if (profitEl) animateValue(profitEl, 0, stats.profit, 600);
-                if (countEl) {
-                    // Анимация для количества (без ₽)
+                if (revenueEl) {
                     const startTime = performance.now();
-                    function animate(currentTime) {
+                    function animateRev(currentTime) {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / 800, 1);
+                        const value = Math.round(stats.revenue * progress);
+                        revenueEl.textContent = formatNumber(value) + '₽';
+                        if (progress < 1) requestAnimationFrame(animateRev);
+                    }
+                    requestAnimationFrame(animateRev);
+                }
+                
+                if (profitEl) {
+                    const startTime = performance.now();
+                    function animateProf(currentTime) {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / 600, 1);
+                        const value = Math.round(stats.profit * progress);
+                        profitEl.textContent = formatNumber(value) + '₽';
+                        if (progress < 1) requestAnimationFrame(animateProf);
+                    }
+                    requestAnimationFrame(animateProf);
+                }
+                
+                if (countEl) {
+                    const startTime = performance.now();
+                    function animateCount(currentTime) {
                         const elapsed = currentTime - startTime;
                         const progress = Math.min(elapsed / 600, 1);
                         const value = Math.round(stats.count * progress);
                         countEl.textContent = formatNumber(value);
-                        if (progress < 1) requestAnimationFrame(animate);
+                        if (progress < 1) requestAnimationFrame(animateCount);
                     }
-                    requestAnimationFrame(animate);
+                    requestAnimationFrame(animateCount);
                 }
             }, 100);
         }
@@ -899,7 +878,7 @@
         // ============ ДЕМО-ДАННЫЕ ============
         async function addDemoData() {
             const existingSales = await db.getAll('sales');
-            if (existingSales.length > 0) return; // Данные уже есть
+            if (existingSales.length > 0) return;
             
             const demoSales = [];
             const now = new Date();
@@ -919,7 +898,6 @@
                 });
             }
             
-            // Добавляем сегодняшние продажи
             const today = now.toISOString().split('T')[0];
             demoSales.push({
                 date: today,
@@ -943,12 +921,12 @@
         }
 
         // ============ PULL-TO-REFRESH ============
-        let touchStartY = 0;
         let pullDistance = 0;
         const PULL_THRESHOLD = 80;
 
         document.addEventListener('DOMContentLoaded', () => {
             const mainContent = document.getElementById('mainContent');
+            let touchStartY = 0;
             
             mainContent.addEventListener('touchstart', (e) => {
                 if (window.scrollY === 0) {
@@ -967,10 +945,9 @@
             
             mainContent.addEventListener('touchend', async () => {
                 if (pullDistance > PULL_THRESHOLD && window.scrollY === 0) {
-                    document.body.style.transform = 'translateY(0)';
                     document.body.style.transition = 'transform 0.3s ease';
+                    document.body.style.transform = 'translateY(0)';
                     
-                    // Показываем индикатор загрузки
                     const toast = document.createElement('div');
                     toast.style.cssText = `
                         position: fixed;
@@ -990,28 +967,16 @@
                     
                     await renderStatistics(currentPeriod);
                     
-                    setTimeout(() => {
-                        toast.remove();
-                    }, 1000);
+                    setTimeout(() => toast.remove(), 1000);
                 } else {
                     document.body.style.transform = 'translateY(0)';
                 }
-                document.body.style.transition = 'transform 0.3s ease';
                 pullDistance = 0;
             });
         });
 
         // ============ ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ============
         async function switchTab(tabName) {
-            const titles = {
-                'statistics': 'Статистика',
-                'warehouse': 'Склад',
-                'sales': 'Продажи',
-                'clients': 'Клиенты'
-            };
-            
-            document.getElementById('currentTabTitle').textContent = titles[tabName];
-            
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
                 if (item.dataset.tab === tabName) {
@@ -1027,7 +992,15 @@
                 if (tabName === 'statistics') {
                     await renderStatistics(currentPeriod);
                 } else {
-                    contentBody.innerHTML = `<p class="text-center text-muted py-5">Вкладка "${titles[tabName]}" пока пустая</p>`;
+                    const titles = {
+                        'warehouse': 'Склад',
+                        'sales': 'Продажи',
+                        'clients': 'Клиенты'
+                    };
+                    contentBody.innerHTML = `
+                        <h2 class="tab-title">${titles[tabName]}</h2>
+                        <p class="text-center text-muted py-5">Вкладка "${titles[tabName]}" пока пустая</p>
+                    `;
                 }
                 contentBody.style.opacity = '1';
                 contentBody.style.transform = 'translateY(0)';
@@ -1058,6 +1031,7 @@
         }
 
         // Закрытие сайдбара по свайпу
+        let touchStartX = 0;
         document.getElementById('sidebar').addEventListener('touchstart', (e) => {
             touchStartX = e.touches[0].clientX;
         });
@@ -1066,8 +1040,6 @@
             const diff = touchStartX - e.changedTouches[0].clientX;
             if (diff > 100) closeSidebar();
         });
-
-        let touchStartX = 0;
 
         document.addEventListener('DOMContentLoaded', init);
     </script>
