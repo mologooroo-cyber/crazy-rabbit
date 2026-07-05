@@ -62,6 +62,7 @@
         .main-content { padding: 75px 12px 20px; min-height: 100vh; }
         .tab-title { display: inline-block; font-weight: 700; padding-bottom: 10px; border-bottom: 3px solid var(--accent); margin-bottom: 20px; font-size: 22px; }
 
+        /* Статистика */
         .stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
         .period-buttons { display: flex; gap: 4px; background: var(--bg-card); border-radius: 12px; padding: 4px; }
         .period-btn { width: 36px; height: 36px; border: none; background: transparent; color: var(--text-secondary); border-radius: 10px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
@@ -110,6 +111,7 @@
         .date-input:focus { border-color: var(--accent); }
         .date-separator { color: var(--text-secondary); font-size: 14px; }
 
+        /* Склад */
         .warehouse-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
         @media (min-width: 500px) { .warehouse-cards { grid-template-columns: repeat(3, 1fr); } }
         .wh-card { background: var(--bg-card); border-radius: 15px; padding: 15px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -125,45 +127,39 @@
 
         .warehouse-table-section { background: var(--bg-card); border-radius: 15px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .wh-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .wh-header-left { display: flex; align-items: center; gap: 10px; }
         .wh-back-btn { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; padding: 5px; }
         .wh-category-title { font-size: 16px; font-weight: 700; }
+        .wh-header-actions { display: flex; align-items: center; gap: 8px; }
         .wh-add-btn { background: var(--accent); color: white; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .wh-delete-selected-btn { background: var(--red); color: white; border: none; height: 36px; padding: 0 12px; border-radius: 10px; font-size: 14px; cursor: pointer; display: none; align-items: center; gap: 6px; font-weight: 600; }
+        .wh-delete-selected-btn.visible { display: flex; }
+        .wh-delete-selected-btn:active { transform: scale(0.95); }
+        .wh-cancel-select-btn { background: var(--border); color: var(--text-primary); border: none; height: 36px; padding: 0 12px; border-radius: 10px; font-size: 14px; cursor: pointer; display: none; align-items: center; gap: 6px; }
+        .wh-cancel-select-btn.visible { display: flex; }
         .search-input { width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); font-size: 14px; outline: none; margin-bottom: 15px; }
         .search-input:focus { border-color: var(--accent); }
 
         .accordion-group { margin-bottom: 8px; }
-        .accordion-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 15px; background: var(--bg-primary); border-radius: 10px;
-            font-weight: 600; font-size: 14px; min-height: 48px;
-            cursor: default;
-        }
-        .accordion-header-left {
-            display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
-            cursor: pointer;
-        }
-        .accordion-header-actions {
-            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
-        }
-        .accordion-header .accordion-arrow {
-            transition: transform 0.3s ease; font-size: 13px;
-            cursor: pointer;
-        }
+        .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 15px; background: var(--bg-primary); border-radius: 10px; font-weight: 600; font-size: 14px; min-height: 48px; cursor: default; }
+        .accordion-header-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; }
+        .accordion-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .accordion-header .accordion-arrow { transition: transform 0.3s ease; font-size: 13px; cursor: pointer; }
         .accordion-header.open .accordion-arrow { transform: rotate(180deg); }
         .accordion-body { display: none; padding: 5px 0; }
         .accordion-body.open { display: block; }
         .accordion-body .accordion-header { padding-left: 28px; }
 
-        .group-edit-btn {
-            background: none; border: none; color: var(--accent); cursor: pointer;
-            font-size: 17px; padding: 6px 8px; transition: all 0.2s ease;
-            display: flex; align-items: center; justify-content: center;
-            position: relative; z-index: 10;
-        }
+        .group-edit-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 17px; padding: 6px 8px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; position: relative; z-index: 10; }
         .group-edit-btn:active { transform: scale(1.15); color: var(--accent-hover); }
 
-        .product-row { display: flex; align-items: center; padding: 10px 15px 10px 25px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 6px; }
+        /* Строка товара */
+        .product-row-wrapper { position: relative; overflow: hidden; }
+        .product-row { display: flex; align-items: center; padding: 10px 15px 10px 25px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease, background 0.2s ease; position: relative; z-index: 1; background: var(--bg-card); }
         .product-row:active { background: rgba(129,216,208,0.1); }
+        .product-row.selected { background: rgba(129,216,208,0.2); }
+        .product-row.swiping { transition: transform 0.1s ease; }
+        .swipe-delete-bg { position: absolute; top: 0; right: 0; height: 100%; background: var(--red); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 700; z-index: 0; border-radius: 0 10px 10px 0; width: 100%; text-align: right; padding-right: 20px; }
         .product-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .product-col.price { text-align: right; flex: 0.7; }
         .product-col.qty { text-align: center; flex: 0.5; }
@@ -172,6 +168,14 @@
         .table-header-row { display: flex; padding: 8px 15px 8px 25px; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 6px; }
         .table-header-row .product-col { font-weight: 600; }
         .table-header-row .product-col.copy-btn { flex: 0 0 30px; }
+
+        /* Чекбокс */
+        .checkbox-col { flex: 0 0 24px; display: none; align-items: center; }
+        .checkbox-col.visible { display: flex; }
+        .select-checkbox { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .product-row.pop-anim { animation: popIn 0.4s ease; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease; }
         .modal-dialog-custom { background: var(--bg-secondary); border-radius: 20px; width: 90%; max-width: 420px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: scaleIn 0.2s ease; }
@@ -187,6 +191,11 @@
         .btn-cancel { background: var(--border); color: var(--text-primary); }
         .btn-delete { background: var(--red); color: white; flex: 0.5; }
         .btn:active { transform: scale(0.96); }
+
+        /* Снекбар */
+        .snackbar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--bg-sidebar); color: white; padding: 14px 24px; border-radius: 25px; z-index: 9999; font-size: 14px; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px; animation: slideUp 0.3s ease; }
+        .snackbar .snackbar-undo { background: var(--accent); border: none; color: white; padding: 6px 14px; border-radius: 15px; cursor: pointer; font-weight: 700; font-size: 13px; }
+        @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -212,9 +221,10 @@
     </div>
     <main class="main-content" id="mainContent"><div class="content-body" id="contentBody"></div></main>
     <div id="modalContainer"></div>
+    <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 18;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 19;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -268,6 +278,18 @@
         }
         function closeModal(event) { if(!event||event.target.classList.contains('modal-overlay'))document.getElementById('modalContainer').innerHTML=''; }
 
+        function showSnackbar(message, undoCallback) {
+            const container = document.getElementById('snackbarContainer');
+            const id = 'snack_' + Date.now();
+            container.innerHTML = `<div class="snackbar" id="${id}">${message} ${undoCallback ? '<button class="snackbar-undo" onclick="window.snackbarUndo(\''+id+'\')">Отменить</button>' : ''}</div>`;
+            window.snackbarUndo = function(sid) {
+                if (sid === id && undoCallback) undoCallback();
+                document.getElementById(sid)?.remove();
+            };
+            setTimeout(() => { const el = document.getElementById(id); if (el) el.remove(); }, 5000);
+        }
+
+        // ============ СТАТИСТИКА (компактно) ============
         let cp='today',ccm='sum',csd=null,ced=null;
         function getDateRange(p){const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];let s,e,ps,pe;switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}return{s,e,ps,pe};}
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
@@ -299,15 +321,51 @@
         function showLeavingClientsModal(){showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)','<p class="text-muted py-4 text-center">Список уходящих клиентов</p>','');}
 
         // ============ СКЛАД ============
-        let cwc=null,og=new Set();
+        let cwc=null,og=new Set(),selectMode=false,selectedIds=new Set(),deletedProducts=[];
+
+        function enterSelectMode() { selectMode=true; selectedIds=new Set(); updateSelectUI(); }
+        function exitSelectMode() { selectMode=false; selectedIds=new Set(); updateSelectUI(); }
+        function toggleSelectProduct(id) {
+            if(selectedIds.has(id))selectedIds.delete(id);else selectedIds.add(id);
+            updateSelectUI();
+        }
+        function updateSelectUI() {
+            document.querySelectorAll('.checkbox-col').forEach(c=>c.classList.toggle('visible',selectMode));
+            document.querySelectorAll('.product-row').forEach(r=>r.classList.toggle('selected',selectMode&&selectedIds.has(parseInt(r.dataset.pid))));
+            document.querySelectorAll('.select-checkbox').forEach(c=>c.checked=selectedIds.has(parseInt(c.dataset.pid)));
+            const delBtn=document.querySelector('.wh-delete-selected-btn');
+            const cancelBtn=document.querySelector('.wh-cancel-select-btn');
+            if(delBtn)delBtn.classList.toggle('visible',selectMode);
+            if(cancelBtn)cancelBtn.classList.toggle('visible',selectMode);
+            if(delBtn)delBtn.textContent=`Удалить (${selectedIds.size})`;
+            const addBtn=document.querySelector('.wh-add-btn');
+            if(addBtn)addBtn.style.display=selectMode?'none':'flex';
+        }
+
+        async function deleteSelectedProducts() {
+            if(selectedIds.size===0)return;
+            if(!confirm(`Удалить ${selectedIds.size} товаров?`))return;
+            deletedProducts=[];
+            for(const id of selectedIds){
+                const p=await db.g('products',id);
+                if(p){deletedProducts.push(p);await db.del('products',id);}
+            }
+            exitSelectMode();
+            await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
+            showSnackbar(`Удалено ${deletedProducts.length} товаров`, async ()=>{
+                for(const p of deletedProducts){const cp={...p};delete cp.id;await db.add('products',cp);}
+                await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
+                deletedProducts=[];
+            });
+        }
 
         async function renderWarehouseCards(){
-            cwc=null;og=new Set();
+            cwc=null;og=new Set();selectMode=false;selectedIds=new Set();
             const ap=await db.all('products');
             const counts={};CATEGORIES.forEach(c=>counts[c]=ap.filter(p=>p.category===c).reduce((s,p)=>s+(p.quantity||0),0));
             document.getElementById('contentBody').innerHTML=`<h2 class="tab-title">Склад</h2><div class="warehouse-cards">${CATEGORIES.map(c=>`<div class="wh-card ${CATEGORY_CLASS[c]}" onclick="openWarehouseCategory('${c}')"><div class="wh-icon"><i class="bi ${CATEGORY_ICONS[c]}"></i></div><div class="wh-label">${CATEGORY_NAMES[c]}</div><div class="wh-count">${counts[c]} шт.</div></div>`).join('')}</div>`;
         }
-        async function openWarehouseCategory(c){cwc=c;og=new Set();await renderWarehouseTable(c);}
+        async function openWarehouseCategory(c){cwc=c;og=new Set();selectMode=false;selectedIds=new Set();await renderWarehouseTable(c);}
 
         function groupProducts(products,groupBy){
             if(groupBy.length===0)return{'_root':products};
@@ -321,12 +379,8 @@
             const isLastLevel=(level+1>=groupBy.length);
             entries.forEach(([key,items])=>{
                 const fi=items[0];
-                // СОБИРАЕМ КЛЮЧИ НАПРЯМУЮ ИЗ ПОЛЕЙ ТОВАРА
                 const currentLevelKeys=[];
-                for(let i=0;i<=level;i++){
-                    const fieldName=groupBy[i];
-                    currentLevelKeys.push(norm(fi[fieldName]));
-                }
+                for(let i=0;i<=level;i++){const fieldName=groupBy[i];currentLevelKeys.push(norm(fi[fieldName]));}
                 const gid=getGroupId(cat,level,currentLevelKeys);
                 const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;
                 const label=rl||currentLevelKeys[level];
@@ -344,12 +398,14 @@
                     h+=buildAccordionHTML(sg,groupBy,level+1,cat,currentLevelKeys);
                 }else{
                     const cols=CATEGORY_TABLE_COLS[cwc];
-                    h+=`<div class="table-header-row">${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
+                    h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
                     items.forEach(item=>{
-                        h+=`<div class="product-row" ondblclick="editProduct(${item.id})">`;
+                        h+=`<div class="product-row-wrapper"><div class="swipe-delete-bg"><i class="bi bi-trash"></i> Удалить</div>`;
+                        h+=`<div class="product-row" data-pid="${item.id}" ondblclick="if(!selectMode)editProduct(${item.id})">`;
+                        h+=`<div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="toggleSelectProduct(${item.id})" onclick="event.stopPropagation()"></div>`;
                         cols.forEach(col=>{let v=item[col]||'';if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;});
                         h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div>`;
-                        h+=`</div>`;
+                        h+=`</div></div>`;
                     });
                 }
                 h+=`</div></div>`;
@@ -358,8 +414,7 @@
         }
 
         window.toggleAcc=function(gid){
-            const body=document.getElementById(gid);
-            if(!body)return;
+            const body=document.getElementById(gid);if(!body)return;
             const hdr=document.getElementById('hdr_'+gid);
             if(!hdr)return;
             if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}
@@ -368,32 +423,96 @@
 
         function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
 
+        function setupSwipeAndLongPress() {
+            document.querySelectorAll('.product-row').forEach(row => {
+                let startX=0,startY=0,swiped=false,longPressTimer=null;
+                const wrapper=row.parentElement;
+                const bg=wrapper.querySelector('.swipe-delete-bg');
+
+                row.addEventListener('touchstart',e=>{
+                    startX=e.touches[0].clientX;startY=e.touches[0].clientY;swiped=false;
+                    longPressTimer=setTimeout(()=>{if(!selectMode){enterSelectMode();toggleSelectProduct(parseInt(row.dataset.pid));swiped=true;row.style.transform='translateX(0)';}},500);
+                },{passive:false});
+
+                row.addEventListener('touchmove',e=>{
+                    clearTimeout(longPressTimer);
+                    const dx=e.touches[0].clientX-startX;
+                    const dy=e.touches[0].clientY-startY;
+                    if(Math.abs(dx)>Math.abs(dy)&&dx<0&&!selectMode){
+                        e.preventDefault();
+                        swiped=true;
+                        const maxSwipe=wrapper.offsetWidth*0.5;
+                        const tx=Math.max(-maxSwipe,dx);
+                        row.style.transition='none';
+                        row.style.transform=`translateX(${tx}px)`;
+                        if(bg)bg.style.opacity=Math.abs(tx)/maxSwipe;
+                    }
+                },{passive:false});
+
+                row.addEventListener('touchend',async e=>{
+                    clearTimeout(longPressTimer);
+                    if(swiped&&!selectMode){
+                        const dx=(e.changedTouches[0]?.clientX||startX)-startX;
+                        const threshold=wrapper.offsetWidth*0.5;
+                        if(Math.abs(dx)>threshold){
+                            const pid=parseInt(row.dataset.pid);
+                            const p=await db.g('products',pid);
+                            if(p){deletedProducts=[p];await db.del('products',pid);}
+                            await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
+                            showSnackbar(`Удалён 1 товар`,async()=>{
+                                for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}
+                                await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
+                                deletedProducts=[];
+                            });
+                        }else{
+                            row.style.transition='transform 0.2s ease';
+                            row.style.transform='translateX(0)';
+                            if(bg)bg.style.opacity='0';
+                        }
+                    }
+                    swiped=false;
+                });
+
+                row.addEventListener('click',e=>{
+                    if(selectMode&&!e.target.classList.contains('select-checkbox')){
+                        toggleSelectProduct(parseInt(row.dataset.pid));
+                    }
+                });
+            });
+        }
+
         async function renderWarehouseTable(cat,sq=''){
             cwc=cat;const ap=await db.all('products');let pr=ap.filter(p=>p.category===cat);
             if(sq){const q=sq.toLowerCase();const cols=CATEGORY_TABLE_COLS[cat];const ac=[...cols,'manufacturer','lineup'];pr=pr.filter(p=>ac.some(c=>(p[c]||'').toString().toLowerCase().includes(q)));og=new Set();}
             const gb=CATEGORY_GROUPS[cat];const g=groupProducts(pr,gb);
-            document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><button class="wh-add-btn" onclick="showAddProductModal()">+</button></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;
-            setTimeout(()=>{if(og.size>0){restoreOpenGroups();}else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');og.add(gid);}}},50);
+            document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><div class="wh-header-left"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span></div><div class="wh-header-actions"><button class="wh-cancel-select-btn" onclick="exitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;
+            setTimeout(()=>{
+                if(og.size>0){restoreOpenGroups();}else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');og.add(gid);}}
+                if(selectMode)updateSelectUI();
+                setupSwipeAndLongPress();
+            },50);
         }
         function onSearch(v){renderWarehouseTable(cwc,v);}
 
         async function copyProduct(pid){
             const p=await db.g('products',pid);if(!p)return;
-            const cp={...p};delete cp.id;await db.add('products',cp);
+            const cp={...p};delete cp.id;const newId=await db.add('products',cp);
             await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
+            setTimeout(()=>{
+                const row=document.querySelector(`.product-row[data-pid="${newId}"]`);
+                if(row)row.classList.add('pop-anim');
+            },100);
         }
 
         // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ ============
         document.addEventListener('click',function(e){
             const btn=e.target.closest('.group-edit-btn');
             if(!btn)return;
-            e.stopPropagation();
-            e.preventDefault();
+            e.stopPropagation();e.preventDefault();
             const cat=btn.getAttribute('data-cat');
             const keysStr=btn.getAttribute('data-keys');
             if(!cat||!keysStr)return;
-            const keys=keysStr.split('|||');
-            showGroupEditModal(cat,keys);
+            showGroupEditModal(cat,keysStr.split('|||'));
         });
 
         async function showGroupEditModal(cat,currentKeys){
@@ -421,11 +540,7 @@
             const ap=await db.all('products');
             const cp=ap.filter(p=>p.category===cat);
             const filtered=cp.filter(p=>ks.every((key,idx)=>norm(p[gb[idx]])===key));
-            for(const p of filtered){
-                if(pv!=='')p.purchase=parseInt(pv)||0;
-                if(sv!=='')p.selling=parseInt(sv)||0;
-                await db.pu('products',p);
-            }
+            for(const p of filtered){if(pv!=='')p.purchase=parseInt(pv)||0;if(sv!=='')p.selling=parseInt(sv)||0;await db.pu('products',p);}
             closeModal();
             await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');
         }
@@ -440,8 +555,10 @@
             const p={category:cat,manufacturer:document.getElementById('prod_manufacturer').value.trim(),lineup:document.getElementById('prod_lineup').value.trim(),quantity:parseInt(document.getElementById('prod_quantity').value)||0,purchase:parseInt(document.getElementById('prod_purchase').value)||0,selling:parseInt(document.getElementById('prod_selling').value)||0};
             ex.forEach(ext=>p[ext.key]=document.getElementById('prod_'+ext.key).value.trim());
             if(!p.manufacturer){alert('Введите производителя');return;}
-            if(id){p.id=parseInt(id);await db.pu('products',p);}else{await db.add('products',p);}
+            const isNew=!id;
+            if(id){p.id=parseInt(id);await db.pu('products',p);}else{const newId=await db.add('products',p);p.id=newId;}
             closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');
+            if(isNew){setTimeout(()=>{const row=document.querySelector(`.product-row[data-pid="${p.id}"]`);if(row)row.classList.add('pop-anim');},100);}
         }
         function showAddProductModal(){const cat=cwc;const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';showModal('Добавить товар','bi '+CATEGORY_ICONS[cat],color,getProductFormHTML(),`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`);}
         async function editProduct(pid){const p=await db.g('products',pid);if(!p)return;cwc=p.category;const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[p.category]).trim()||'var(--accent)';showModal('Редактировать товар','bi '+CATEGORY_ICONS[p.category],color,getProductFormHTML(p),`<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`);}
@@ -469,4 +586,4 @@
         document.addEventListener('DOMContentLoaded',init);
     </script>
 </body>
-</html> 
+</html>
