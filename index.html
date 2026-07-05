@@ -135,11 +135,20 @@
         .accordion-header {
             display: flex; align-items: center; justify-content: space-between;
             padding: 14px 15px; background: var(--bg-primary); border-radius: 10px;
-            cursor: pointer; font-weight: 600; font-size: 14px; min-height: 48px;
+            font-weight: 600; font-size: 14px; min-height: 48px;
+            cursor: default;
         }
-        .accordion-header-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
-        .accordion-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .accordion-header .accordion-arrow { transition: transform 0.3s ease; font-size: 13px; pointer-events: none; }
+        .accordion-header-left {
+            display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+            cursor: pointer;
+        }
+        .accordion-header-actions {
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+        }
+        .accordion-header .accordion-arrow {
+            transition: transform 0.3s ease; font-size: 13px;
+            cursor: pointer;
+        }
         .accordion-header.open .accordion-arrow { transform: rotate(180deg); }
         .accordion-body { display: none; padding: 5px 0; }
         .accordion-body.open { display: block; }
@@ -205,10 +214,24 @@
     <div id="modalContainer"></div>
 
     <script>
+        // ============ БАЗА ДАННЫХ ============
         const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 15;
         class Database {
             constructor() { this.db = null; }
-            async init() { return new Promise((resolve, reject) => { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onerror = () => reject(r.error); r.onsuccess = () => { this.db = r.result; resolve(); }; r.onupgradeneeded = (e) => { const d = e.target.result; if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' }); if (!d.objectStoreNames.contains('sales')) { const s = d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }); s.createIndex('date', 'date', { unique: false }); } if (!d.objectStoreNames.contains('products')) { const p = d.createObjectStore('products', { keyPath: 'id', autoIncrement: true }); p.createIndex('category', 'category', { unique: false }); } if (!d.objectStoreNames.contains('clients')) d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true }); }; }); }
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const r = indexedDB.open(DB_NAME, DB_VERSION);
+                    r.onerror = () => reject(r.error);
+                    r.onsuccess = () => { this.db = r.result; resolve(); };
+                    r.onupgradeneeded = (e) => {
+                        const d = e.target.result;
+                        if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' });
+                        if (!d.objectStoreNames.contains('sales')) { const s = d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }); s.createIndex('date', 'date', { unique: false }); }
+                        if (!d.objectStoreNames.contains('products')) { const p = d.createObjectStore('products', { keyPath: 'id', autoIncrement: true }); p.createIndex('category', 'category', { unique: false }); }
+                        if (!d.objectStoreNames.contains('clients')) d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true });
+                    };
+                });
+            }
             async g(s, k) { return this.p(this.db.transaction([s],'readonly').objectStore(s).get(k)); }
             async pu(s, d) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).put(d)); }
             async all(s) { return this.p(this.db.transaction([s],'readonly').objectStore(s).getAll()); }
@@ -218,45 +241,77 @@
         }
         const db = new Database();
 
+        // ============ КОНСТАНТЫ ============
         const CATEGORIES = ['liquid','supplies','pods','disposable','snus'];
         const CATEGORY_NAMES = {'liquid':'Жидкости','supplies':'Расходники','pods':'Поды','disposable':'Одноразки','snus':'Снюс'};
         const CATEGORY_ICONS = {'liquid':'bi-droplet','supplies':'bi-tools','pods':'bi-usb-plug','disposable':'bi-phone','snus':'bi-box2'};
         const CATEGORY_CLASS = {'liquid':'liquid','supplies':'supplies','pods':'pods','disposable':'disposable','snus':'snus'};
-        const CATEGORY_EXTRA_FIELDS = {'liquid':[{key:'flavor',label:'Вкус'}],'supplies':[],'pods':[{key:'color',label:'Цвет'}],'disposable':[{key:'flavor',label:'Вкус'}],'snus':[{key:'flavor',label:'Вкус'}]};
-        const CATEGORY_TABLE_COLS = {'liquid':['flavor','quantity','purchase','selling'],'supplies':['lineup','quantity','purchase','selling'],'pods':['color','quantity','purchase','selling'],'disposable':['flavor','quantity','purchase','selling'],'snus':['flavor','quantity','purchase','selling']};
+        const CATEGORY_EXTRA_FIELDS = {
+            'liquid':[{key:'flavor',label:'Вкус'}],'supplies':[],'pods':[{key:'color',label:'Цвет'}],
+            'disposable':[{key:'flavor',label:'Вкус'}],'snus':[{key:'flavor',label:'Вкус'}]
+        };
+        const CATEGORY_TABLE_COLS = {
+            'liquid':['flavor','quantity','purchase','selling'],
+            'supplies':['lineup','quantity','purchase','selling'],
+            'pods':['color','quantity','purchase','selling'],
+            'disposable':['flavor','quantity','purchase','selling'],
+            'snus':['flavor','quantity','purchase','selling']
+        };
         const COL_LABELS = {'manufacturer':'Производитель','lineup':'Линейка','flavor':'Вкус','color':'Цвет','quantity':'Кол-во','purchase':'Закупка','selling':'Продажа'};
-        const CATEGORY_GROUPS = {'liquid':['manufacturer','lineup'],'supplies':['manufacturer'],'pods':['manufacturer','lineup'],'disposable':['manufacturer','lineup'],'snus':['manufacturer','lineup']};
+        const CATEGORY_GROUPS = {
+            'liquid':['manufacturer','lineup'],'supplies':['manufacturer'],'pods':['manufacturer','lineup'],
+            'disposable':['manufacturer','lineup'],'snus':['manufacturer','lineup']
+        };
         function norm(s) { return (s||'').trim().toUpperCase(); }
 
+        // ============ ТЕМЫ ============
         const themes = ['dark','light','pink'];
         const themeNames = {'dark':'Тёмная тема','light':'Светлая тема','pink':'Розовая тема'};
         let cti = 0;
         async function toggleTheme() { cti = (cti+1)%themes.length; document.documentElement.setAttribute('data-theme',themes[cti]); document.getElementById('themeName').textContent=themeNames[themes[cti]]; try{await db.pu('settings',{key:'theme',value:themes[cti]});}catch(e){} }
         async function loadTheme() { try{const s=await db.g('settings','theme');if(s){document.documentElement.setAttribute('data-theme',s.value);cti=themes.indexOf(s.value);document.getElementById('themeName').textContent=themeNames[s.value];}}catch(e){} }
 
+        // ============ САЙДБАР ============
         function openSidebar() { document.getElementById('sidebar').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); }
         function closeSidebarOutside(e) { if(e.target===document.getElementById('sidebar'))closeSidebar(); }
+
+        // ============ ФОРМАТИРОВАНИЕ ============
         function fn(n) { if(!n&&n!==0)return'0';return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
         function fp(p) { if(p===null||p===undefined)return null;return`${p>=0?'+':''}${p.toFixed(1)}%`; }
-        function showModal(title,icon,color,body,footer) { document.getElementById('modalContainer').innerHTML=`<div class="modal-overlay" onclick="closeModal(event)"><div class="modal-dialog-custom" onclick="event.stopPropagation()"><div class="modal-header-custom"><i class="${icon}" style="color:${color};font-size:22px;"></i><h3 style="color:${color};font-size:18px;font-weight:700;margin:0;">${title}</h3></div><div class="modal-body-custom">${body}</div>${footer?`<div class="modal-footer-custom">${footer}</div>`:''}</div></div>`; }
+
+        // ============ МОДАЛЬНЫЕ ОКНА ============
+        function showModal(title,icon,color,body,footer) {
+            document.getElementById('modalContainer').innerHTML=`<div class="modal-overlay" onclick="closeModal(event)"><div class="modal-dialog-custom" onclick="event.stopPropagation()"><div class="modal-header-custom"><i class="${icon}" style="color:${color};font-size:22px;"></i><h3 style="color:${color};font-size:18px;font-weight:700;margin:0;">${title}</h3></div><div class="modal-body-custom">${body}</div>${footer?`<div class="modal-footer-custom">${footer}</div>`:''}</div></div>`;
+        }
         function closeModal(event) { if(!event||event.target.classList.contains('modal-overlay'))document.getElementById('modalContainer').innerHTML=''; }
 
-        // Статистика
+        // ============ СТАТИСТИКА ============
         let cp='today',ccm='sum',csd=null,ced=null;
         function getDateRange(p){const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];let s,e,ps,pe;switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}return{s,e,ps,pe};}
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
         function gdd(s,e){return Math.ceil((new Date(e)-new Date(s))/86400000)+1;}
+        function getDailyData(sales,s,e){const sm=gdd(s,e)>31,m=new Map();sales.forEach(x=>{const d=new Date(x.date),k=sm?`${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear().toString().slice(2)}`:`${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`;m.set(k,(m.get(k)||0)+(x.profit||0));});return[...m.keys()].sort((a,b)=>{const[pa,pb]=[a.split('.'),b.split('.')];return sm?(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]):(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}).map(k=>({label:k,value:m.get(k)}));}
+        function getCategoryData(sales,mode){const map={};CATEGORIES.forEach(c=>map[c]=0);sales.forEach(x=>{if(map[x.category]!==undefined)map[x.category]+=(mode==='sum'?(x.profit||0):1);});return CATEGORIES.map(c=>({category:c,name:CATEGORY_NAMES[c],value:map[c]}));}
         function ssd(p,s,e){if(p==='today')return false;if(p==='custom')return gdd(s,e)>=2;return true;}
 
         async function renderStatistics(period){
             cp=period;const{s,e,ps,pe}=getDateRange(period);const sales=await getSalesInRange2(s,e),prevSales=(ps&&pe)?await getSalesInRange2(ps,pe):[];
             const rev=sales.reduce((s,x)=>s+(x.total||0),0),prof=sales.reduce((s,x)=>s+(x.profit||0),0),cnt=sales.length;
             const pRev=prevSales.reduce((s,x)=>s+(x.total||0),0),pProf=prevSales.reduce((s,x)=>s+(x.profit||0),0),pCnt=prevSales.length;
-            document.getElementById('contentBody').innerHTML=`<div class="stats-header"><h2 class="tab-title">Статистика</h2><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div>
-            <div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fn(rev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}">${fp((rev-pRev)/pRev*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fn(prof)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}">${fp((prof-pProf)/pProf*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value">${fn(cnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div></div>
-            <div class="summary-row"><div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">0₽</div></div><div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value">0₽</div></div><div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">0 чел.</div></div><div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">0 чел.</div></div></div>`;
+            const sd=ssd(period,s,e);const dd=sd?getDailyData(sales,s,e):[],cd=getCategoryData(sales,ccm);
+            const md=Math.max(...dd.map(d=>d.value),1),mc=Math.max(...cd.map(d=>d.value),1);
+            document.getElementById('contentBody').innerHTML=
+                `<div class="stats-header"><h2 class="tab-title">Статистика</h2><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div>
+                <div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fn(rev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}">${fp((rev-pRev)/pRev*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fn(prof)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}">${fp((prof-pProf)/pProf*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value">${fn(cnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div></div>
+                <div class="summary-row"><div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">0₽</div></div><div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value">0₽</div></div><div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">0 чел.</div></div><div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">0 чел.</div></div></div>
+                <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>{const h=mc>0?(d.value/mc*100):0;return`<div class="category-column"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill cat-${d.category}" style="height:${h}%;" data-height="${h}"></div><div class="category-label">${d.name}</div></div>`;}).join('')}</div></div>
+                ${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> Продажи по дням</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>{const h=md>0?(d.value/md*100):0;return`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill" style="height:${h}%;" data-height="${h}"></div><div class="bar-label">${d.label}</div></div>`;}).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}
+                ${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`:''}`;
+            setTimeout(()=>document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(b=>{const h=b.getAttribute('data-height');b.style.height='0%';setTimeout(()=>b.style.height=h+'%',50);}),100);
         }
+        async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
+        function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
         function showBookingModal(){showModal('Бронь','bi bi-calendar-check','var(--green)','<p class="text-muted py-4 text-center">Список забронированных товаров</p>','');}
         function showDebtModal(){showModal('Долг','bi bi-cash-coin','var(--red)','<p class="text-muted py-4 text-center">Список должников</p>','');}
         function showNewClientsModal(){showModal('Новые клиенты','bi bi-person-plus','var(--accent)','<p class="text-muted py-4 text-center">Список новых клиентов</p>','');}
@@ -277,25 +332,26 @@
             if(groupBy.length===0)return{'_root':products};
             const g={};products.forEach(p=>{const k=groupBy.map(g=>norm(p[g])).join('|||');if(!g[k])g[k]=[];g[k].push(p);});return g;
         }
+        function getGroupId(cat,level,keys){return['grp',cat,...keys.slice(0,level+1)].join('_');}
 
         function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){
             if(level>=groupBy.length)return'';
             let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));
             const isLastLevel=(level+1>=groupBy.length);
             entries.forEach(([key,items])=>{
-                // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: key уже содержит полный путь типа "HUSKY|||ICECREAM"
-                // Разбиваем его на массив отдельных ключей
-                const fullKeys=key.split('|||');
-                const gid='grp_'+cat+'_'+fullKeys.join('_');
+                const fullKeys=[...parentKeys,key];
+                const gid=getGroupId(cat,level,fullKeys);
                 const fi=items[0];
                 const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;
-                const label=rl||fullKeys[level];
+                const label=rl||key;
                 const tab=level>0?'&emsp;&emsp;':'';
-                // data-keys = нормализованный полный путь (уже из key)
                 const ks=fullKeys.join('|||');
                 const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';
                 h+=`<div class="accordion-group">`;
-                h+=`<div class="accordion-header" onclick="window.toggleAcc('${gid}')"><span class="accordion-header-left">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow"></i></div></div>`;
+                h+=`<div class="accordion-header" id="hdr_${gid}">`;
+                h+=`<span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span>`;
+                h+=`<div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div>`;
+                h+=`</div>`;
                 h+=`<div class="accordion-body" id="${gid}">`;
                 if(!isLastLevel){
                     const sg={};items.forEach(item=>{const sk=groupBy.slice(0,level+2).map(g=>norm(item[g])).join('|||');if(!sg[sk])sg[sk]=[];sg[sk].push(item);});
@@ -303,32 +359,50 @@
                 }else{
                     const cols=CATEGORY_TABLE_COLS[cwc];
                     h+=`<div class="table-header-row">${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
-                    items.forEach(item=>{h+=`<div class="product-row" ondblclick="editProduct(${item.id})">`;cols.forEach(col=>{let v=item[col]||'';if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;});h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div>`;});
+                    items.forEach(item=>{
+                        h+=`<div class="product-row" ondblclick="editProduct(${item.id})">`;
+                        cols.forEach(col=>{let v=item[col]||'';if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;});
+                        h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div>`;
+                        h+=`</div>`;
+                    });
                 }
                 h+=`</div></div>`;
             });
             return h;
         }
 
-        window.toggleAcc=function(gid){const body=document.getElementById(gid);if(!body)return;const hdr=body.previousElementSibling;if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}else{body.classList.add('open');hdr.classList.add('open');og.add(gid);}};
-        function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');b.previousElementSibling.classList.add('open');}});}
+        window.toggleAcc=function(gid){
+            const body=document.getElementById(gid);
+            if(!body)return;
+            const hdr=document.getElementById('hdr_'+gid);
+            if(!hdr)return;
+            if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}
+            else{body.classList.add('open');hdr.classList.add('open');og.add(gid);}
+        };
+
+        function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
 
         async function renderWarehouseTable(cat,sq=''){
             cwc=cat;const ap=await db.all('products');let pr=ap.filter(p=>p.category===cat);
             if(sq){const q=sq.toLowerCase();const cols=CATEGORY_TABLE_COLS[cat];const ac=[...cols,'manufacturer','lineup'];pr=pr.filter(p=>ac.some(c=>(p[c]||'').toString().toLowerCase().includes(q)));og=new Set();}
             const gb=CATEGORY_GROUPS[cat];const g=groupProducts(pr,gb);
             document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><button class="wh-add-btn" onclick="showAddProductModal()">+</button></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;
-            setTimeout(()=>{if(og.size>0){restoreOpenGroups();}else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');bodies[0].previousElementSibling.classList.add('open');og.add(gid);}}},50);
+            setTimeout(()=>{if(og.size>0){restoreOpenGroups();}else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');og.add(gid);}}},50);
         }
         function onSearch(v){renderWarehouseTable(cwc,v);}
 
-        async function copyProduct(pid){const p=await db.g('products',pid);if(!p)return;const cp={...p};delete cp.id;await db.add('products',cp);await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');}
+        async function copyProduct(pid){
+            const p=await db.g('products',pid);if(!p)return;
+            const cp={...p};delete cp.id;await db.add('products',cp);
+            await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
+        }
 
         // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ ============
         document.addEventListener('click',function(e){
             const btn=e.target.closest('.group-edit-btn');
             if(!btn)return;
-            e.stopPropagation();e.preventDefault();
+            e.stopPropagation();
+            e.preventDefault();
             const cat=btn.getAttribute('data-cat');
             const keysStr=btn.getAttribute('data-keys');
             if(!cat||!keysStr)return;
@@ -340,12 +414,16 @@
             const gb=CATEGORY_GROUPS[cat];
             const ap=await db.all('products');
             const cp=ap.filter(p=>p.category===cat);
-            // currentKeys уже нормализованные из data-keys
             const filtered=cp.filter(p=>currentKeys.every((key,idx)=>norm(p[gb[idx]])===key));
             if(filtered.length===0){alert('Нет товаров в группе');return;}
             const gl=currentKeys.join(' → ');
             const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';
-            showModal('Изменить цены','bi bi-tags',color,`<p class="text-muted mb-3">Группа: <strong>${gl}</strong> (${filtered.length} шт.)</p><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="grp_purchase" placeholder="Не менять"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="grp_selling" placeholder="Не менять"></div><input type="hidden" id="grp_cat" value="${cat}"><input type="hidden" id="grp_keys" value="${currentKeys.join('|||')}">`,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveGroupEdit()">Применить</button>`);
+            showModal('Изменить цены','bi bi-tags',color,
+                `<p class="text-muted mb-3">Группа: <strong>${gl}</strong> (${filtered.length} шт.)</p>
+                <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="grp_purchase" placeholder="Не менять"></div>
+                <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="grp_selling" placeholder="Не менять"></div>
+                <input type="hidden" id="grp_cat" value="${cat}"><input type="hidden" id="grp_keys" value="${currentKeys.join('|||')}">`,
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveGroupEdit()">Применить</button>`);
         }
 
         async function saveGroupEdit(){
@@ -357,26 +435,56 @@
             const ap=await db.all('products');
             const cp=ap.filter(p=>p.category===cat);
             const filtered=cp.filter(p=>ks.every((key,idx)=>norm(p[gb[idx]])===key));
-            for(const p of filtered){if(pv!=='')p.purchase=parseInt(pv)||0;if(sv!=='')p.selling=parseInt(sv)||0;await db.pu('products',p);}
-            closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');
+            for(const p of filtered){
+                if(pv!=='')p.purchase=parseInt(pv)||0;
+                if(sv!=='')p.selling=parseInt(sv)||0;
+                await db.pu('products',p);
+            }
+            closeModal();
+            await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');
         }
 
         // ============ ФОРМЫ ТОВАРА ============
-        function getProductFormHTML(product=null){const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];return`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${product?.manufacturer||''}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${product?.lineup||''}"></div>${ex.map(ext=>`<div class="form-group"><label class="form-label">${ext.label}</label><input type="text" class="form-input" id="prod_${ext.key}" value="${product?.[ext.key]||''}"></div>`).join('')}<div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="prod_quantity" value="${product?.quantity||0}" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value="${product?.purchase||''}"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value="${product?.selling||''}"></div><input type="hidden" id="prod_id" value="${product?.id||''}">`;}
-        async function saveProduct(){const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];const id=document.getElementById('prod_id').value;const p={category:cat,manufacturer:document.getElementById('prod_manufacturer').value.trim(),lineup:document.getElementById('prod_lineup').value.trim(),quantity:parseInt(document.getElementById('prod_quantity').value)||0,purchase:parseInt(document.getElementById('prod_purchase').value)||0,selling:parseInt(document.getElementById('prod_selling').value)||0};ex.forEach(ext=>p[ext.key]=document.getElementById('prod_'+ext.key).value.trim());if(!p.manufacturer){alert('Введите производителя');return;}if(id){p.id=parseInt(id);await db.pu('products',p);}else{await db.add('products',p);}closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');}
+        function getProductFormHTML(product=null){
+            const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];
+            return`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${product?.manufacturer||''}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${product?.lineup||''}"></div>${ex.map(ext=>`<div class="form-group"><label class="form-label">${ext.label}</label><input type="text" class="form-input" id="prod_${ext.key}" value="${product?.[ext.key]||''}"></div>`).join('')}<div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="prod_quantity" value="${product?.quantity||0}" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value="${product?.purchase||''}"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value="${product?.selling||''}"></div><input type="hidden" id="prod_id" value="${product?.id||''}">`;
+        }
+
+        async function saveProduct(){
+            const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];const id=document.getElementById('prod_id').value;
+            const p={category:cat,manufacturer:document.getElementById('prod_manufacturer').value.trim(),lineup:document.getElementById('prod_lineup').value.trim(),quantity:parseInt(document.getElementById('prod_quantity').value)||0,purchase:parseInt(document.getElementById('prod_purchase').value)||0,selling:parseInt(document.getElementById('prod_selling').value)||0};
+            ex.forEach(ext=>p[ext.key]=document.getElementById('prod_'+ext.key).value.trim());
+            if(!p.manufacturer){alert('Введите производителя');return;}
+            if(id){p.id=parseInt(id);await db.pu('products',p);}else{await db.add('products',p);}
+            closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');
+        }
         function showAddProductModal(){const cat=cwc;const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';showModal('Добавить товар','bi '+CATEGORY_ICONS[cat],color,getProductFormHTML(),`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`);}
         async function editProduct(pid){const p=await db.g('products',pid);if(!p)return;cwc=p.category;const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[p.category]).trim()||'var(--accent)';showModal('Редактировать товар','bi '+CATEGORY_ICONS[p.category],color,getProductFormHTML(p),`<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`);}
         async function deleteProduct(pid){if(!confirm('Удалить товар?'))return;await db.del('products',pid);closeModal();await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');}
 
         // ============ ВКЛАДКИ ============
-        async function switchTab(tab){document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));const body=document.getElementById('contentBody');body.style.opacity='0';body.style.transform='translateY(20px)';setTimeout(async()=>{if(tab==='statistics')await renderStatistics(cp);else if(tab==='warehouse')await renderWarehouseCards();else body.innerHTML=`<h2 class="tab-title">${tab==='sales'?'Продажи':'Клиенты'}</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;body.style.opacity='1';body.style.transform='';},200);if(innerWidth<768)closeSidebar();}
+        async function switchTab(tab){
+            document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));
+            const body=document.getElementById('contentBody');body.style.opacity='0';body.style.transform='translateY(20px)';
+            setTimeout(async()=>{if(tab==='statistics')await renderStatistics(cp);else if(tab==='warehouse')await renderWarehouseCards();else body.innerHTML=`<h2 class="tab-title">${tab==='sales'?'Продажи':'Клиенты'}</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;body.style.opacity='1';body.style.transform='';},200);
+            if(innerWidth<768)closeSidebar();
+        }
 
         // ============ PULL-TO-REFRESH ============
         let pd=0;
-        document.addEventListener('DOMContentLoaded',()=>{const mc=document.getElementById('mainContent');let sy=0;mc.addEventListener('touchstart',e=>{if(!window.scrollY)sy=e.touches[0].clientY;});mc.addEventListener('touchmove',e=>{if(!window.scrollY){pd=e.touches[0].clientY-sy;if(pd>0)document.body.style.transform=`translateY(${pd*0.3}px)`;}});mc.addEventListener('touchend',async()=>{if(pd>80&&!window.scrollY){document.body.style.transition='transform .3s';document.body.style.transform='';const t=document.createElement('div');t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 20px;border-radius:20px;z-index:9999;font-size:14px;';t.innerHTML='<i class="bi bi-arrow-repeat spinner"></i> Обновляем...';document.body.appendChild(t);if(cwc)await renderWarehouseTable(cwc);else await renderWarehouseCards();setTimeout(()=>t.remove(),1000);}else document.body.style.transform='';pd=0;});});
+        document.addEventListener('DOMContentLoaded',()=>{
+            const mc=document.getElementById('mainContent');let sy=0;
+            mc.addEventListener('touchstart',e=>{if(!window.scrollY)sy=e.touches[0].clientY;});
+            mc.addEventListener('touchmove',e=>{if(!window.scrollY){pd=e.touches[0].clientY-sy;if(pd>0)document.body.style.transform=`translateY(${pd*0.3}px)`;}});
+            mc.addEventListener('touchend',async()=>{if(pd>80&&!window.scrollY){document.body.style.transition='transform .3s';document.body.style.transform='';const t=document.createElement('div');t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 20px;border-radius:20px;z-index:9999;font-size:14px;';t.innerHTML='<i class="bi bi-arrow-repeat spinner"></i> Обновляем...';document.body.appendChild(t);if(cwc)await renderWarehouseTable(cwc);else await renderWarehouseCards();setTimeout(()=>t.remove(),1000);}else document.body.style.transform='';pd=0;});
+        });
 
+        // ============ ИНИТ ============
         async function init(){try{await db.init();await loadTheme();await renderWarehouseCards();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');console.log('✅ Crazy Rabbit готов!');}catch(e){console.error(e);}}
-        let tx=0;document.getElementById('sidebar').addEventListener('touchstart',e=>tx=e.touches[0].clientX);document.getElementById('sidebar').addEventListener('touchend',e=>{if(tx-e.changedTouches[0].clientX>100)closeSidebar();});document.addEventListener('DOMContentLoaded',init);
+        let tx=0;
+        document.getElementById('sidebar').addEventListener('touchstart',e=>tx=e.touches[0].clientX);
+        document.getElementById('sidebar').addEventListener('touchend',e=>{if(tx-e.changedTouches[0].clientX>100)closeSidebar();});
+        document.addEventListener('DOMContentLoaded',init);
     </script>
 </body>
 </html>
