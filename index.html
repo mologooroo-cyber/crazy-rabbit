@@ -8,7 +8,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Crazy Rabbit</title>
     
-    <!-- Bootstrap 5.3 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
@@ -87,7 +86,6 @@
             padding: 0;
         }
 
-        /* Кнопка меню */
         .menu-toggle-btn {
             position: fixed;
             top: 15px;
@@ -112,7 +110,6 @@
             transform: scale(0.95);
         }
 
-        /* Сайдбар */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -263,13 +260,12 @@
             transform: scale(0.97);
         }
 
-        /* Основной контент */
         .main-content {
             padding: 75px 12px 20px;
             min-height: 100vh;
         }
 
-        /* Шапка статистики */
+        /* Шапка */
         .stats-header {
             display: flex;
             align-items: center;
@@ -321,7 +317,7 @@
             transform: scale(0.9);
         }
 
-        /* Карточки статистики */
+        /* Карточки */
         .stats-cards {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -354,7 +350,6 @@
         .stat-card .stat-value {
             font-size: 20px;
             font-weight: 700;
-            color: var(--text-primary);
             margin-bottom: 5px;
         }
 
@@ -371,7 +366,83 @@
             color: var(--red);
         }
 
-        /* Блоки с графиками */
+        /* Сводка */
+        .summary-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 12px 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .summary-item .summary-icon {
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+
+        .summary-item .summary-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .summary-item .summary-value {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .summary-item .summary-percent {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .summary-item.booking {
+            color: var(--green);
+        }
+        .summary-item.booking .summary-icon,
+        .summary-item.booking .summary-label,
+        .summary-item.booking .summary-value {
+            color: var(--green);
+        }
+
+        .summary-item.debt {
+            color: var(--red);
+        }
+        .summary-item.debt .summary-icon,
+        .summary-item.debt .summary-label,
+        .summary-item.debt .summary-value {
+            color: var(--red);
+        }
+
+        .summary-item.new-clients .summary-icon,
+        .summary-item.new-clients .summary-label,
+        .summary-item.new-clients .summary-value {
+            color: var(--accent);
+        }
+        .summary-item.new-clients .summary-percent {
+            color: var(--green);
+        }
+
+        .summary-item.leaving-clients .summary-icon,
+        .summary-item.leaving-clients .summary-label,
+        .summary-item.leaving-clients .summary-value {
+            color: var(--accent);
+        }
+        .summary-item.leaving-clients .summary-percent {
+            color: var(--red);
+        }
+
+        /* Блоки графиков */
         .chart-block {
             background: var(--bg-card);
             border-radius: 15px;
@@ -380,11 +451,17 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
         .chart-title {
             font-size: 15px;
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -394,14 +471,43 @@
             color: var(--accent);
         }
 
-        /* График продаж по дням */
+        .chart-switch {
+            display: flex;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .switch-btn {
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .switch-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .switch-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* График по дням */
         .bar-chart {
             display: flex;
             align-items: flex-end;
             gap: 4px;
-            height: 220px;
+            height: 160px;
             padding-bottom: 30px;
-            position: relative;
             overflow-x: auto;
             overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
@@ -426,7 +532,6 @@
             align-items: center;
             min-width: 30px;
             flex-shrink: 0;
-            transition: all 0.3s ease;
         }
 
         .bar-value {
@@ -538,14 +643,8 @@
         }
 
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .content-body {
@@ -564,12 +663,10 @@
     </style>
 </head>
 <body>
-    <!-- Кнопка меню -->
     <button class="menu-toggle-btn" onclick="openSidebar()">
         <i class="bi bi-list"></i>
     </button>
 
-    <!-- Сайдбар -->
     <div class="sidebar-overlay" id="sidebar" onclick="closeSidebarOutside(event)">
         <div class="sidebar-content" onclick="event.stopPropagation()">
             <div class="sidebar-header">
@@ -578,44 +675,34 @@
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
-            
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" onclick="switchTab('statistics')" data-tab="statistics">
-                    <i class="bi bi-graph-up-arrow"></i>
-                    <span>Статистика</span>
+                    <i class="bi bi-graph-up-arrow"></i><span>Статистика</span>
                 </a>
                 <a href="#" class="nav-item" onclick="switchTab('warehouse')" data-tab="warehouse">
-                    <i class="bi bi-box-seam"></i>
-                    <span>Склад</span>
+                    <i class="bi bi-box-seam"></i><span>Склад</span>
                 </a>
                 <a href="#" class="nav-item" onclick="switchTab('sales')" data-tab="sales">
-                    <i class="bi bi-cart3"></i>
-                    <span>Продажи</span>
+                    <i class="bi bi-cart3"></i><span>Продажи</span>
                 </a>
                 <a href="#" class="nav-item" onclick="switchTab('clients')" data-tab="clients">
-                    <i class="bi bi-people"></i>
-                    <span>Клиенты</span>
+                    <i class="bi bi-people"></i><span>Клиенты</span>
                 </a>
             </nav>
-            
             <div class="sidebar-footer">
                 <div class="theme-indicator">
                     <span class="theme-dot"></span>
                     <span id="themeName">Тёмная тема</span>
                 </div>
                 <button class="theme-toggle-btn" onclick="toggleTheme()">
-                    <i class="bi bi-palette"></i>
-                    <span>Сменить тему</span>
+                    <i class="bi bi-palette"></i><span>Сменить тему</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Основной контент -->
     <main class="main-content" id="mainContent">
-        <div class="content-body" id="contentBody">
-            <!-- Динамический контент -->
-        </div>
+        <div class="content-body" id="contentBody"></div>
     </main>
 
     <script>
@@ -630,729 +717,473 @@
             async init() {
                 return new Promise((resolve, reject) => {
                     const request = indexedDB.open(this.dbName, this.dbVersion);
-
                     request.onerror = () => reject(request.error);
-                    request.onsuccess = () => {
-                        this.db = request.result;
-                        resolve();
-                    };
-
+                    request.onsuccess = () => { this.db = request.result; resolve(); };
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
-                        
-                        if (!db.objectStoreNames.contains('settings')) {
-                            db.createObjectStore('settings', { keyPath: 'key' });
-                        }
-                        
+                        if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
                         if (!db.objectStoreNames.contains('sales')) {
-                            const salesStore = db.createObjectStore('sales', { keyPath: 'id', autoIncrement: true });
-                            salesStore.createIndex('date', 'date', { unique: false });
+                            const s = db.createObjectStore('sales', { keyPath: 'id', autoIncrement: true });
+                            s.createIndex('date', 'date', { unique: false });
                         }
-                        
-                        if (!db.objectStoreNames.contains('products')) {
-                            db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
-                        }
-                        
-                        if (!db.objectStoreNames.contains('clients')) {
-                            db.createObjectStore('clients', { keyPath: 'id', autoIncrement: true });
-                        }
+                        if (!db.objectStoreNames.contains('products')) db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+                        if (!db.objectStoreNames.contains('clients')) db.createObjectStore('clients', { keyPath: 'id', autoIncrement: true });
                     };
                 });
             }
 
-            async get(storeName, key) {
+            async get(store, key) {
                 return new Promise((resolve, reject) => {
-                    const transaction = this.db.transaction([storeName], 'readonly');
-                    const store = transaction.objectStore(storeName);
-                    const request = store.get(key);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
+                    const tx = this.db.transaction([store], 'readonly');
+                    const req = tx.objectStore(store).get(key);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
                 });
             }
 
-            async put(storeName, data) {
+            async put(store, data) {
                 return new Promise((resolve, reject) => {
-                    const transaction = this.db.transaction([storeName], 'readwrite');
-                    const store = transaction.objectStore(storeName);
-                    const request = store.put(data);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
+                    const tx = this.db.transaction([store], 'readwrite');
+                    const req = tx.objectStore(store).put(data);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
                 });
             }
 
-            async getAll(storeName) {
+            async getAll(store) {
                 return new Promise((resolve, reject) => {
-                    const transaction = this.db.transaction([storeName], 'readonly');
-                    const store = transaction.objectStore(storeName);
-                    const request = store.getAll();
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
+                    const tx = this.db.transaction([store], 'readonly');
+                    const req = tx.objectStore(store).getAll();
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
                 });
             }
 
-            async getByDateRange(storeName, startDate, endDate) {
+            async getByDateRange(store, start, end) {
                 return new Promise((resolve, reject) => {
-                    const transaction = this.db.transaction([storeName], 'readonly');
-                    const store = transaction.objectStore(storeName);
-                    const index = store.index('date');
-                    const range = IDBKeyRange.bound(startDate, endDate);
-                    const request = index.getAll(range);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
+                    const tx = this.db.transaction([store], 'readonly');
+                    const index = tx.objectStore(store).index('date');
+                    const range = IDBKeyRange.bound(start, end);
+                    const req = index.getAll(range);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
                 });
             }
 
-            async add(storeName, data) {
+            async add(store, data) {
                 return new Promise((resolve, reject) => {
-                    const transaction = this.db.transaction([storeName], 'readwrite');
-                    const store = transaction.objectStore(storeName);
-                    const request = store.add(data);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
+                    const tx = this.db.transaction([store], 'readwrite');
+                    const req = tx.objectStore(store).add(data);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
                 });
             }
         }
 
         const db = new Database();
-
-        // ============ КОНСТАНТЫ ============
         const CATEGORIES = ['liquids', 'supplies', 'pods', 'disposable', 'snus'];
-        const CATEGORY_NAMES = {
-            'liquids': 'Жидкости',
-            'supplies': 'Расходники',
-            'pods': 'Поды',
-            'disposable': 'Одноразки',
-            'snus': 'Снюс'
-        };
+        const CATEGORY_NAMES = { 'liquids': 'Жидкости', 'supplies': 'Расходники', 'pods': 'Поды', 'disposable': 'Одноразки', 'snus': 'Снюс' };
 
-        // ============ УПРАВЛЕНИЕ ТЕМАМИ ============
+        // ============ ТЕМЫ ============
         const themes = ['dark', 'light', 'pink'];
-        const themeNames = {
-            'dark': 'Тёмная тема',
-            'light': 'Светлая тема',
-            'pink': 'Розовая тема'
-        };
-        
+        const themeNames = { 'dark': 'Тёмная тема', 'light': 'Светлая тема', 'pink': 'Розовая тема' };
         let currentThemeIndex = 0;
 
         async function toggleTheme() {
             currentThemeIndex = (currentThemeIndex + 1) % themes.length;
             const theme = themes[currentThemeIndex];
-            
             document.documentElement.setAttribute('data-theme', theme);
             document.getElementById('themeName').textContent = themeNames[theme];
-            
-            try {
-                await db.put('settings', { key: 'theme', value: theme });
-            } catch (e) {
-                console.error('Ошибка сохранения темы:', e);
-            }
+            try { await db.put('settings', { key: 'theme', value: theme }); } catch (e) {}
         }
 
         async function loadTheme() {
             try {
-                const settings = await db.get('settings', 'theme');
-                if (settings) {
-                    const theme = settings.value;
-                    document.documentElement.setAttribute('data-theme', theme);
-                    currentThemeIndex = themes.indexOf(theme);
-                    document.getElementById('themeName').textContent = themeNames[theme];
+                const s = await db.get('settings', 'theme');
+                if (s) {
+                    document.documentElement.setAttribute('data-theme', s.value);
+                    currentThemeIndex = themes.indexOf(s.value);
+                    document.getElementById('themeName').textContent = themeNames[s.value];
                 }
-            } catch (e) {
-                document.getElementById('themeName').textContent = 'Тёмная тема';
-            }
+            } catch (e) {}
         }
 
-        // ============ УПРАВЛЕНИЕ САЙДБАРОМ ============
-        function openSidebar() {
-            document.getElementById('sidebar').classList.add('active');
-        }
-
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('active');
-        }
-
-        function closeSidebarOutside(event) {
-            if (event.target === document.getElementById('sidebar')) {
-                closeSidebar();
-            }
-        }
+        // ============ САЙДБАР ============
+        function openSidebar() { document.getElementById('sidebar').classList.add('active'); }
+        function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); }
+        function closeSidebarOutside(e) { if (e.target === document.getElementById('sidebar')) closeSidebar(); }
 
         // ============ СТАТИСТИКА ============
         let currentPeriod = 'today';
+        let currentCategoryMode = 'sum'; // 'sum' или 'count'
         let customStartDate = null;
         let customEndDate = null;
 
         function getDateRange(period) {
             const now = new Date();
-            let startDate, endDate, prevStartDate, prevEndDate;
-            
-            const todayStr = now.toISOString().split('T')[0];
-            const yesterdayStr = new Date(now - 86400000).toISOString().split('T')[0];
-            
-            switch(period) {
+            const today = now.toISOString().split('T')[0];
+            const yesterday = new Date(now - 86400000).toISOString().split('T')[0];
+            let start, end, prevStart, prevEnd;
+
+            switch (period) {
                 case 'today':
-                    startDate = todayStr;
-                    endDate = todayStr;
-                    prevStartDate = yesterdayStr;
-                    prevEndDate = yesterdayStr;
-                    break;
-                    
+                    start = today; end = today; prevStart = yesterday; prevEnd = yesterday; break;
                 case 'week':
-                    const dayOfWeek = now.getDay();
-                    const monday = new Date(now);
-                    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-                    startDate = monday.toISOString().split('T')[0];
-                    endDate = todayStr;
-                    
-                    const prevMonday = new Date(monday);
-                    prevMonday.setDate(monday.getDate() - 7);
-                    const prevSunday = new Date(monday);
-                    prevSunday.setDate(monday.getDate() - 1);
-                    prevStartDate = prevMonday.toISOString().split('T')[0];
-                    prevEndDate = prevSunday.toISOString().split('T')[0];
-                    break;
-                    
+                    const dow = now.getDay();
+                    const mon = new Date(now); mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+                    start = mon.toISOString().split('T')[0]; end = today;
+                    const pMon = new Date(mon); pMon.setDate(mon.getDate() - 7);
+                    const pSun = new Date(mon); pSun.setDate(mon.getDate() - 1);
+                    prevStart = pMon.toISOString().split('T')[0]; prevEnd = pSun.toISOString().split('T')[0]; break;
                 case 'month':
-                    startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-                    endDate = todayStr;
-                    
-                    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                    const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-                    prevStartDate = prevMonth.toISOString().split('T')[0];
-                    prevEndDate = prevMonthEnd.toISOString().split('T')[0];
-                    break;
-                    
+                    start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]; end = today;
+                    const pm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    const pme = new Date(now.getFullYear(), now.getMonth(), 0);
+                    prevStart = pm.toISOString().split('T')[0]; prevEnd = pme.toISOString().split('T')[0]; break;
                 case 'all':
-                    startDate = '2020-01-01';
-                    endDate = todayStr;
-                    prevStartDate = null;
-                    prevEndDate = null;
-                    break;
-                    
+                    start = '2020-01-01'; end = today; prevStart = null; prevEnd = null; break;
                 case 'custom':
-                    startDate = customStartDate || todayStr;
-                    endDate = customEndDate || todayStr;
-                    prevStartDate = null;
-                    prevEndDate = null;
-                    break;
+                    start = customStartDate || today; end = customEndDate || today; prevStart = null; prevEnd = null; break;
             }
-            
-            return { startDate, endDate, prevStartDate, prevEndDate };
+            return { start, end, prevStart, prevEnd };
         }
 
-        async function getSalesInRange(startDate, endDate) {
-            try {
-                return await db.getByDateRange('sales', startDate, endDate);
-            } catch (e) {
-                const allSales = await db.getAll('sales');
-                return allSales.filter(s => s.date >= startDate && s.date <= endDate);
-            }
+        async function getSalesInRange(start, end) {
+            try { return await db.getByDateRange('sales', start, end); }
+            catch { const all = await db.getAll('sales'); return all.filter(s => s.date >= start && s.date <= end); }
         }
 
-        function getDaysDiff(startDate, endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        function getDaysDiff(start, end) {
+            return Math.ceil((new Date(end) - new Date(start)) / 86400000) + 1;
         }
 
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        function fmtNum(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+        function fmtPct(p) {
+            if (p === null || p === undefined) return null;
+            return `${p >= 0 ? '+' : ''}${p.toFixed(1)}%`;
         }
 
-        function formatPercent(percent) {
-            if (percent === null || percent === undefined) return null;
-            const sign = percent >= 0 ? '+' : '';
-            return `${sign}${percent.toFixed(1)}%`;
-        }
+        async function getStats(period) {
+            const { start, end, prevStart, prevEnd } = getDateRange(period);
+            const sales = await getSalesInRange(start, end);
+            const prevSales = (prevStart && prevEnd) ? await getSalesInRange(prevStart, prevEnd) : [];
 
-        async function getStatsForPeriod(period) {
-            const { startDate, endDate, prevStartDate, prevEndDate } = getDateRange(period);
-            
-            const currentSales = await getSalesInRange(startDate, endDate);
-            const prevSales = (prevStartDate && prevEndDate) ? await getSalesInRange(prevStartDate, prevEndDate) : [];
-            
-            const currentRevenue = currentSales.reduce((sum, s) => sum + s.total, 0);
-            const currentProfit = currentSales.reduce((sum, s) => sum + s.profit, 0);
-            const currentCount = currentSales.length;
-            
-            const prevRevenue = prevSales.reduce((sum, s) => sum + s.total, 0);
-            const prevProfit = prevSales.reduce((sum, s) => sum + s.profit, 0);
-            const prevCount = prevSales.length;
-            
+            const rev = sales.reduce((s, x) => s + x.total, 0);
+            const prof = sales.reduce((s, x) => s + x.profit, 0);
+            const cnt = sales.length;
+            const pRev = prevSales.reduce((s, x) => s + x.total, 0);
+            const pProf = prevSales.reduce((s, x) => s + x.profit, 0);
+            const pCnt = prevSales.length;
+
+            // Демо-данные для сводки
+            const booking = Math.floor(Math.random() * 30000) + 5000;
+            const debt = Math.floor(Math.random() * 15000) + 1000;
+            const newClients = Math.floor(Math.random() * 20) + 1;
+            const leavingClients = Math.floor(Math.random() * 10) + 1;
+            const pNewClients = Math.floor(Math.random() * 18) + 1;
+            const pLeavingClients = Math.floor(Math.random() * 8) + 1;
+
             return {
-                revenue: currentRevenue,
-                profit: currentProfit,
-                count: currentCount,
-                revenuePercent: prevRevenue ? ((currentRevenue - prevRevenue) / prevRevenue * 100) : null,
-                profitPercent: prevProfit ? ((currentProfit - prevProfit) / prevProfit * 100) : null,
-                countPercent: prevCount ? ((currentCount - prevCount) / prevCount * 100) : null,
-                sales: currentSales,
-                startDate,
-                endDate
+                revenue: rev, profit: prof, count: cnt,
+                revenuePercent: pRev ? ((rev - pRev) / pRev * 100) : null,
+                profitPercent: pProf ? ((prof - pProf) / pProf * 100) : null,
+                countPercent: pCnt ? ((cnt - pCnt) / pCnt * 100) : null,
+                sales, start, end,
+                booking, debt, newClients, leavingClients,
+                newClientsPercent: pNewClients ? ((newClients - pNewClients) / pNewClients * 100) : null,
+                leavingClientsPercent: pLeavingClients ? ((leavingClients - pLeavingClients) / pLeavingClients * 100) : null
             };
         }
 
-        function getDailyData(sales, startDate, endDate) {
-            const daysDiff = getDaysDiff(startDate, endDate);
-            const showMonths = daysDiff > 31;
-            
-            const dataMap = new Map();
-            
-            sales.forEach(sale => {
-                const date = new Date(sale.date);
-                let key;
-                if (showMonths) {
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    const year = date.getFullYear().toString().slice(2);
-                    key = `${month}.${year}`;
-                } else {
-                    const day = date.getDate().toString().padStart(2, '0');
-                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                    key = `${day}.${month}`;
-                }
-                
-                if (!dataMap.has(key)) {
-                    dataMap.set(key, 0);
-                }
-                dataMap.set(key, dataMap.get(key) + sale.profit);
+        function getDailyData(sales, start, end) {
+            const showMonths = getDaysDiff(start, end) > 31;
+            const map = new Map();
+            sales.forEach(s => {
+                const d = new Date(s.date);
+                const key = showMonths
+                    ? `${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear().toString().slice(2)}`
+                    : `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+                map.set(key, (map.get(key) || 0) + s.profit);
             });
-            
-            // Сортируем по дате
-            const sortedKeys = Array.from(dataMap.keys()).sort((a, b) => {
-                const partsA = a.split('.');
-                const partsB = b.split('.');
-                if (showMonths) {
-                    return (partsA[1] + partsA[0]).localeCompare(partsB[1] + partsB[0]);
-                } else {
-                    return (partsA[1] + partsA[0]).localeCompare(partsB[1] + partsB[0]);
+            const sorted = [...map.keys()].sort((a, b) => {
+                const [pa, pb] = [a.split('.'), b.split('.')];
+                return showMonths ? (pa[1] + pa[0]).localeCompare(pb[1] + pb[0]) : (pa[1] + pa[0]).localeCompare(pb[1] + pb[0]);
+            });
+            return sorted.map(k => ({ label: k, value: map.get(k) }));
+        }
+
+        function getCategoryData(sales, mode) {
+            const map = {};
+            CATEGORIES.forEach(c => map[c] = 0);
+            sales.forEach(s => {
+                if (s.category && map[s.category] !== undefined) {
+                    map[s.category] += (mode === 'sum' ? s.profit : 1);
                 }
             });
-            
-            return sortedKeys.map(key => ({
-                label: key,
-                value: dataMap.get(key)
-            }));
+            return CATEGORIES.map(c => ({ category: c, name: CATEGORY_NAMES[c], value: map[c] }));
         }
 
-        function getCategoryData(sales) {
-            const dataMap = {};
-            CATEGORIES.forEach(cat => dataMap[cat] = 0);
-            
-            sales.forEach(sale => {
-                if (sale.category && dataMap[sale.category] !== undefined) {
-                    dataMap[sale.category] += sale.profit;
-                }
-            });
-            
-            return CATEGORIES.map(cat => ({
-                category: cat,
-                name: CATEGORY_NAMES[cat],
-                value: dataMap[cat]
-            }));
-        }
-
-        function buildBarChartHtml(dailyData, maxValue) {
-            if (dailyData.length === 0) {
-                return '<p class="text-center text-muted py-3">Нет данных за выбранный период</p>';
-            }
-            
-            const minWidth = dailyData.length > 14 ? '30px' : `${Math.max(30, Math.floor(100 / dailyData.length))}px`;
-            
-            return `
-                <div class="bar-chart" style="${dailyData.length > 14 ? 'overflow-x: auto;' : ''}">
-                    ${dailyData.map(item => {
-                        const height = maxValue > 0 ? (item.value / maxValue * 100) : 0;
-                        return `
-                            <div class="bar-column" style="min-width: ${minWidth};">
-                                <div class="bar-value">${formatNumber(item.value)}₽</div>
-                                <div class="bar-fill" style="height: ${height}%;" data-height="${height}"></div>
-                                <div class="bar-label">${item.label}</div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-        }
-
-        function buildCategoryChartHtml(categoryData, maxValue) {
-            return `
-                <div class="category-chart">
-                    ${categoryData.map(item => {
-                        const height = maxValue > 0 ? (item.value / maxValue * 100) : 0;
-                        return `
-                            <div class="category-column">
-                                <div class="category-value">${formatNumber(item.value)}₽</div>
-                                <div class="category-fill cat-${item.category}" style="height: ${height}%;" data-height="${height}"></div>
-                                <div class="category-label">${item.name}</div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-        }
-
-        function shouldShowDailyChart(period, startDate, endDate) {
+        function shouldShowDaily(period, start, end) {
             if (period === 'today') return false;
-            if (period === 'custom') {
-                const daysDiff = getDaysDiff(startDate, endDate);
-                return daysDiff >= 2;
-            }
-            return true; // week, month, all
+            if (period === 'custom') return getDaysDiff(start, end) >= 2;
+            return true;
+        }
+
+        function renderChartBlock(title, icon, barsHtml, switchHtml = '') {
+            return `
+                <div class="chart-block">
+                    <div class="chart-header">
+                        <div class="chart-title"><i class="${icon}"></i> ${title}</div>
+                        ${switchHtml}
+                    </div>
+                    ${barsHtml}
+                </div>`;
+        }
+
+        function buildDailyBars(data, max) {
+            if (!data.length) return '<p class="text-center text-muted py-3">Нет данных</p>';
+            const minW = data.length > 14 ? '30px' : `${Math.max(30, Math.floor(100 / data.length))}px`;
+            return `<div class="bar-chart" style="${data.length > 14 ? 'overflow-x:auto;' : ''}">
+                ${data.map(d => {
+                    const h = max > 0 ? (d.value / max * 100) : 0;
+                    return `<div class="bar-column" style="min-width:${minW};">
+                        <div class="bar-value">${fmtNum(d.value)}₽</div>
+                        <div class="bar-fill" style="height:${h}%;" data-height="${h}"></div>
+                        <div class="bar-label">${d.label}</div>
+                    </div>`;
+                }).join('')}
+            </div>`;
+        }
+
+        function buildCategoryBars(data, max, mode) {
+            const suffix = mode === 'sum' ? '₽' : ' шт.';
+            return `<div class="category-chart">
+                ${data.map(d => {
+                    const h = max > 0 ? (d.value / max * 100) : 0;
+                    return `<div class="category-column">
+                        <div class="category-value">${fmtNum(d.value)}${suffix}</div>
+                        <div class="category-fill cat-${d.category}" style="height:${h}%;" data-height="${h}"></div>
+                        <div class="category-label">${d.name}</div>
+                    </div>`;
+                }).join('')}
+            </div>`;
         }
 
         async function renderStatistics(period) {
             currentPeriod = period;
-            const stats = await getStatsForPeriod(period);
-            const showDailyChart = shouldShowDailyChart(period, stats.startDate, stats.endDate);
-            
-            // Данные для графиков
-            let dailyData = [];
-            let categoryData = getCategoryData(stats.sales);
-            if (showDailyChart) {
-                dailyData = getDailyData(stats.sales, stats.startDate, stats.endDate);
-            }
-            
-            const maxDailyValue = Math.max(...dailyData.map(d => d.value), 1);
-            const maxCategoryValue = Math.max(...categoryData.map(d => d.value), 1);
-            
-            // Кнопки периодов
-            const periodButtons = `
-                <button class="period-btn ${period === 'today' ? 'active' : ''}" data-period="today" onclick="renderStatistics('today')" title="Сегодня">
-                    <i class="bi bi-calendar-day"></i>
-                </button>
-                <button class="period-btn ${period === 'week' ? 'active' : ''}" data-period="week" onclick="renderStatistics('week')" title="Неделя">
-                    <i class="bi bi-calendar-week"></i>
-                </button>
-                <button class="period-btn ${period === 'month' ? 'active' : ''}" data-period="month" onclick="renderStatistics('month')" title="Месяц">
-                    <i class="bi bi-calendar-month"></i>
-                </button>
-                <button class="period-btn ${period === 'all' ? 'active' : ''}" data-period="all" onclick="renderStatistics('all')" title="Всё время">
-                    <i class="bi bi-infinity"></i>
-                </button>
-                <button class="period-btn ${period === 'custom' ? 'active' : ''}" data-period="custom" onclick="renderStatistics('custom')" title="Период">
-                    <i class="bi bi-calendar-range"></i>
-                </button>
-            `;
-            
-            let dateRangeHtml = '';
-            if (period === 'custom') {
-                dateRangeHtml = `
-                    <div class="date-range" id="dateRange">
-                        <input type="date" class="date-input" id="startDate" value="${customStartDate || ''}" onchange="updateCustomDates()">
-                        <span class="date-separator">—</span>
-                        <input type="date" class="date-input" id="endDate" value="${customEndDate || ''}" onchange="updateCustomDates()">
-                    </div>
-                `;
-            }
-            
-            // График по дням
-            let dailyChartHtml = '';
-            if (showDailyChart) {
-                dailyChartHtml = `
-                    <div class="chart-block">
-                        <div class="chart-title">
-                            <i class="bi bi-graph-up"></i> Продажи по дням
-                        </div>
-                        ${buildBarChartHtml(dailyData, maxDailyValue)}
-                    </div>
-                `;
-            }
-            
-            // График по категориям
-            const categoryChartHtml = `
-                <div class="chart-block">
-                    <div class="chart-title">
-                        <i class="bi bi-pie-chart"></i> Продажи по категориям
-                    </div>
-                    ${buildCategoryChartHtml(categoryData, maxCategoryValue)}
-                </div>
-            `;
-            
+            const stats = await getStats(period);
+            const showDaily = shouldShowDaily(period, stats.start, stats.end);
+            const dailyData = showDaily ? getDailyData(stats.sales, stats.start, stats.end) : [];
+            const catData = getCategoryData(stats.sales, currentCategoryMode);
+            const maxDaily = Math.max(...dailyData.map(d => d.value), 1);
+            const maxCat = Math.max(...catData.map(d => d.value), 1);
+
+            const periodBtns = ['today','week','month','all','custom'].map(p => `
+                <button class="period-btn ${period === p ? 'active' : ''}" data-period="${p}" onclick="renderStatistics('${p}')" title="${p==='today'?'Сегодня':p==='week'?'Неделя':p==='month'?'Месяц':p==='all'?'Всё время':'Период'}">
+                    <i class="bi bi-calendar${p==='today'?'-day':p==='week'?'-week':p==='month'?'-month':p==='all'?'':'-range'}${p==='all'?' bi-infinity':''}"></i>
+                </button>`).join('');
+
+            const dateRangeHtml = period === 'custom' ? `
+                <div class="date-range">
+                    <input type="date" class="date-input" id="startDate" value="${customStartDate||''}" onchange="updateCustomDates()">
+                    <span class="date-separator">—</span>
+                    <input type="date" class="date-input" id="endDate" value="${customEndDate||''}" onchange="updateCustomDates()">
+                </div>` : '';
+
+            const catSwitchHtml = `
+                <div class="chart-switch">
+                    <button class="switch-btn ${currentCategoryMode==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button>
+                    <button class="switch-btn ${currentCategoryMode==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button>
+                </div>`;
+
+            const dailyBlock = showDaily ? renderChartBlock('Продажи по дням', 'bi-graph-up', buildDailyBars(dailyData, maxDaily)) : '';
+            const catBlock = renderChartBlock('Продажи по категориям', 'bi-pie-chart', buildCategoryBars(catData, maxCat, currentCategoryMode), catSwitchHtml);
+
             const html = `
                 <div class="stats-header">
                     <h2 class="tab-title">Статистика</h2>
-                    <div class="period-buttons">
-                        ${periodButtons}
-                    </div>
+                    <div class="period-buttons">${periodBtns}</div>
                 </div>
-                
+
                 <div class="stats-cards">
                     <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="bi bi-cash-stack"></i>
-                        </div>
+                        <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
                         <div class="stat-label">Выручка</div>
-                        <div class="stat-value" id="revenueValue">${formatNumber(stats.revenue)}₽</div>
-                        ${period !== 'all' && stats.revenuePercent !== null ? 
-                            `<div class="stat-percent ${stats.revenuePercent >= 0 ? 'positive' : 'negative'}">
-                                ${formatPercent(stats.revenuePercent)}
-                            </div>` : ''}
+                        <div class="stat-value" id="rv">${fmtNum(stats.revenue)}₽</div>
+                        ${period!=='all'&&stats.revenuePercent!==null?`<div class="stat-percent ${stats.revenuePercent>=0?'positive':'negative'}">${fmtPct(stats.revenuePercent)}</div>`:''}
                     </div>
-                    
                     <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="bi bi-graph-up"></i>
-                        </div>
+                        <div class="stat-icon"><i class="bi bi-graph-up"></i></div>
                         <div class="stat-label">Прибыль</div>
-                        <div class="stat-value" id="profitValue">${formatNumber(stats.profit)}₽</div>
-                        ${period !== 'all' && stats.profitPercent !== null ? 
-                            `<div class="stat-percent ${stats.profitPercent >= 0 ? 'positive' : 'negative'}">
-                                ${formatPercent(stats.profitPercent)}
-                            </div>` : ''}
+                        <div class="stat-value" id="pv">${fmtNum(stats.profit)}₽</div>
+                        ${period!=='all'&&stats.profitPercent!==null?`<div class="stat-percent ${stats.profitPercent>=0?'positive':'negative'}">${fmtPct(stats.profitPercent)}</div>`:''}
                     </div>
-                    
                     <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="bi bi-cart-check"></i>
-                        </div>
+                        <div class="stat-icon"><i class="bi bi-cart-check"></i></div>
                         <div class="stat-label">Продажи</div>
-                        <div class="stat-value" id="countValue">${formatNumber(stats.count)}</div>
-                        ${period !== 'all' && stats.countPercent !== null ? 
-                            `<div class="stat-percent ${stats.countPercent >= 0 ? 'positive' : 'negative'}">
-                                ${formatPercent(stats.countPercent)}
-                            </div>` : ''}
+                        <div class="stat-value" id="cv">${fmtNum(stats.count)}</div>
+                        ${period!=='all'&&stats.countPercent!==null?`<div class="stat-percent ${stats.countPercent>=0?'positive':'negative'}">${fmtPct(stats.countPercent)}</div>`:''}
                     </div>
                 </div>
-                
-                ${categoryChartHtml}
-                ${dailyChartHtml}
+
+                <div class="summary-row">
+                    <div class="summary-item booking">
+                        <div class="summary-icon"><i class="bi bi-calendar-check"></i></div>
+                        <div class="summary-label">Бронь</div>
+                        <div class="summary-value">${fmtNum(stats.booking)}₽</div>
+                    </div>
+                    <div class="summary-item debt">
+                        <div class="summary-icon"><i class="bi bi-cash-coin"></i></div>
+                        <div class="summary-label">Долг</div>
+                        <div class="summary-value">${fmtNum(stats.debt)}₽</div>
+                    </div>
+                    <div class="summary-item new-clients">
+                        <div class="summary-icon"><i class="bi bi-person-plus"></i></div>
+                        <div class="summary-label">Новые</div>
+                        <div class="summary-value">${stats.newClients} чел.</div>
+                        ${period!=='all'&&stats.newClientsPercent!==null?`<div class="summary-percent">${fmtPct(stats.newClientsPercent)}</div>`:''}
+                    </div>
+                    <div class="summary-item leaving-clients">
+                        <div class="summary-icon"><i class="bi bi-person-dash"></i></div>
+                        <div class="summary-label">Уходящие</div>
+                        <div class="summary-value">${stats.leavingClients} чел.</div>
+                        ${period!=='all'&&stats.leavingClientsPercent!==null?`<div class="summary-percent">${fmtPct(stats.leavingClientsPercent)}</div>`:''}
+                    </div>
+                </div>
+
+                ${catBlock}
+                ${dailyBlock}
                 ${dateRangeHtml}
             `;
-            
+
             document.getElementById('contentBody').innerHTML = html;
-            
-            // Анимация цифр в карточках
+
+            // Анимация цифр
             setTimeout(() => {
-                animateNumber('revenueValue', stats.revenue, 800, '₽');
-                animateNumber('profitValue', stats.profit, 600, '₽');
-                animateCountNumber('countValue', stats.count, 600);
-            }, 100);
-            
-            // Анимация столбцов
-            setTimeout(() => {
-                document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(bar => {
-                    const targetHeight = bar.getAttribute('data-height');
-                    bar.style.height = '0%';
-                    setTimeout(() => {
-                        bar.style.height = targetHeight + '%';
-                    }, 50);
+                animVal('rv', stats.revenue, '₽');
+                animVal('pv', stats.profit, '₽');
+                animCnt('cv', stats.count);
+                // Столбцы
+                document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(b => {
+                    const h = b.getAttribute('data-height');
+                    b.style.height = '0%';
+                    setTimeout(() => b.style.height = h + '%', 50);
                 });
-            }, 300);
+            }, 100);
         }
 
-        function animateNumber(elementId, targetValue, duration, suffix) {
-            const el = document.getElementById(elementId);
-            if (!el) return;
-            
-            const startTime = performance.now();
-            function animate(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                // easeOutCubic
-                const eased = 1 - Math.pow(1 - progress, 3);
-                const value = Math.round(targetValue * eased);
-                el.textContent = formatNumber(value) + suffix;
-                if (progress < 1) requestAnimationFrame(animate);
-            }
-            requestAnimationFrame(animate);
+        async function setCategoryMode(mode) {
+            currentCategoryMode = mode;
+            await renderStatistics(currentPeriod);
         }
 
-        function animateCountNumber(elementId, targetValue, duration) {
-            const el = document.getElementById(elementId);
-            if (!el) return;
-            
-            const startTime = performance.now();
-            function animate(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const eased = 1 - Math.pow(1 - progress, 3);
-                const value = Math.round(targetValue * eased);
-                el.textContent = formatNumber(value);
-                if (progress < 1) requestAnimationFrame(animate);
+        function animVal(id, target, suffix) {
+            const el = document.getElementById(id); if (!el) return;
+            const start = performance.now();
+            function step(t) {
+                const p = Math.min((t - start) / 800, 1);
+                const v = Math.round(target * (1 - Math.pow(1 - p, 3)));
+                el.textContent = fmtNum(v) + suffix;
+                if (p < 1) requestAnimationFrame(step);
             }
-            requestAnimationFrame(animate);
+            requestAnimationFrame(step);
+        }
+
+        function animCnt(id, target) {
+            const el = document.getElementById(id); if (!el) return;
+            const start = performance.now();
+            function step(t) {
+                const p = Math.min((t - start) / 600, 1);
+                el.textContent = fmtNum(Math.round(target * (1 - Math.pow(1 - p, 3))));
+                if (p < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
         }
 
         function updateCustomDates() {
             customStartDate = document.getElementById('startDate').value;
             customEndDate = document.getElementById('endDate').value;
-            if (customStartDate && customEndDate) {
-                renderStatistics('custom');
-            }
+            if (customStartDate && customEndDate) renderStatistics('custom');
         }
 
         // ============ ДЕМО-ДАННЫЕ ============
         async function addDemoData() {
-            const existingSales = await db.getAll('sales');
-            if (existingSales.length > 0) return;
-            
-            const demoSales = [];
+            if ((await db.getAll('sales')).length > 0) return;
             const now = new Date();
-            
-            // Генерируем продажи за последние 90 дней
+            const sales = [];
             for (let i = 0; i < 60; i++) {
-                const date = new Date(now - Math.random() * 90 * 86400000);
+                const d = new Date(now - Math.random() * 90 * 86400000);
                 const total = Math.floor(Math.random() * 5000) + 500;
                 const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
-                const profit = total - cost;
-                const category = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
-                
-                demoSales.push({
-                    date: date.toISOString().split('T')[0],
-                    total: total,
-                    cost: cost,
-                    profit: profit,
-                    category: category,
+                sales.push({
+                    date: d.toISOString().split('T')[0],
+                    total, cost, profit: total - cost,
+                    category: CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)],
                     items: []
                 });
             }
-            
-            // Добавляем сегодняшние продажи
             const today = now.toISOString().split('T')[0];
             for (let i = 0; i < 5; i++) {
                 const total = Math.floor(Math.random() * 15000) + 3000;
                 const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
-                const profit = total - cost;
-                const category = CATEGORIES[i % CATEGORIES.length];
-                
-                demoSales.push({
-                    date: today,
-                    total: total,
-                    cost: cost,
-                    profit: profit,
-                    category: category,
-                    items: []
-                });
+                sales.push({ date: today, total, cost, profit: total - cost, category: CATEGORIES[i % 5], items: [] });
             }
-            
-            for (const sale of demoSales) {
-                await db.add('sales', sale);
-            }
+            for (const s of sales) await db.add('sales', s);
         }
 
         // ============ PULL-TO-REFRESH ============
-        let pullDistance = 0;
-        const PULL_THRESHOLD = 80;
-
+        let pullDist = 0;
         document.addEventListener('DOMContentLoaded', () => {
-            const mainContent = document.getElementById('mainContent');
-            let touchStartY = 0;
-            
-            mainContent.addEventListener('touchstart', (e) => {
-                if (window.scrollY === 0) {
-                    touchStartY = e.touches[0].clientY;
-                }
+            const mc = document.getElementById('mainContent');
+            let startY = 0;
+            mc.addEventListener('touchstart', e => { if (!window.scrollY) startY = e.touches[0].clientY; });
+            mc.addEventListener('touchmove', e => {
+                if (!window.scrollY) { pullDist = e.touches[0].clientY - startY; if (pullDist > 0) document.body.style.transform = `translateY(${pullDist * 0.3}px)`; }
             });
-            
-            mainContent.addEventListener('touchmove', (e) => {
-                if (window.scrollY === 0) {
-                    pullDistance = e.touches[0].clientY - touchStartY;
-                    if (pullDistance > 0) {
-                        document.body.style.transform = `translateY(${pullDistance * 0.3}px)`;
-                    }
-                }
-            });
-            
-            mainContent.addEventListener('touchend', async () => {
-                if (pullDistance > PULL_THRESHOLD && window.scrollY === 0) {
-                    document.body.style.transition = 'transform 0.3s ease';
-                    document.body.style.transform = 'translateY(0)';
-                    
-                    const toast = document.createElement('div');
-                    toast.style.cssText = `
-                        position: fixed;
-                        top: 20px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        background: var(--accent);
-                        color: white;
-                        padding: 10px 20px;
-                        border-radius: 20px;
-                        z-index: 9999;
-                        font-size: 14px;
-                        animation: fadeInUp 0.3s ease;
-                    `;
-                    toast.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i> Обновляем...';
-                    document.body.appendChild(toast);
-                    
+            mc.addEventListener('touchend', async () => {
+                if (pullDist > 80 && !window.scrollY) {
+                    document.body.style.transition = 'transform .3s'; document.body.style.transform = '';
+                    const t = document.createElement('div');
+                    t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 20px;border-radius:20px;z-index:9999;font-size:14px;';
+                    t.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i> Обновляем...';
+                    document.body.appendChild(t);
                     await renderStatistics(currentPeriod);
-                    
-                    setTimeout(() => toast.remove(), 1000);
-                } else {
-                    document.body.style.transform = 'translateY(0)';
-                }
-                pullDistance = 0;
+                    setTimeout(() => t.remove(), 1000);
+                } else document.body.style.transform = '';
+                pullDist = 0;
             });
         });
 
-        // ============ ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ============
-        async function switchTab(tabName) {
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-                if (item.dataset.tab === tabName) {
-                    item.classList.add('active');
-                }
-            });
-            
-            const contentBody = document.getElementById('contentBody');
-            contentBody.style.opacity = '0';
-            contentBody.style.transform = 'translateY(20px)';
-            
+        // ============ ВКЛАДКИ ============
+        async function switchTab(tab) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab === tab));
+            const body = document.getElementById('contentBody');
+            body.style.opacity = '0'; body.style.transform = 'translateY(20px)';
             setTimeout(async () => {
-                if (tabName === 'statistics') {
-                    await renderStatistics(currentPeriod);
-                } else {
-                    const titles = {
-                        'warehouse': 'Склад',
-                        'sales': 'Продажи',
-                        'clients': 'Клиенты'
-                    };
-                    contentBody.innerHTML = `
-                        <h2 class="tab-title">${titles[tabName]}</h2>
-                        <p class="text-center text-muted py-5">Вкладка "${titles[tabName]}" пока пустая</p>
-                    `;
+                if (tab === 'statistics') await renderStatistics(currentPeriod);
+                else {
+                    const titles = { 'warehouse': 'Склад', 'sales': 'Продажи', 'clients': 'Клиенты' };
+                    body.innerHTML = `<h2 class="tab-title">${titles[tab]}</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
                 }
-                contentBody.style.opacity = '1';
-                contentBody.style.transform = 'translateY(0)';
+                body.style.opacity = '1'; body.style.transform = '';
             }, 200);
-            
-            if (window.innerWidth < 768) {
-                closeSidebar();
-            }
+            if (innerWidth < 768) closeSidebar();
         }
 
-        // ============ ИНИЦИАЛИЗАЦИЯ ============
+        // ============ ИНИТ ============
         async function init() {
-            try {
-                await db.init();
-                await loadTheme();
-                await addDemoData();
-                await renderStatistics('today');
-                console.log('Crazy Rabbit готов к работе! 🐰');
-            } catch (e) {
-                console.error('Ошибка инициализации:', e);
-            }
-            
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('SW зарегистрирован'))
-                    .catch(err => console.log('SW ошибка:', err));
-            }
+            await db.init();
+            await loadTheme();
+            await addDemoData();
+            await renderStatistics('today');
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
         }
 
-        // Закрытие сайдбара по свайпу
-        let touchStartX = 0;
-        document.getElementById('sidebar').addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-        });
-
-        document.getElementById('sidebar').addEventListener('touchend', (e) => {
-            const diff = touchStartX - e.changedTouches[0].clientX;
-            if (diff > 100) closeSidebar();
-        });
+        let tx = 0;
+        document.getElementById('sidebar').addEventListener('touchstart', e => tx = e.touches[0].clientX);
+        document.getElementById('sidebar').addEventListener('touchend', e => { if (tx - e.changedTouches[0].clientX > 100) closeSidebar(); });
 
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
-</html> 
+</html>
