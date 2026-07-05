@@ -62,7 +62,6 @@
         .main-content { padding: 75px 12px 20px; min-height: 100vh; }
         .tab-title { display: inline-block; font-weight: 700; padding-bottom: 10px; border-bottom: 3px solid var(--accent); margin-bottom: 20px; font-size: 22px; }
 
-        /* Статистика */
         .stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
         .period-buttons { display: flex; gap: 4px; background: var(--bg-card); border-radius: 12px; padding: 4px; }
         .period-btn { width: 36px; height: 36px; border: none; background: transparent; color: var(--text-secondary); border-radius: 10px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
@@ -111,7 +110,6 @@
         .date-input:focus { border-color: var(--accent); }
         .date-separator { color: var(--text-secondary); font-size: 14px; }
 
-        /* Склад */
         .warehouse-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
         @media (min-width: 500px) { .warehouse-cards { grid-template-columns: repeat(3, 1fr); } }
         .wh-card { background: var(--bg-card); border-radius: 15px; padding: 15px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -134,7 +132,6 @@
         .wh-add-btn { background: var(--accent); color: white; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .wh-delete-selected-btn { background: var(--red); color: white; border: none; height: 36px; padding: 0 12px; border-radius: 10px; font-size: 14px; cursor: pointer; display: none; align-items: center; gap: 6px; font-weight: 600; }
         .wh-delete-selected-btn.visible { display: flex; }
-        .wh-delete-selected-btn:active { transform: scale(0.95); }
         .wh-cancel-select-btn { background: var(--border); color: var(--text-primary); border: none; height: 36px; padding: 0 12px; border-radius: 10px; font-size: 14px; cursor: pointer; display: none; align-items: center; gap: 6px; }
         .wh-cancel-select-btn.visible { display: flex; }
         .search-input { width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); font-size: 14px; outline: none; margin-bottom: 15px; }
@@ -153,13 +150,12 @@
         .group-edit-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 17px; padding: 6px 8px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; position: relative; z-index: 10; }
         .group-edit-btn:active { transform: scale(1.15); color: var(--accent-hover); }
 
-        /* Строка товара */
         .product-row-wrapper { position: relative; overflow: hidden; }
         .product-row { display: flex; align-items: center; padding: 10px 15px 10px 25px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease, background 0.2s ease; position: relative; z-index: 1; background: var(--bg-card); }
         .product-row:active { background: rgba(129,216,208,0.1); }
         .product-row.selected { background: rgba(129,216,208,0.2); }
         .product-row.swiping { transition: transform 0.1s ease; }
-        .swipe-delete-bg { position: absolute; top: 0; right: 0; height: 100%; background: var(--red); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; font-weight: 700; z-index: 0; border-radius: 0 10px 10px 0; width: 100%; text-align: right; padding-right: 20px; }
+        .swipe-delete-bg { position: absolute; top: 0; right: 0; height: 100%; background: var(--red); z-index: 0; width: 100%; }
         .product-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .product-col.price { text-align: right; flex: 0.7; }
         .product-col.qty { text-align: center; flex: 0.5; }
@@ -169,7 +165,6 @@
         .table-header-row .product-col { font-weight: 600; }
         .table-header-row .product-col.copy-btn { flex: 0 0 30px; }
 
-        /* Чекбокс */
         .checkbox-col { flex: 0 0 24px; display: none; align-items: center; }
         .checkbox-col.visible { display: flex; }
         .select-checkbox { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
@@ -192,7 +187,6 @@
         .btn-delete { background: var(--red); color: white; flex: 0.5; }
         .btn:active { transform: scale(0.96); }
 
-        /* Снекбар */
         .snackbar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--bg-sidebar); color: white; padding: 14px 24px; border-radius: 25px; z-index: 9999; font-size: 14px; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px; animation: slideUp 0.3s ease; }
         .snackbar .snackbar-undo { background: var(--accent); border: none; color: white; padding: 6px 14px; border-radius: 15px; cursor: pointer; font-weight: 700; font-size: 13px; }
         @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
@@ -224,7 +218,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 19;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 20;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -286,10 +280,10 @@
                 if (sid === id && undoCallback) undoCallback();
                 document.getElementById(sid)?.remove();
             };
-            setTimeout(() => { const el = document.getElementById(id); if (el) el.remove(); }, 5000);
+            setTimeout(() => { const el = document.getElementById(id); if (el) el.remove(); }, 3000);
         }
 
-        // ============ СТАТИСТИКА (компактно) ============
+        // ============ СТАТИСТИКА ============
         let cp='today',ccm='sum',csd=null,ced=null;
         function getDateRange(p){const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];let s,e,ps,pe;switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}return{s,e,ps,pe};}
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
@@ -325,10 +319,7 @@
 
         function enterSelectMode() { selectMode=true; selectedIds=new Set(); updateSelectUI(); }
         function exitSelectMode() { selectMode=false; selectedIds=new Set(); updateSelectUI(); }
-        function toggleSelectProduct(id) {
-            if(selectedIds.has(id))selectedIds.delete(id);else selectedIds.add(id);
-            updateSelectUI();
-        }
+        function toggleSelectProduct(id) { if(selectedIds.has(id))selectedIds.delete(id);else selectedIds.add(id); updateSelectUI(); }
         function updateSelectUI() {
             document.querySelectorAll('.checkbox-col').forEach(c=>c.classList.toggle('visible',selectMode));
             document.querySelectorAll('.product-row').forEach(r=>r.classList.toggle('selected',selectMode&&selectedIds.has(parseInt(r.dataset.pid))));
@@ -346,10 +337,7 @@
             if(selectedIds.size===0)return;
             if(!confirm(`Удалить ${selectedIds.size} товаров?`))return;
             deletedProducts=[];
-            for(const id of selectedIds){
-                const p=await db.g('products',id);
-                if(p){deletedProducts.push(p);await db.del('products',id);}
-            }
+            for(const id of selectedIds){const p=await db.g('products',id);if(p){deletedProducts.push(p);await db.del('products',id);}}
             exitSelectMode();
             await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
             showSnackbar(`Удалено ${deletedProducts.length} товаров`, async ()=>{
@@ -400,7 +388,7 @@
                     const cols=CATEGORY_TABLE_COLS[cwc];
                     h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
                     items.forEach(item=>{
-                        h+=`<div class="product-row-wrapper"><div class="swipe-delete-bg"><i class="bi bi-trash"></i> Удалить</div>`;
+                        h+=`<div class="product-row-wrapper"><div class="swipe-delete-bg"></div>`;
                         h+=`<div class="product-row" data-pid="${item.id}" ondblclick="if(!selectMode)editProduct(${item.id})">`;
                         h+=`<div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="toggleSelectProduct(${item.id})" onclick="event.stopPropagation()"></div>`;
                         cols.forEach(col=>{let v=item[col]||'';if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;});
@@ -431,7 +419,7 @@
 
                 row.addEventListener('touchstart',e=>{
                     startX=e.touches[0].clientX;startY=e.touches[0].clientY;swiped=false;
-                    longPressTimer=setTimeout(()=>{if(!selectMode){enterSelectMode();toggleSelectProduct(parseInt(row.dataset.pid));swiped=true;row.style.transform='translateX(0)';}},500);
+                    longPressTimer=setTimeout(()=>{if(!selectMode){enterSelectMode();toggleSelectProduct(parseInt(row.dataset.pid));swiped=true;row.style.transform='translateX(0)';}},2500);
                 },{passive:false});
 
                 row.addEventListener('touchmove',e=>{
@@ -445,7 +433,7 @@
                         const tx=Math.max(-maxSwipe,dx);
                         row.style.transition='none';
                         row.style.transform=`translateX(${tx}px)`;
-                        if(bg)bg.style.opacity=Math.abs(tx)/maxSwipe;
+                        if(bg)bg.style.opacity=Math.min(1,Math.abs(tx)/maxSwipe);
                     }
                 },{passive:false});
 
@@ -459,7 +447,7 @@
                             const p=await db.g('products',pid);
                             if(p){deletedProducts=[p];await db.del('products',pid);}
                             await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
-                            showSnackbar(`Удалён 1 товар`,async()=>{
+                            showSnackbar('Товар удалён',async()=>{
                                 for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}
                                 await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
                                 deletedProducts=[];
