@@ -205,8 +205,7 @@
     <div id="modalContainer"></div>
 
     <script>
-        // ============ БАЗА ДАННЫХ ============
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 12;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 13;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -232,52 +231,35 @@
         }
         const db = new Database();
 
-        // ============ КОНСТАНТЫ ============
         const CATEGORIES = ['liquid','supplies','pods','disposable','snus'];
         const CATEGORY_NAMES = {'liquid':'Жидкости','supplies':'Расходники','pods':'Поды','disposable':'Одноразки','snus':'Снюс'};
         const CATEGORY_ICONS = {'liquid':'bi-droplet','supplies':'bi-tools','pods':'bi-usb-plug','disposable':'bi-phone','snus':'bi-box2'};
         const CATEGORY_CLASS = {'liquid':'liquid','supplies':'supplies','pods':'pods','disposable':'disposable','snus':'snus'};
-        const CATEGORY_EXTRA_FIELDS = {
-            'liquid':[{key:'flavor',label:'Вкус'}],'supplies':[],'pods':[{key:'color',label:'Цвет'}],
-            'disposable':[{key:'flavor',label:'Вкус'}],'snus':[{key:'flavor',label:'Вкус'}]
-        };
-        const CATEGORY_TABLE_COLS = {
-            'liquid':['flavor','quantity','purchase','selling'],
-            'supplies':['lineup','quantity','purchase','selling'],
-            'pods':['color','quantity','purchase','selling'],
-            'disposable':['flavor','quantity','purchase','selling'],
-            'snus':['flavor','quantity','purchase','selling']
-        };
+        const CATEGORY_EXTRA_FIELDS = {'liquid':[{key:'flavor',label:'Вкус'}],'supplies':[],'pods':[{key:'color',label:'Цвет'}],'disposable':[{key:'flavor',label:'Вкус'}],'snus':[{key:'flavor',label:'Вкус'}]};
+        const CATEGORY_TABLE_COLS = {'liquid':['flavor','quantity','purchase','selling'],'supplies':['lineup','quantity','purchase','selling'],'pods':['color','quantity','purchase','selling'],'disposable':['flavor','quantity','purchase','selling'],'snus':['flavor','quantity','purchase','selling']};
         const COL_LABELS = {'manufacturer':'Производитель','lineup':'Линейка','flavor':'Вкус','color':'Цвет','quantity':'Кол-во','purchase':'Закупка','selling':'Продажа'};
-        const CATEGORY_GROUPS = {
-            'liquid':['manufacturer','lineup'],'supplies':['manufacturer'],'pods':['manufacturer','lineup'],
-            'disposable':['manufacturer','lineup'],'snus':['manufacturer','lineup']
-        };
+        const CATEGORY_GROUPS = {'liquid':['manufacturer','lineup'],'supplies':['manufacturer'],'pods':['manufacturer','lineup'],'disposable':['manufacturer','lineup'],'snus':['manufacturer','lineup']};
         function norm(s) { return (s||'').trim().toUpperCase(); }
 
-        // ============ ТЕМЫ ============
         const themes = ['dark','light','pink'];
         const themeNames = {'dark':'Тёмная тема','light':'Светлая тема','pink':'Розовая тема'};
         let cti = 0;
         async function toggleTheme() { cti = (cti+1)%themes.length; document.documentElement.setAttribute('data-theme',themes[cti]); document.getElementById('themeName').textContent=themeNames[themes[cti]]; try{await db.pu('settings',{key:'theme',value:themes[cti]});}catch(e){} }
         async function loadTheme() { try{const s=await db.g('settings','theme');if(s){document.documentElement.setAttribute('data-theme',s.value);cti=themes.indexOf(s.value);document.getElementById('themeName').textContent=themeNames[s.value];}}catch(e){} }
 
-        // ============ САЙДБАР ============
         function openSidebar() { document.getElementById('sidebar').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); }
         function closeSidebarOutside(e) { if(e.target===document.getElementById('sidebar'))closeSidebar(); }
 
-        // ============ ФОРМАТИРОВАНИЕ ============
         function fn(n) { if(!n&&n!==0)return'0';return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
         function fp(p) { if(p===null||p===undefined)return null;return`${p>=0?'+':''}${p.toFixed(1)}%`; }
 
-        // ============ МОДАЛЬНЫЕ ОКНА ============
         function showModal(title,icon,color,body,footer) {
             document.getElementById('modalContainer').innerHTML=`<div class="modal-overlay" onclick="closeModal(event)"><div class="modal-dialog-custom" onclick="event.stopPropagation()"><div class="modal-header-custom"><i class="${icon}" style="color:${color};font-size:22px;"></i><h3 style="color:${color};font-size:18px;font-weight:700;margin:0;">${title}</h3></div><div class="modal-body-custom">${body}</div>${footer?`<div class="modal-footer-custom">${footer}</div>`:''}</div></div>`;
         }
         function closeModal(event) { if(!event||event.target.classList.contains('modal-overlay'))document.getElementById('modalContainer').innerHTML=''; }
 
-        // ============ СТАТИСТИКА (компактная) ============
+        // Статистика
         let cp='today',ccm='sum',csd=null,ced=null;
         function getDateRange(p){const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];let s,e,ps,pe;switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}return{s,e,ps,pe};}
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
@@ -328,24 +310,25 @@
         function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){
             if(level>=groupBy.length)return'';
             let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));
-            // Проверяем, является ли текущий уровень последним
             const isLastLevel=(level+1>=groupBy.length);
             entries.forEach(([key,items])=>{
-                const ck=[...parentKeys,key];
-                const gid=getGroupId(cat,level,ck);
+                // ПОЛНЫЙ ПУТЬ ключей: parentKeys + текущий key
+                const fullKeys=[...parentKeys,key];
+                const gid=getGroupId(cat,level,fullKeys);
                 const fi=items[0];
                 const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;
                 const label=rl||key;
                 const tab=level>0?'&emsp;&emsp;':'';
-                // Кнопка показывается ТОЛЬКО на последнем уровне
-                const ks=ck.join('|||');
+                // data-keys содержит ПОЛНЫЙ путь
+                const ks=fullKeys.join('|||');
                 const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';
                 h+=`<div class="accordion-group">`;
                 h+=`<div class="accordion-header" onclick="window.toggleAcc('${gid}')"><span class="accordion-header-left">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow"></i></div></div>`;
                 h+=`<div class="accordion-body" id="${gid}">`;
                 if(!isLastLevel){
                     const sg={};items.forEach(item=>{const sk=groupBy.slice(0,level+2).map(g=>norm(item[g])).join('|||');if(!sg[sk])sg[sk]=[];sg[sk].push(item);});
-                    h+=buildAccordionHTML(sg,groupBy,level+1,cat,ck);
+                    // Передаём fullKeys как parentKeys для следующего уровня
+                    h+=buildAccordionHTML(sg,groupBy,level+1,cat,fullKeys);
                 }else{
                     const cols=CATEGORY_TABLE_COLS[cwc];
                     h+=`<div class="table-header-row">${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
@@ -385,26 +368,28 @@
             await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
         }
 
-        // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ (ИСПРАВЛЕНО) ============
+        // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ (ПОЛНОСТЬЮ ИСПРАВЛЕНО) ============
         document.addEventListener('click',function(e){
             const btn=e.target.closest('.group-edit-btn');
             if(!btn)return;
-            // Останавливаем всплытие чтобы не сработал toggleAcc на родителе
             e.stopPropagation();
             e.preventDefault();
             const cat=btn.getAttribute('data-cat');
             const keysStr=btn.getAttribute('data-keys');
+            console.log('Нажата кнопка:',cat,keysStr);
             if(!cat||!keysStr)return;
             const keys=keysStr.split('|||');
-            console.log('Групповое редактирование:',cat,keys);
             showGroupEditModal(cat,keys);
         });
 
         async function showGroupEditModal(cat,currentKeys){
+            console.log('showGroupEditModal:',cat,currentKeys);
             const gb=CATEGORY_GROUPS[cat];
             const ap=await db.all('products');
             const cp=ap.filter(p=>p.category===cat);
+            // Фильтруем: для каждого уровня группировки проверяем нормализованное значение
             const filtered=cp.filter(p=>currentKeys.every((key,idx)=>norm(p[gb[idx]])===key));
+            console.log('Найдено товаров:',filtered.length);
             if(filtered.length===0){alert('Нет товаров в группе');return;}
             const gl=currentKeys.join(' → ');
             const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';
@@ -469,7 +454,6 @@
             mc.addEventListener('touchend',async()=>{if(pd>80&&!window.scrollY){document.body.style.transition='transform .3s';document.body.style.transform='';const t=document.createElement('div');t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 20px;border-radius:20px;z-index:9999;font-size:14px;';t.innerHTML='<i class="bi bi-arrow-repeat spinner"></i> Обновляем...';document.body.appendChild(t);if(cwc)await renderWarehouseTable(cwc);else await renderWarehouseCards();setTimeout(()=>t.remove(),1000);}else document.body.style.transform='';pd=0;});
         });
 
-        // ============ ИНИТ ============
         async function init(){try{await db.init();await loadTheme();await renderWarehouseCards();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');console.log('✅ Crazy Rabbit готов!');}catch(e){console.error(e);}}
         let tx=0;
         document.getElementById('sidebar').addEventListener('touchstart',e=>tx=e.touches[0].clientX);
