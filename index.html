@@ -205,7 +205,8 @@
     <div id="modalContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 11;
+        // ============ БАЗА ДАННЫХ ============
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 12;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -231,42 +232,54 @@
         }
         const db = new Database();
 
+        // ============ КОНСТАНТЫ ============
         const CATEGORIES = ['liquid','supplies','pods','disposable','snus'];
         const CATEGORY_NAMES = {'liquid':'Жидкости','supplies':'Расходники','pods':'Поды','disposable':'Одноразки','snus':'Снюс'};
         const CATEGORY_ICONS = {'liquid':'bi-droplet','supplies':'bi-tools','pods':'bi-usb-plug','disposable':'bi-phone','snus':'bi-box2'};
         const CATEGORY_CLASS = {'liquid':'liquid','supplies':'supplies','pods':'pods','disposable':'disposable','snus':'snus'};
-        const CATEGORY_EXTRA_FIELDS = {'liquid':[{key:'flavor',label:'Вкус'}],'supplies':[],'pods':[{key:'color',label:'Цвет'}],'disposable':[{key:'flavor',label:'Вкус'}],'snus':[{key:'flavor',label:'Вкус'}]};
-        const CATEGORY_TABLE_COLS = {'liquid':['flavor','quantity','purchase','selling'],'supplies':['lineup','quantity','purchase','selling'],'pods':['color','quantity','purchase','selling'],'disposable':['flavor','quantity','purchase','selling'],'snus':['flavor','quantity','purchase','selling']};
+        const CATEGORY_EXTRA_FIELDS = {
+            'liquid':[{key:'flavor',label:'Вкус'}],'supplies':[],'pods':[{key:'color',label:'Цвет'}],
+            'disposable':[{key:'flavor',label:'Вкус'}],'snus':[{key:'flavor',label:'Вкус'}]
+        };
+        const CATEGORY_TABLE_COLS = {
+            'liquid':['flavor','quantity','purchase','selling'],
+            'supplies':['lineup','quantity','purchase','selling'],
+            'pods':['color','quantity','purchase','selling'],
+            'disposable':['flavor','quantity','purchase','selling'],
+            'snus':['flavor','quantity','purchase','selling']
+        };
         const COL_LABELS = {'manufacturer':'Производитель','lineup':'Линейка','flavor':'Вкус','color':'Цвет','quantity':'Кол-во','purchase':'Закупка','selling':'Продажа'};
-        const CATEGORY_GROUPS = {'liquid':['manufacturer','lineup'],'supplies':['manufacturer'],'pods':['manufacturer','lineup'],'disposable':['manufacturer','lineup'],'snus':['manufacturer','lineup']};
+        const CATEGORY_GROUPS = {
+            'liquid':['manufacturer','lineup'],'supplies':['manufacturer'],'pods':['manufacturer','lineup'],
+            'disposable':['manufacturer','lineup'],'snus':['manufacturer','lineup']
+        };
         function norm(s) { return (s||'').trim().toUpperCase(); }
 
+        // ============ ТЕМЫ ============
         const themes = ['dark','light','pink'];
         const themeNames = {'dark':'Тёмная тема','light':'Светлая тема','pink':'Розовая тема'};
         let cti = 0;
         async function toggleTheme() { cti = (cti+1)%themes.length; document.documentElement.setAttribute('data-theme',themes[cti]); document.getElementById('themeName').textContent=themeNames[themes[cti]]; try{await db.pu('settings',{key:'theme',value:themes[cti]});}catch(e){} }
         async function loadTheme() { try{const s=await db.g('settings','theme');if(s){document.documentElement.setAttribute('data-theme',s.value);cti=themes.indexOf(s.value);document.getElementById('themeName').textContent=themeNames[s.value];}}catch(e){} }
 
+        // ============ САЙДБАР ============
         function openSidebar() { document.getElementById('sidebar').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); }
         function closeSidebarOutside(e) { if(e.target===document.getElementById('sidebar'))closeSidebar(); }
 
+        // ============ ФОРМАТИРОВАНИЕ ============
         function fn(n) { if(!n&&n!==0)return'0';return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
         function fp(p) { if(p===null||p===undefined)return null;return`${p>=0?'+':''}${p.toFixed(1)}%`; }
 
+        // ============ МОДАЛЬНЫЕ ОКНА ============
         function showModal(title,icon,color,body,footer) {
             document.getElementById('modalContainer').innerHTML=`<div class="modal-overlay" onclick="closeModal(event)"><div class="modal-dialog-custom" onclick="event.stopPropagation()"><div class="modal-header-custom"><i class="${icon}" style="color:${color};font-size:22px;"></i><h3 style="color:${color};font-size:18px;font-weight:700;margin:0;">${title}</h3></div><div class="modal-body-custom">${body}</div>${footer?`<div class="modal-footer-custom">${footer}</div>`:''}</div></div>`;
         }
         function closeModal(event) { if(!event||event.target.classList.contains('modal-overlay'))document.getElementById('modalContainer').innerHTML=''; }
 
-        // ============ СТАТИСТИКА ============
+        // ============ СТАТИСТИКА (компактная) ============
         let cp='today',ccm='sum',csd=null,ced=null;
-        function getDateRange(p) {
-            const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];
-            let s,e,ps,pe;
-            switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}
-            return{s,e,ps,pe};
-        }
+        function getDateRange(p){const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];let s,e,ps,pe;switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}return{s,e,ps,pe};}
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
         function gdd(s,e){return Math.ceil((new Date(e)-new Date(s))/86400000)+1;}
         function getDailyData(sales,s,e){const sm=gdd(s,e)>31,m=new Map();sales.forEach(x=>{const d=new Date(x.date),k=sm?`${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear().toString().slice(2)}`:`${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`;m.set(k,(m.get(k)||0)+(x.profit||0));});return[...m.keys()].sort((a,b)=>{const[pa,pb]=[a.split('.'),b.split('.')];return sm?(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]):(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}).map(k=>({label:k,value:m.get(k)}));}
@@ -274,8 +287,7 @@
         function ssd(p,s,e){if(p==='today')return false;if(p==='custom')return gdd(s,e)>=2;return true;}
 
         async function renderStatistics(period){
-            cp=period;const{s,e,ps,pe}=getDateRange(period);
-            const sales=await getSalesInRange2(s,e),prevSales=(ps&&pe)?await getSalesInRange2(ps,pe):[];
+            cp=period;const{s,e,ps,pe}=getDateRange(period);const sales=await getSalesInRange2(s,e),prevSales=(ps&&pe)?await getSalesInRange2(ps,pe):[];
             const rev=sales.reduce((s,x)=>s+(x.total||0),0),prof=sales.reduce((s,x)=>s+(x.profit||0),0),cnt=sales.length;
             const pRev=prevSales.reduce((s,x)=>s+(x.total||0),0),pProf=prevSales.reduce((s,x)=>s+(x.profit||0),0),pCnt=prevSales.length;
             const sd=ssd(period,s,e);const dd=sd?getDailyData(sales,s,e):[],cd=getCategoryData(sales,ccm);
@@ -316,7 +328,8 @@
         function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){
             if(level>=groupBy.length)return'';
             let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));
-            const isLast=(level+1>=groupBy.length);
+            // Проверяем, является ли текущий уровень последним
+            const isLastLevel=(level+1>=groupBy.length);
             entries.forEach(([key,items])=>{
                 const ck=[...parentKeys,key];
                 const gid=getGroupId(cat,level,ck);
@@ -324,14 +337,13 @@
                 const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;
                 const label=rl||key;
                 const tab=level>0?'&emsp;&emsp;':'';
-                // Кнопка показывается только на ПОСЛЕДНЕМ уровне группировки
-                const showEdit=isLast;
+                // Кнопка показывается ТОЛЬКО на последнем уровне
                 const ks=ck.join('|||');
-                const eb=showEdit?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';
+                const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';
                 h+=`<div class="accordion-group">`;
                 h+=`<div class="accordion-header" onclick="window.toggleAcc('${gid}')"><span class="accordion-header-left">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow"></i></div></div>`;
                 h+=`<div class="accordion-body" id="${gid}">`;
-                if(level+1<groupBy.length){
+                if(!isLastLevel){
                     const sg={};items.forEach(item=>{const sk=groupBy.slice(0,level+2).map(g=>norm(item[g])).join('|||');if(!sg[sk])sg[sk]=[];sg[sk].push(item);});
                     h+=buildAccordionHTML(sg,groupBy,level+1,cat,ck);
                 }else{
@@ -373,15 +385,18 @@
             await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
         }
 
-        // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ ЦЕН ============
-        // Глобальный делегированный обработчик
+        // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ (ИСПРАВЛЕНО) ============
         document.addEventListener('click',function(e){
             const btn=e.target.closest('.group-edit-btn');
             if(!btn)return;
+            // Останавливаем всплытие чтобы не сработал toggleAcc на родителе
             e.stopPropagation();
             e.preventDefault();
-            const cat=btn.dataset.cat;
-            const keys=btn.dataset.keys.split('|||');
+            const cat=btn.getAttribute('data-cat');
+            const keysStr=btn.getAttribute('data-keys');
+            if(!cat||!keysStr)return;
+            const keys=keysStr.split('|||');
+            console.log('Групповое редактирование:',cat,keys);
             showGroupEditModal(cat,keys);
         });
 
@@ -390,7 +405,7 @@
             const ap=await db.all('products');
             const cp=ap.filter(p=>p.category===cat);
             const filtered=cp.filter(p=>currentKeys.every((key,idx)=>norm(p[gb[idx]])===key));
-            if(filtered.length===0)return;
+            if(filtered.length===0){alert('Нет товаров в группе');return;}
             const gl=currentKeys.join(' → ');
             const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';
             showModal('Изменить цены','bi bi-tags',color,
@@ -454,11 +469,12 @@
             mc.addEventListener('touchend',async()=>{if(pd>80&&!window.scrollY){document.body.style.transition='transform .3s';document.body.style.transform='';const t=document.createElement('div');t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 20px;border-radius:20px;z-index:9999;font-size:14px;';t.innerHTML='<i class="bi bi-arrow-repeat spinner"></i> Обновляем...';document.body.appendChild(t);if(cwc)await renderWarehouseTable(cwc);else await renderWarehouseCards();setTimeout(()=>t.remove(),1000);}else document.body.style.transform='';pd=0;});
         });
 
-        async function init(){try{await db.init();await loadTheme();await renderWarehouseCards();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');}catch(e){console.error(e);}}
+        // ============ ИНИТ ============
+        async function init(){try{await db.init();await loadTheme();await renderWarehouseCards();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');console.log('✅ Crazy Rabbit готов!');}catch(e){console.error(e);}}
         let tx=0;
         document.getElementById('sidebar').addEventListener('touchstart',e=>tx=e.touches[0].clientX);
         document.getElementById('sidebar').addEventListener('touchend',e=>{if(tx-e.changedTouches[0].clientX>100)closeSidebar();});
         document.addEventListener('DOMContentLoaded',init);
     </script>
 </body>
-</html> 
+</html>
