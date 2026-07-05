@@ -46,4 +46,4 @@ self.addEventListener('fetch', (event) => {
         .catch(() => cached); // Если нет сети - из кэша
     })
   );
-});
+}); 
