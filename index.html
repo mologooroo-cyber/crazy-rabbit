@@ -17,34 +17,43 @@
         :root {
             --bg-primary: #2C3E50;
             --bg-secondary: #34495E;
+            --bg-card: #243342;
             --bg-sidebar: #1a252f;
             --text-primary: #FFFFFF;
             --text-secondary: #BDC3C7;
             --accent: #81D8D0;
             --accent-hover: #6ECBC3;
             --border: #4A6274;
+            --green: #2ecc71;
+            --red: #e74c3c;
         }
 
         [data-theme="light"] {
             --bg-primary: #F8F9FA;
             --bg-secondary: #FFFFFF;
+            --bg-card: #E9ECEF;
             --bg-sidebar: #E9ECEF;
             --text-primary: #2C3E50;
             --text-secondary: #6C757D;
             --accent: #81D8D0;
             --accent-hover: #6ECBC3;
             --border: #DEE2E6;
+            --green: #27ae60;
+            --red: #c0392b;
         }
 
         [data-theme="pink"] {
             --bg-primary: #FFF0F3;
             --bg-secondary: #FFFFFF;
+            --bg-card: #FFE0E6;
             --bg-sidebar: #FFE0E6;
             --text-primary: #FF69B4;
             --text-secondary: #FFB6C1;
             --accent: #FF69B4;
             --accent-hover: #FF1493;
             --border: #FFB6C1;
+            --green: #00b894;
+            --red: #d63031;
         }
 
         * {
@@ -63,6 +72,7 @@
             padding: 0;
         }
 
+        /* Кнопка меню */
         .menu-toggle-btn {
             position: fixed;
             top: 15px;
@@ -87,6 +97,7 @@
             transform: scale(0.95);
         }
 
+        /* Сайдбар */
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -198,7 +209,23 @@
             border-top: 1px solid var(--border);
         }
 
-        /* Кнопка смены темы */
+        .theme-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .theme-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: inline-block;
+        }
+
         .theme-toggle-btn {
             width: 100%;
             padding: 14px;
@@ -219,32 +246,11 @@
 
         .theme-toggle-btn:active {
             transform: scale(0.97);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .theme-toggle-btn i {
-            font-size: 20px;
-        }
-
-        .theme-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-
-        .theme-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-            display: inline-block;
-        }
-
+        /* Основной контент */
         .main-content {
-            padding: 80px 20px 20px;
+            padding: 80px 15px 20px;
             min-height: 100vh;
         }
 
@@ -253,18 +259,187 @@
             font-weight: 700;
             padding-bottom: 10px;
             border-bottom: 3px solid var(--accent);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            font-size: 24px;
         }
 
-        .content-body {
-            background: var(--bg-secondary);
+        /* Статистика */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 15px 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card .stat-icon {
+            font-size: 24px;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .stat-card .stat-percent {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .stat-card .stat-percent.positive {
+            color: var(--green);
+        }
+
+        .stat-card .stat-percent.negative {
+            color: var(--red);
+        }
+
+        /* Селектор периода */
+        .period-selector {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .period-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .period-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border);
+            background: transparent;
+            color: var(--text-primary);
             border-radius: 20px;
-            padding: 20px;
-            min-height: 300px;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .period-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .period-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Выбор дат */
+        .date-range {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .date-input {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
             transition: all 0.3s ease;
         }
 
+        .date-input:focus {
+            border-color: var(--accent);
+        }
+
+        .date-separator {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Pull-to-refresh индикатор */
+        .pull-indicator {
+            text-align: center;
+            padding: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            display: none;
+            transition: all 0.3s ease;
+        }
+
+        .pull-indicator.refreshing {
+            display: block;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 480px) {
+            .stats-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .stat-card:last-child {
+                grid-column: span 2;
+            }
+            
+            .stat-card .stat-value {
+                font-size: 18px;
+            }
+            
+            .period-buttons {
+                gap: 6px;
+            }
+            
+            .period-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .stats-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card:last-child {
+                grid-column: span 1;
+            }
+        }
+
+        /* Анимация появления */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -330,10 +505,10 @@
     </div>
 
     <!-- Основной контент -->
-    <main class="main-content">
+    <main class="main-content" id="mainContent">
         <h2 class="tab-title" id="currentTabTitle">Статистика</h2>
         <div class="content-body" id="contentBody">
-            <p class="text-center text-muted py-5">Добро пожаловать в Crazy Rabbit!</p>
+            <!-- Динамический контент -->
         </div>
     </main>
 
@@ -342,7 +517,7 @@
         class Database {
             constructor() {
                 this.dbName = 'CrazyRabbitDB';
-                this.dbVersion = 1;
+                this.dbVersion = 2;
                 this.db = null;
             }
 
@@ -358,8 +533,22 @@
 
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
+                        
                         if (!db.objectStoreNames.contains('settings')) {
                             db.createObjectStore('settings', { keyPath: 'key' });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('sales')) {
+                            const salesStore = db.createObjectStore('sales', { keyPath: 'id', autoIncrement: true });
+                            salesStore.createIndex('date', 'date', { unique: false });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('products')) {
+                            db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('clients')) {
+                            db.createObjectStore('clients', { keyPath: 'id', autoIncrement: true });
                         }
                     };
                 });
@@ -384,6 +573,38 @@
                     request.onerror = () => reject(request.error);
                 });
             }
+
+            async getAll(storeName) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([storeName], 'readonly');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.getAll();
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async getByDateRange(storeName, startDate, endDate) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([storeName], 'readonly');
+                    const store = transaction.objectStore(storeName);
+                    const index = store.index('date');
+                    const range = IDBKeyRange.bound(startDate, endDate);
+                    const request = index.getAll(range);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async add(storeName, data) {
+                return new Promise((resolve, reject) => {
+                    const transaction = this.db.transaction([storeName], 'readwrite');
+                    const store = transaction.objectStore(storeName);
+                    const request = store.add(data);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
         }
 
         const db = new Database();
@@ -395,26 +616,16 @@
             'light': 'Светлая тема',
             'pink': 'Розовая тема'
         };
-        const themeIcons = {
-            'dark': 'bi-moon-stars',
-            'light': 'bi-sun',
-            'pink': 'bi-heart'
-        };
         
         let currentThemeIndex = 0;
 
         async function toggleTheme() {
-            // Переключаем на следующую тему
             currentThemeIndex = (currentThemeIndex + 1) % themes.length;
             const theme = themes[currentThemeIndex];
             
-            // Применяем тему
             document.documentElement.setAttribute('data-theme', theme);
-            
-            // Обновляем индикатор
             document.getElementById('themeName').textContent = themeNames[theme];
             
-            // Сохраняем в БД
             try {
                 await db.put('settings', { key: 'theme', value: theme });
             } catch (e) {
@@ -432,7 +643,6 @@
                     document.getElementById('themeName').textContent = themeNames[theme];
                 }
             } catch (e) {
-                // Тема по умолчанию (dark)
                 document.getElementById('themeName').textContent = 'Тёмная тема';
             }
         }
@@ -452,8 +662,347 @@
             }
         }
 
+        // ============ СТАТИСТИКА ============
+        let currentPeriod = 'today';
+        let customStartDate = null;
+        let customEndDate = null;
+
+        async function getStatsForPeriod(period) {
+            const now = new Date();
+            let startDate, endDate, prevStartDate, prevEndDate;
+            
+            const todayStr = now.toISOString().split('T')[0];
+            const yesterdayStr = new Date(now - 86400000).toISOString().split('T')[0];
+            
+            switch(period) {
+                case 'today':
+                    startDate = todayStr;
+                    endDate = todayStr;
+                    prevStartDate = yesterdayStr;
+                    prevEndDate = yesterdayStr;
+                    break;
+                    
+                case 'week':
+                    const dayOfWeek = now.getDay();
+                    const monday = new Date(now);
+                    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+                    startDate = monday.toISOString().split('T')[0];
+                    endDate = todayStr;
+                    
+                    const prevMonday = new Date(monday);
+                    prevMonday.setDate(monday.getDate() - 7);
+                    const prevSunday = new Date(monday);
+                    prevSunday.setDate(monday.getDate() - 1);
+                    prevStartDate = prevMonday.toISOString().split('T')[0];
+                    prevEndDate = prevSunday.toISOString().split('T')[0];
+                    break;
+                    
+                case 'month':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                    endDate = todayStr;
+                    
+                    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+                    prevStartDate = prevMonth.toISOString().split('T')[0];
+                    prevEndDate = prevMonthEnd.toISOString().split('T')[0];
+                    break;
+                    
+                case 'all':
+                    startDate = '2020-01-01';
+                    endDate = todayStr;
+                    prevStartDate = null;
+                    prevEndDate = null;
+                    break;
+                    
+                case 'custom':
+                    startDate = customStartDate || todayStr;
+                    endDate = customEndDate || todayStr;
+                    prevStartDate = null;
+                    prevEndDate = null;
+                    break;
+            }
+            
+            const currentSales = await getSalesInRange(startDate, endDate);
+            const prevSales = (prevStartDate && prevEndDate) ? await getSalesInRange(prevStartDate, prevEndDate) : [];
+            
+            const currentRevenue = currentSales.reduce((sum, s) => sum + s.total, 0);
+            const currentProfit = currentSales.reduce((sum, s) => sum + s.profit, 0);
+            const currentCount = currentSales.length;
+            
+            const prevRevenue = prevSales.reduce((sum, s) => sum + s.total, 0);
+            const prevProfit = prevSales.reduce((sum, s) => sum + s.profit, 0);
+            const prevCount = prevSales.length;
+            
+            return {
+                revenue: currentRevenue,
+                profit: currentProfit,
+                count: currentCount,
+                revenuePercent: prevRevenue ? ((currentRevenue - prevRevenue) / prevRevenue * 100) : null,
+                profitPercent: prevProfit ? ((currentProfit - prevProfit) / prevProfit * 100) : null,
+                countPercent: prevCount ? ((currentCount - prevCount) / prevCount * 100) : null
+            };
+        }
+
+        async function getSalesInRange(startDate, endDate) {
+            try {
+                return await db.getByDateRange('sales', startDate, endDate);
+            } catch (e) {
+                // Если индекс не работает, фильтруем вручную
+                const allSales = await db.getAll('sales');
+                return allSales.filter(s => s.date >= startDate && s.date <= endDate);
+            }
+        }
+
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        function formatPercent(percent) {
+            if (percent === null || percent === undefined) return null;
+            const sign = percent >= 0 ? '+' : '';
+            return `${sign}${percent.toFixed(1)}%`;
+        }
+
+        function animateValue(element, start, end, duration) {
+            const startTime = performance.now();
+            const diff = end - start;
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const value = start + (diff * progress);
+                element.textContent = formatNumber(Math.round(value)) + '₽';
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        async function renderStatistics(period) {
+            currentPeriod = period;
+            
+            // Обновляем кнопки периода
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.period === period);
+            });
+            
+            // Показываем/скрываем выбор дат
+            const dateRangeEl = document.getElementById('dateRange');
+            if (dateRangeEl) {
+                dateRangeEl.style.display = period === 'custom' ? 'flex' : 'none';
+            }
+            
+            const stats = await getStatsForPeriod(period);
+            
+            const html = `
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <div class="stat-label">Выручка</div>
+                        <div class="stat-value" id="revenueValue">${formatNumber(stats.revenue)}₽</div>
+                        ${period !== 'all' && stats.revenuePercent !== null ? 
+                            `<div class="stat-percent ${stats.revenuePercent >= 0 ? 'positive' : 'negative'}">
+                                ${formatPercent(stats.revenuePercent)}
+                            </div>` : ''}
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <div class="stat-label">Прибыль</div>
+                        <div class="stat-value" id="profitValue">${formatNumber(stats.profit)}₽</div>
+                        ${period !== 'all' && stats.profitPercent !== null ? 
+                            `<div class="stat-percent ${stats.profitPercent >= 0 ? 'positive' : 'negative'}">
+                                ${formatPercent(stats.profitPercent)}
+                            </div>` : ''}
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-cart-check"></i>
+                        </div>
+                        <div class="stat-label">Продажи</div>
+                        <div class="stat-value" id="countValue">${formatNumber(stats.count)}</div>
+                        ${period !== 'all' && stats.countPercent !== null ? 
+                            `<div class="stat-percent ${stats.countPercent >= 0 ? 'positive' : 'negative'}">
+                                ${formatPercent(stats.countPercent)}
+                            </div>` : ''}
+                    </div>
+                </div>
+                
+                <div class="period-selector">
+                    <div class="period-buttons">
+                        <button class="period-btn ${period === 'today' ? 'active' : ''}" data-period="today" onclick="renderStatistics('today')">
+                            <i class="bi bi-calendar-day"></i> Сегодня
+                        </button>
+                        <button class="period-btn ${period === 'week' ? 'active' : ''}" data-period="week" onclick="renderStatistics('week')">
+                            <i class="bi bi-calendar-week"></i> Неделя
+                        </button>
+                        <button class="period-btn ${period === 'month' ? 'active' : ''}" data-period="month" onclick="renderStatistics('month')">
+                            <i class="bi bi-calendar-month"></i> Месяц
+                        </button>
+                        <button class="period-btn ${period === 'all' ? 'active' : ''}" data-period="all" onclick="renderStatistics('all')">
+                            <i class="bi bi-infinity"></i> Всё время
+                        </button>
+                        <button class="period-btn ${period === 'custom' ? 'active' : ''}" data-period="custom" onclick="renderStatistics('custom')">
+                            <i class="bi bi-calendar-range"></i> Период
+                        </button>
+                    </div>
+                    
+                    <div class="date-range" id="dateRange" style="display: ${period === 'custom' ? 'flex' : 'none'}">
+                        <input type="date" class="date-input" id="startDate" value="${customStartDate || ''}" onchange="updateCustomDates()">
+                        <span class="date-separator">—</span>
+                        <input type="date" class="date-input" id="endDate" value="${customEndDate || ''}" onchange="updateCustomDates()">
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('contentBody').innerHTML = html;
+            
+            // Анимация цифр
+            setTimeout(() => {
+                const revenueEl = document.getElementById('revenueValue');
+                const profitEl = document.getElementById('profitValue');
+                const countEl = document.getElementById('countValue');
+                
+                if (revenueEl) animateValue(revenueEl, 0, stats.revenue, 800);
+                if (profitEl) animateValue(profitEl, 0, stats.profit, 600);
+                if (countEl) {
+                    // Анимация для количества (без ₽)
+                    const startTime = performance.now();
+                    function animate(currentTime) {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / 600, 1);
+                        const value = Math.round(stats.count * progress);
+                        countEl.textContent = formatNumber(value);
+                        if (progress < 1) requestAnimationFrame(animate);
+                    }
+                    requestAnimationFrame(animate);
+                }
+            }, 100);
+        }
+
+        function updateCustomDates() {
+            customStartDate = document.getElementById('startDate').value;
+            customEndDate = document.getElementById('endDate').value;
+            if (customStartDate && customEndDate) {
+                renderStatistics('custom');
+            }
+        }
+
+        // ============ ДЕМО-ДАННЫЕ ============
+        async function addDemoData() {
+            const existingSales = await db.getAll('sales');
+            if (existingSales.length > 0) return; // Данные уже есть
+            
+            const demoSales = [];
+            const now = new Date();
+            
+            for (let i = 0; i < 50; i++) {
+                const date = new Date(now - Math.random() * 90 * 86400000);
+                const total = Math.floor(Math.random() * 5000) + 500;
+                const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
+                const profit = total - cost;
+                
+                demoSales.push({
+                    date: date.toISOString().split('T')[0],
+                    total: total,
+                    cost: cost,
+                    profit: profit,
+                    items: []
+                });
+            }
+            
+            // Добавляем сегодняшние продажи
+            const today = now.toISOString().split('T')[0];
+            demoSales.push({
+                date: today,
+                total: 50000,
+                cost: 35000,
+                profit: 15000,
+                items: []
+            });
+            
+            demoSales.push({
+                date: today,
+                total: 12000,
+                cost: 8000,
+                profit: 4000,
+                items: []
+            });
+            
+            for (const sale of demoSales) {
+                await db.add('sales', sale);
+            }
+        }
+
+        // ============ PULL-TO-REFRESH ============
+        let touchStartY = 0;
+        let pullDistance = 0;
+        const PULL_THRESHOLD = 80;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainContent = document.getElementById('mainContent');
+            
+            mainContent.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0) {
+                    touchStartY = e.touches[0].clientY;
+                }
+            });
+            
+            mainContent.addEventListener('touchmove', (e) => {
+                if (window.scrollY === 0) {
+                    pullDistance = e.touches[0].clientY - touchStartY;
+                    if (pullDistance > 0) {
+                        document.body.style.transform = `translateY(${pullDistance * 0.3}px)`;
+                    }
+                }
+            });
+            
+            mainContent.addEventListener('touchend', async () => {
+                if (pullDistance > PULL_THRESHOLD && window.scrollY === 0) {
+                    document.body.style.transform = 'translateY(0)';
+                    document.body.style.transition = 'transform 0.3s ease';
+                    
+                    // Показываем индикатор загрузки
+                    const toast = document.createElement('div');
+                    toast.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: var(--accent);
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        z-index: 9999;
+                        font-size: 14px;
+                        animation: fadeInUp 0.3s ease;
+                    `;
+                    toast.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i> Обновляем...';
+                    document.body.appendChild(toast);
+                    
+                    await renderStatistics(currentPeriod);
+                    
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 1000);
+                } else {
+                    document.body.style.transform = 'translateY(0)';
+                }
+                document.body.style.transition = 'transform 0.3s ease';
+                pullDistance = 0;
+            });
+        });
+
         // ============ ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ============
-        function switchTab(tabName) {
+        async function switchTab(tabName) {
             const titles = {
                 'statistics': 'Статистика',
                 'warehouse': 'Склад',
@@ -463,7 +1012,6 @@
             
             document.getElementById('currentTabTitle').textContent = titles[tabName];
             
-            // Обновляем активный пункт меню
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
                 if (item.dataset.tab === tabName) {
@@ -471,18 +1019,20 @@
                 }
             });
             
-            // Обновляем контент с анимацией
             const contentBody = document.getElementById('contentBody');
             contentBody.style.opacity = '0';
             contentBody.style.transform = 'translateY(20px)';
             
-            setTimeout(() => {
-                contentBody.innerHTML = `<p class="text-center text-muted py-5">Вкладка "${titles[tabName]}" пока пустая</p>`;
+            setTimeout(async () => {
+                if (tabName === 'statistics') {
+                    await renderStatistics(currentPeriod);
+                } else {
+                    contentBody.innerHTML = `<p class="text-center text-muted py-5">Вкладка "${titles[tabName]}" пока пустая</p>`;
+                }
                 contentBody.style.opacity = '1';
                 contentBody.style.transform = 'translateY(0)';
             }, 200);
             
-            // Закрываем сайдбар
             if (window.innerWidth < 768) {
                 closeSidebar();
             }
@@ -493,12 +1043,13 @@
             try {
                 await db.init();
                 await loadTheme();
+                await addDemoData();
+                await renderStatistics('today');
                 console.log('Crazy Rabbit готов к работе! 🐰');
             } catch (e) {
                 console.error('Ошибка инициализации:', e);
             }
             
-            // Регистрация Service Worker
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
                     .then(reg => console.log('SW зарегистрирован'))
@@ -507,7 +1058,6 @@
         }
 
         // Закрытие сайдбара по свайпу
-        let touchStartX = 0;
         document.getElementById('sidebar').addEventListener('touchstart', (e) => {
             touchStartX = e.touches[0].clientX;
         });
@@ -517,7 +1067,8 @@
             if (diff > 100) closeSidebar();
         });
 
-        // Запуск
+        let touchStartX = 0;
+
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
