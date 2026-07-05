@@ -62,6 +62,55 @@
         .main-content { padding: 20px 12px 20px; min-height: 100vh; }
         .tab-title { display: inline-block; font-weight: 700; padding-bottom: 10px; border-bottom: 3px solid var(--accent); margin-bottom: 20px; font-size: 22px; }
 
+        /* Статистика */
+        .stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
+        .period-buttons { display: flex; gap: 4px; background: var(--bg-card); border-radius: 12px; padding: 4px; }
+        .period-btn { width: 36px; height: 36px; border: none; background: transparent; color: var(--text-secondary); border-radius: 10px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+        .period-btn.active { background: var(--accent); color: white; }
+        .stats-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-card { background: var(--bg-card); border-radius: 15px; padding: 15px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-card .stat-icon { font-size: 24px; color: var(--accent); margin-bottom: 8px; }
+        .stat-card .stat-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; }
+        .stat-card .stat-value { font-size: 20px; font-weight: 700; margin-bottom: 5px; }
+        .stat-card .stat-percent { font-size: 14px; font-weight: 600; }
+        .stat-card .stat-percent.positive { color: var(--green); } .stat-card .stat-percent.negative { color: var(--red); }
+        .summary-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .summary-item { flex: 1; background: var(--bg-card); border-radius: 15px; padding: 12px 10px; text-align: center; cursor: pointer; }
+        .summary-item:active { transform: scale(0.96); }
+        .summary-item .summary-icon { font-size: 20px; margin-bottom: 6px; }
+        .summary-item .summary-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .summary-item .summary-value { font-size: 16px; font-weight: 700; }
+        .summary-item .summary-percent { font-size: 11px; font-weight: 600; margin-top: 2px; }
+        .summary-item.booking, .summary-item.booking .summary-icon, .summary-item.booking .summary-label, .summary-item.booking .summary-value { color: var(--green); }
+        .summary-item.debt, .summary-item.debt .summary-icon, .summary-item.debt .summary-label, .summary-item.debt .summary-value { color: var(--red); }
+        .summary-item.new-clients .summary-icon, .summary-item.new-clients .summary-label, .summary-item.new-clients .summary-value { color: var(--accent); }
+        .summary-item.new-clients .summary-percent { color: var(--green); }
+        .summary-item.leaving-clients .summary-icon, .summary-item.leaving-clients .summary-label, .summary-item.leaving-clients .summary-value { color: var(--accent); }
+        .summary-item.leaving-clients .summary-percent { color: var(--red); }
+        .chart-block { background: var(--bg-card); border-radius: 15px; padding: 20px 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .chart-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .chart-title i { color: var(--accent); }
+        .chart-switch { display: flex; background: var(--bg-primary); border-radius: 8px; padding: 2px; gap: 2px; }
+        .switch-btn { padding: 6px 12px; border: none; background: transparent; color: var(--text-secondary); border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+        .switch-btn.active { background: var(--accent); color: white; }
+        .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 160px; padding-bottom: 30px; overflow-x: auto; }
+        .bar-column { display: flex; flex-direction: column; align-items: center; min-width: 30px; flex-shrink: 0; position: relative; }
+        .bar-value { font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
+        .bar-fill { width: 24px; background: var(--accent); border-radius: 6px 6px 0 0; transition: height 0.8s ease; min-height: 4px; }
+        .bar-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; white-space: nowrap; }
+        .category-chart { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-bottom: 30px; }
+        .category-column { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .category-value { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
+        .category-fill { width: 100%; max-width: 50px; border-radius: 8px 8px 0 0; transition: height 0.8s ease; min-height: 4px; }
+        .category-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; text-align: center; }
+        .cat-liquid { background: var(--cat-liquid); } .cat-supplies { background: var(--cat-supplies); }
+        .cat-pods { background: var(--cat-pods); } .cat-disposable { background: var(--cat-disposable); } .cat-snus { background: var(--cat-snus); }
+        .date-range { display: flex; gap: 8px; align-items: center; margin-top: 12px; padding: 10px; background: var(--bg-card); border-radius: 12px; }
+        .date-input { flex: 1; padding: 8px 10px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-primary); color: var(--text-primary); font-size: 13px; outline: none; }
+        .date-input:focus { border-color: var(--accent); }
+        .date-separator { color: var(--text-secondary); font-size: 14px; }
+
         /* Склад */
         .warehouse-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
         @media (min-width: 500px) { .warehouse-cards { grid-template-columns: repeat(3, 1fr); } }
@@ -135,6 +184,8 @@
         .sale-col.qty { text-align: center; flex: 0.5; }
         .sales-delete-bg { position: absolute; top: 0; right: 0; height: 100%; background: var(--red); z-index: 0; width: 100%; }
         .sale-table-header { display: flex; padding: 8px 15px; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 6px; font-weight: 600; }
+        .sale-checkbox-col { flex: 0 0 24px; display: none; align-items: center; }
+        .sale-checkbox-col.visible { display: flex; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.2s ease; }
         .modal-dialog-custom { background: var(--bg-secondary); border-radius: 20px; width: 90%; max-width: 420px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: scaleIn 0.2s ease; }
@@ -167,49 +218,6 @@
         .warehouse-table-section, .warehouse-table-section *, .product-row, .product-row *, .accordion-header, .accordion-header *, .table-header-row, .table-header-row *, .product-row-wrapper, .product-row-wrapper *, .sales-table-section, .sales-table-section *, .sale-row, .sale-row *, .sale-row-wrapper, .sale-row-wrapper *, .sale-table-header, .sale-table-header * {
             -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none;
         }
-
-        /* Статистика */
-        .stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
-        .period-buttons { display: flex; gap: 4px; background: var(--bg-card); border-radius: 12px; padding: 4px; }
-        .period-btn { width: 36px; height: 36px; border: none; background: transparent; color: var(--text-secondary); border-radius: 10px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
-        .period-btn.active { background: var(--accent); color: white; }
-        .stats-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .stat-card { background: var(--bg-card); border-radius: 15px; padding: 15px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .stat-card .stat-icon { font-size: 24px; color: var(--accent); margin-bottom: 8px; }
-        .stat-card .stat-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; }
-        .stat-card .stat-value { font-size: 20px; font-weight: 700; }
-        .summary-row { display: flex; gap: 10px; margin-bottom: 20px; }
-        .summary-item { flex: 1; background: var(--bg-card); border-radius: 15px; padding: 12px 10px; text-align: center; cursor: pointer; }
-        .summary-item .summary-icon { font-size: 20px; margin-bottom: 6px; }
-        .summary-item .summary-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-        .summary-item .summary-value { font-size: 16px; font-weight: 700; }
-        .summary-item.booking, .summary-item.booking .summary-icon, .summary-item.booking .summary-label, .summary-item.booking .summary-value { color: var(--green); }
-        .summary-item.debt, .summary-item.debt .summary-icon, .summary-item.debt .summary-label, .summary-item.debt .summary-value { color: var(--red); }
-        .summary-item.new-clients .summary-icon, .summary-item.new-clients .summary-label, .summary-item.new-clients .summary-value { color: var(--accent); }
-        .summary-item.leaving-clients .summary-icon, .summary-item.leaving-clients .summary-label, .summary-item.leaving-clients .summary-value { color: var(--accent); }
-        .chart-block { background: var(--bg-card); border-radius: 15px; padding: 20px 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-        .chart-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .chart-title i { color: var(--accent); }
-        .chart-switch { display: flex; background: var(--bg-primary); border-radius: 8px; padding: 2px; gap: 2px; }
-        .switch-btn { padding: 6px 12px; border: none; background: transparent; color: var(--text-secondary); border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
-        .switch-btn.active { background: var(--accent); color: white; }
-        .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 160px; padding-bottom: 30px; overflow-x: auto; }
-        .bar-column { display: flex; flex-direction: column; align-items: center; min-width: 30px; flex-shrink: 0; position: relative; }
-        .bar-value { font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
-        .bar-fill { width: 24px; background: var(--accent); border-radius: 6px 6px 0 0; transition: height 0.8s ease; min-height: 4px; }
-        .bar-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; white-space: nowrap; }
-        .category-chart { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-bottom: 30px; }
-        .category-column { flex: 1; display: flex; flex-direction: column; align-items: center; }
-        .category-value { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
-        .category-fill { width: 100%; max-width: 50px; border-radius: 8px 8px 0 0; transition: height 0.8s ease; min-height: 4px; }
-        .category-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; text-align: center; }
-        .cat-liquid { background: var(--cat-liquid); } .cat-supplies { background: var(--cat-supplies); }
-        .cat-pods { background: var(--cat-pods); } .cat-disposable { background: var(--cat-disposable); } .cat-snus { background: var(--cat-snus); }
-        .date-range { display: flex; gap: 8px; align-items: center; margin-top: 12px; padding: 10px; background: var(--bg-card); border-radius: 12px; }
-        .date-input { flex: 1; padding: 8px 10px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-primary); color: var(--text-primary); font-size: 13px; outline: none; }
-        .date-input:focus { border-color: var(--accent); }
-        .date-separator { color: var(--text-secondary); font-size: 14px; }
     </style>
 </head>
 <body>
@@ -230,7 +238,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 21;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 22;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -294,11 +302,30 @@
         document.addEventListener('selectstart', function(e) { if (e.target.closest('.warehouse-table-section')||e.target.closest('.sales-table-section')) { e.preventDefault(); } });
 
         // ============ САЙДБАР СВАЙПОМ ============
-        let sidebarSwipeStart=0;
-        document.addEventListener('touchstart',e=>{if(e.touches.length===1)sidebarSwipeStart=e.touches[0].clientX;});
-        document.addEventListener('touchend',e=>{
-            const dx=(e.changedTouches[0]?.clientX||0)-sidebarSwipeStart;
-            if(dx>80&&sidebarSwipeStart<30)openSidebar();
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 1) {
+                window._sidebarSwipeStart = e.touches[0].clientX;
+                window._sidebarSwipeY = e.touches[0].clientY;
+                window._sidebarSwipeDetected = false;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', function(e) {
+            if (!window._sidebarSwipeStart) return;
+            const dx = e.touches[0].clientX - window._sidebarSwipeStart;
+            const dy = e.touches[0].clientY - window._sidebarSwipeY;
+            if (dx > 10 && Math.abs(dx) > Math.abs(dy) && window._sidebarSwipeStart < 40) {
+                window._sidebarSwipeDetected = true;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', function(e) {
+            if (window._sidebarSwipeDetected) {
+                const dx = (e.changedTouches[0]?.clientX || 0) - window._sidebarSwipeStart;
+                if (dx > 50) openSidebar();
+            }
+            window._sidebarSwipeStart = 0;
+            window._sidebarSwipeDetected = false;
         });
 
         // ============ СТАТИСТИКА ============
@@ -313,10 +340,19 @@
         async function renderStatistics(period){
             cp=period;const{s,e,ps,pe}=getDateRange(period);const sales=await getSalesInRange2(s,e),prevSales=(ps&&pe)?await getSalesInRange2(ps,pe):[];
             const rev=sales.reduce((s,x)=>s+(x.total||0),0),prof=sales.reduce((s,x)=>s+(x.profit||0),0),cnt=sales.length;
+            const pRev=prevSales.reduce((s,x)=>s+(x.total||0),0),pProf=prevSales.reduce((s,x)=>s+(x.profit||0),0),pCnt=prevSales.length;
             const sd=ssd(period,s,e);const dd=sd?getDailyData(sales,s,e):[],cd=getCategoryData(sales,ccm);
             const md=Math.max(...dd.map(d=>d.value),1),mc=Math.max(...cd.map(d=>d.value),1);
-            document.getElementById('contentBody').innerHTML=`<h2 class="tab-title">Статистика</h2><div class="stats-header"><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div><div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fn(rev)}₽</div></div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fn(prof)}₽</div></div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value">${fn(cnt)}</div></div></div><div class="summary-row"><div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">0₽</div></div><div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value">0₽</div></div><div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">0 чел.</div></div><div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">0 чел.</div></div></div><div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div></div><div class="category-chart">${cd.map(d=>{const h=mc>0?(d.value/mc*100):0;return`<div class="category-column"><div class="category-value">${fn(d.value)}₽</div><div class="category-fill cat-${d.category}" style="height:${h}%;"></div><div class="category-label">${d.name}</div></div>`;}).join('')}</div></div>${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> Продажи по дням</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>{const h=md>0?(d.value/md*100):0;return`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill" style="height:${h}%;"></div><div class="bar-label">${d.label}</div></div>`;}).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}`;
+            document.getElementById('contentBody').innerHTML=`<div class="stats-header"><h2 class="tab-title">Статистика</h2><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div>
+            <div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fn(rev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}">${fp((rev-pRev)/pRev*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fn(prof)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}">${fp((prof-pProf)/pProf*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value">${fn(cnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div></div>
+            <div class="summary-row"><div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">0₽</div></div><div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value">0₽</div></div><div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">0 чел.</div></div><div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">0 чел.</div></div></div>
+            <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>{const h=mc>0?(d.value/mc*100):0;return`<div class="category-column"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill cat-${d.category}" style="height:${h}%;" data-height="${h}"></div><div class="category-label">${d.name}</div></div>`;}).join('')}</div></div>
+            ${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> Продажи по дням</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>{const h=md>0?(d.value/md*100):0;return`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill" style="height:${h}%;" data-height="${h}"></div><div class="bar-label">${d.label}</div></div>`;}).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}
+            ${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`:''}`;
+            setTimeout(()=>document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(b=>{const h=b.getAttribute('data-height');b.style.height='0%';setTimeout(()=>b.style.height=h+'%',50);}),100);
         }
+        async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
+        function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
         function showBookingModal(){showModal('Бронь','bi bi-calendar-check','var(--green)','<p class="text-muted py-4 text-center">Список забронированных товаров</p>','');}
         function showDebtModal(){showModal('Долг','bi bi-cash-coin','var(--red)','<p class="text-muted py-4 text-center">Список должников</p>','');}
         function showNewClientsModal(){showModal('Новые клиенты','bi bi-person-plus','var(--accent)','<p class="text-muted py-4 text-center">Список новых клиентов</p>','');}
@@ -367,7 +403,7 @@
         function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
         function setupWarehouseSwipe(){
             document.querySelectorAll('.product-row').forEach(row=>{let sx=0,sy=0,sw=false,lt=null;const w=row.parentElement,bg=w.querySelector('.swipe-delete-bg');
-                row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!selectMode){enterSelectMode();toggleSelectProduct(parseInt(row.dataset.pid));sw=true;row.style.transform='translateX(0)';}},2000);},{passive:false});
+                row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!selectMode){enterSelectMode();toggleSelectProduct(parseInt(row.dataset.pid));sw=true;row.style.transform='translateX(0)';}},1000);},{passive:false});
                 row.addEventListener('touchmove',e=>{clearTimeout(lt);const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;if(Math.abs(dx)>Math.abs(dy)&&dx<0&&!selectMode){e.preventDefault();sw=true;const ms=w.offsetWidth*0.5;row.style.transition='none';row.style.transform=`translateX(${Math.max(-ms,dx)}px)`;if(bg)bg.style.opacity=Math.min(1,Math.abs(dx)/ms);}},{passive:false});
                 row.addEventListener('touchend',async e=>{clearTimeout(lt);if(sw&&!selectMode){const dx=(e.changedTouches[0]?.clientX||sx)-sx;if(Math.abs(dx)>w.offsetWidth*0.5){const pid=parseInt(row.dataset.pid);const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});}else{row.style.transition='transform 0.2s ease';row.style.transform='translateX(0)';if(bg)bg.style.opacity='0';}}sw=false;});
             });
@@ -429,7 +465,7 @@
         }
         function setupSalesSwipe(){
             document.querySelectorAll('.sale-row').forEach(row=>{let sx=0,sy=0,sw=false,lt=null;const w=row.parentElement,bg=w.querySelector('.sales-delete-bg');
-                row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!salesSelectMode){enterSalesSelectMode();toggleSalesSelect(parseInt(row.dataset.sid));sw=true;row.style.transform='translateX(0)';}},2000);},{passive:false});
+                row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!salesSelectMode){enterSalesSelectMode();toggleSalesSelect(parseInt(row.dataset.sid));sw=true;row.style.transform='translateX(0)';}},1000);},{passive:false});
                 row.addEventListener('touchmove',e=>{clearTimeout(lt);const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;if(Math.abs(dx)>Math.abs(dy)&&dx<0&&!salesSelectMode){e.preventDefault();sw=true;const ms=w.offsetWidth*0.5;row.style.transition='none';row.style.transform=`translateX(${Math.max(-ms,dx)}px)`;if(bg)bg.style.opacity=Math.min(1,Math.abs(dx)/ms);}},{passive:false});
                 row.addEventListener('touchend',async e=>{clearTimeout(lt);if(sw&&!salesSelectMode){const dx=(e.changedTouches[0]?.clientX||sx)-sx;if(Math.abs(dx)>w.offsetWidth*0.5){const sid=parseInt(row.dataset.sid);const s=await db.g('sales',sid);if(s){deletedSales=[s];await db.del('sales',sid);}await renderSalesTable();showSnackbar('Продажа удалена',async()=>{for(const ds of deletedSales){const cp={...ds};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});}else{row.style.transition='transform 0.2s ease';row.style.transform='translateX(0)';if(bg)bg.style.opacity='0';}}sw=false;});
             });
@@ -452,18 +488,34 @@
             salesFilter.note=document.getElementById('flt_note').value;
             closeModal();renderSalesTable();
         }
-        function showAddSaleModal(sale=null){
+        async function getProductListForSelect(){
+            const products=await db.all('products');
+            const names=new Set();
+            products.forEach(p=>{if(p.manufacturer&&p.lineup){let name=p.manufacturer+' '+p.lineup;if(p.flavor)name+=' '+p.flavor;if(p.color)name+=' '+p.color;names.add(name);}});
+            return [...names].sort();
+        }
+        async function showAddSaleModal(sale=null){
             const isEdit=!!sale;
+            const productList=await getProductListForSelect();
+            const productOptions=productList.map(p=>`<option value="${p}" ${(sale?.product||'')===p?'selected':''}>${p}</option>`).join('');
             showModal(isEdit?'Редактировать продажу':'Добавить продажу','bi bi-cart3','var(--accent)',
                 `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="sale_client" value="${sale?.client||''}"></div>
-                <div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="sale_product" value="${sale?.product||''}"></div>
+                <div class="form-group"><label class="form-label">Товар</label><select class="form-select" id="sale_product" onchange="onProductChange()"><option value="">Выберите товар</option>${productOptions}<option value="__other__">Другое...</option></select><input type="text" class="form-input" id="sale_product_other" style="display:none;margin-top:8px;" placeholder="Введите название"></div>
                 <div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="sale_quantity" value="${sale?.quantity||1}" min="1"></div>
                 <div class="form-group"><label class="form-label">Сумма (₽)</label><input type="number" class="form-input" id="sale_total" value="${sale?.total||''}" ${sale?.note==='приз'?'disabled':''}></div>
                 <div class="form-group"><label class="form-label">Дата</label><input type="date" class="form-input" id="sale_date" value="${sale?.date||new Date().toISOString().split('T')[0]}"></div>
                 <div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="sale_note" onchange="onSaleNoteChange()"><option value="без заметки" ${(sale?.note||'без заметки')==='без заметки'?'selected':''}>Без заметки</option><option value="бронь" ${sale?.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${sale?.note==='долг'?'selected':''}>Долг</option><option value="приз" ${sale?.note==='приз'?'selected':''}>Приз</option></select></div>
                 <input type="hidden" id="sale_id" value="${sale?.id||''}">`,
                 `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>${isEdit?`<button class="btn btn-delete" onclick="deleteSaleFromModal()">Удалить</button>`:''}<button class="btn btn-save" onclick="saveSale()">Применить</button>`);
+            if(sale?.product&&!productList.includes(sale.product)){setTimeout(()=>{const sel=document.getElementById('sale_product');if(sel){sel.value='__other__';const other=document.getElementById('sale_product_other');if(other){other.style.display='block';other.value=sale.product;}}},50);}
             if(sale?.note==='приз'){setTimeout(()=>{const ti=document.getElementById('sale_total');if(ti){ti.value='0';ti.disabled=true;}},50);}
+        }
+        async function onProductChange(){
+            const sel=document.getElementById('sale_product');
+            const other=document.getElementById('sale_product_other');
+            const totalInput=document.getElementById('sale_total');
+            if(sel.value==='__other__'){other.style.display='block';totalInput.value='';}
+            else{other.style.display='none';if(sel.value){const products=await db.all('products');const parts=sel.value.split(' ');const found=products.find(p=>{const name=(p.manufacturer+' '+p.lineup+(p.flavor?' '+p.flavor:'')+(p.color?' '+p.color:'')).trim();return name===sel.value;});if(found&&found.selling){totalInput.value=found.selling;}}}
         }
         function onSaleNoteChange(){
             const note=document.getElementById('sale_note').value;
@@ -473,10 +525,12 @@
         async function saveSale(){
             const id=document.getElementById('sale_id').value;
             const note=document.getElementById('sale_note').value;
+            const sel=document.getElementById('sale_product');
+            let product=sel.value==='__other__'?document.getElementById('sale_product_other').value.trim():sel.value;
             const total=note==='приз'?0:(parseInt(document.getElementById('sale_total').value)||0);
             const sale={
                 client:document.getElementById('sale_client').value.trim(),
-                product:document.getElementById('sale_product').value.trim(),
+                product:product,
                 quantity:parseInt(document.getElementById('sale_quantity').value)||1,
                 total:total,
                 date:document.getElementById('sale_date').value,
