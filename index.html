@@ -251,19 +251,28 @@
         .accordion-body { display: none; padding: 5px 0; }
         .accordion-body.open { display: block; }
 
+        /* Подгруппы с отступом */
+        .accordion-body .accordion-header { padding-left: 30px; font-size: 13px; }
+
         .product-row {
             display: flex; align-items: center; padding: 10px 15px 10px 25px;
-            border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 8px;
+            border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 6px;
         }
         .product-row:active { background: rgba(129,216,208,0.1); }
         .product-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .product-col.price { text-align: right; flex: 0.7; }
         .product-col.qty { text-align: center; flex: 0.5; }
+        .product-col.copy-btn {
+            flex: 0 0 28px; text-align: center; cursor: pointer; color: var(--accent);
+            font-size: 16px; padding: 2px;
+        }
+        .product-col.copy-btn:active { color: var(--accent-hover); transform: scale(1.2); }
         .table-header-row {
             display: flex; padding: 8px 15px 8px 25px; font-size: 11px;
-            color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 8px;
+            color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 6px;
         }
         .table-header-row .product-col { font-weight: 600; }
+        .table-header-row .product-col.copy-btn { flex: 0 0 28px; }
 
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -331,7 +340,7 @@
     <script>
         // ============ БАЗА ДАННЫХ ============
         const DB_NAME = 'CrazyRabbitDB';
-        const DB_VERSION = 6;
+        const DB_VERSION = 7;
 
         class Database {
             constructor() { this.db = null; }
@@ -356,23 +365,11 @@
             async getAll(store) { return this.promisify(this.db.transaction([store], 'readonly').objectStore(store).getAll()); }
             async add(store, data) { return this.promisify(this.db.transaction([store], 'readwrite').objectStore(store).add(data)); }
             async delete(store, id) { return this.promisify(this.db.transaction([store], 'readwrite').objectStore(store).delete(id)); }
-            
-            async getByIndex(store, index, value) {
-                try { return this.promisify(this.db.transaction([store], 'readonly').objectStore(store).index(index).getAll(value)); }
-                catch { const all = await this.getAll(store); return all.filter(item => item[index] === value); }
-            }
-
             async getByDateRange(store, start, end) {
                 try { return this.promisify(this.db.transaction([store], 'readonly').objectStore(store).index('date').getAll(IDBKeyRange.bound(start, end))); }
                 catch { const all = await this.getAll(store); return all.filter(item => item.date >= start && item.date <= end); }
             }
-
-            promisify(request) {
-                return new Promise((resolve, reject) => {
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                });
-            }
+            promisify(request) { return new Promise((resolve, reject) => { request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); }
         }
 
         const db = new Database();
@@ -383,13 +380,9 @@
         const CATEGORY_ICONS = { 'liquid': 'bi-droplet', 'supplies': 'bi-tools', 'pods': 'bi-usb-plug', 'disposable': 'bi-phone', 'snus': 'bi-box2' };
         const CATEGORY_CLASS = { 'liquid': 'liquid', 'supplies': 'supplies', 'pods': 'pods', 'disposable': 'disposable', 'snus': 'snus' };
         const CATEGORY_EXTRA_FIELDS = {
-            'liquid': [{ key: 'flavor', label: 'Вкус' }],
-            'supplies': [],
-            'pods': [{ key: 'color', label: 'Цвет' }],
-            'disposable': [{ key: 'flavor', label: 'Вкус' }],
-            'snus': [{ key: 'flavor', label: 'Вкус' }]
+            'liquid': [{ key: 'flavor', label: 'Вкус' }], 'supplies': [], 'pods': [{ key: 'color', label: 'Цвет' }],
+            'disposable': [{ key: 'flavor', label: 'Вкус' }], 'snus': [{ key: 'flavor', label: 'Вкус' }]
         };
-        // ВИДИМЫЕ колонки в таблице (без manufacturer и lineup — они в заголовках аккордеона)
         const CATEGORY_TABLE_COLS = {
             'liquid': ['flavor', 'quantity', 'purchase', 'selling'],
             'supplies': ['lineup', 'quantity', 'purchase', 'selling'],
@@ -397,22 +390,14 @@
             'disposable': ['flavor', 'quantity', 'purchase', 'selling'],
             'snus': ['flavor', 'quantity', 'purchase', 'selling']
         };
-        const COL_LABELS = {
-            'manufacturer': 'Производитель', 'lineup': 'Линейка', 'flavor': 'Вкус',
-            'color': 'Цвет', 'quantity': 'Кол-во', 'purchase': 'Закупка', 'selling': 'Продажа'
-        };
+        const COL_LABELS = { 'manufacturer': 'Производитель', 'lineup': 'Линейка', 'flavor': 'Вкус', 'color': 'Цвет', 'quantity': 'Кол-во', 'purchase': 'Закупка', 'selling': 'Продажа' };
         const CATEGORY_GROUPS = {
-            'liquid': ['manufacturer', 'lineup'],
-            'supplies': ['manufacturer'],
-            'pods': ['manufacturer', 'lineup'],
-            'disposable': ['manufacturer', 'lineup'],
-            'snus': ['manufacturer', 'lineup']
+            'liquid': ['manufacturer', 'lineup'], 'supplies': ['manufacturer'], 'pods': ['manufacturer', 'lineup'],
+            'disposable': ['manufacturer', 'lineup'], 'snus': ['manufacturer', 'lineup']
         };
 
         // ============ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ============
-        function normalize(str) {
-            return (str || '').trim().toUpperCase();
-        }
+        function normalize(str) { return (str || '').trim().toUpperCase(); }
 
         // ============ ТЕМЫ ============
         const themes = ['dark', 'light', 'pink'];
@@ -470,22 +455,16 @@
         }
 
         function getDaysDiff(start, end) { return Math.ceil((new Date(end) - new Date(start)) / 86400000) + 1; }
-
         function getDailyData(sales, start, end) {
             const showMonths = getDaysDiff(start, end) > 31, map = new Map();
-            sales.forEach(s => {
-                const d = new Date(s.date), key = showMonths ? `${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear().toString().slice(2)}` : `${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`;
-                map.set(key, (map.get(key) || 0) + (s.profit || 0));
-            });
+            sales.forEach(s => { const d = new Date(s.date), key = showMonths ? `${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear().toString().slice(2)}` : `${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`; map.set(key, (map.get(key) || 0) + (s.profit || 0)); });
             return [...map.keys()].sort((a, b) => { const [pa, pb] = [a.split('.'), b.split('.')]; return showMonths ? (pa[1]+pa[0]).localeCompare(pb[1]+pb[0]) : (pa[1]+pa[0]).localeCompare(pb[1]+pb[0]); }).map(k => ({ label: k, value: map.get(k) }));
         }
-
         function getCategoryData(sales, mode) {
             const map = {}; CATEGORIES.forEach(c => map[c] = 0);
             sales.forEach(s => { if (map[s.category] !== undefined) map[s.category] += (mode === 'sum' ? (s.profit || 0) : 1); });
             return CATEGORIES.map(c => ({ category: c, name: CATEGORY_NAMES[c], value: map[c] }));
         }
-
         function shouldShowDaily(period, start, end) { if (period === 'today') return false; if (period === 'custom') return getDaysDiff(start, end) >= 2; return true; }
 
         async function renderStatistics(period) {
@@ -514,7 +493,6 @@
                 <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${currentCategoryMode==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${currentCategoryMode==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${catData.map(d => { const h = maxCat>0?(d.value/maxCat*100):0; return `<div class="category-column"><div class="category-value">${fmtNum(d.value)}${currentCategoryMode==='sum'?'₽':' шт.'}</div><div class="category-fill cat-${d.category}" style="height:${h}%;" data-height="${h}"></div><div class="category-label">${d.name}</div></div>`; }).join('')}</div></div>
                 ${showDaily ? `<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> Продажи по дням</div></div>${dailyData.length ? `<div class="bar-chart">${dailyData.map(d => { const h = maxDaily>0?(d.value/maxDaily*100):0; return `<div class="bar-column"><div class="bar-value">${fmtNum(d.value)}₽</div><div class="bar-fill" style="height:${h}%;" data-height="${h}"></div><div class="bar-label">${d.label}</div></div>`; }).join('')}</div>` : '<p class="text-muted text-center py-3">Нет данных</p>'}</div>` : ''}
                 ${period === 'custom' ? `<div class="date-range"><input type="date" class="date-input" id="startDate" value="${customStartDate||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${customEndDate||''}" onchange="updateCustomDates()"></div>` : ''}`;
-
             setTimeout(() => document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(b => { const h = b.getAttribute('data-height'); b.style.height = '0%'; setTimeout(() => b.style.height = h + '%', 50); }), 100);
         }
 
@@ -527,28 +505,24 @@
 
         // ============ СКЛАД ============
         let currentWarehouseCategory = null;
+        let openGroups = new Set();
 
         async function renderWarehouseCards() {
             currentWarehouseCategory = null;
+            openGroups = new Set();
             const allProducts = await db.getAll('products');
             const counts = {};
             CATEGORIES.forEach(cat => counts[cat] = allProducts.filter(p => p.category === cat).length);
-
             document.getElementById('contentBody').innerHTML = `
                 <h2 class="tab-title">Склад</h2>
                 <div class="warehouse-cards">
-                    ${CATEGORIES.map(cat => `
-                        <div class="wh-card ${CATEGORY_CLASS[cat]}" onclick="openWarehouseCategory('${cat}')">
-                            <div class="wh-icon"><i class="bi ${CATEGORY_ICONS[cat]}"></i></div>
-                            <div class="wh-label">${CATEGORY_NAMES[cat]}</div>
-                            <div class="wh-count">${counts[cat]} товаров</div>
-                        </div>
-                    `).join('')}
+                    ${CATEGORIES.map(cat => `<div class="wh-card ${CATEGORY_CLASS[cat]}" onclick="openWarehouseCategory('${cat}')"><div class="wh-icon"><i class="bi ${CATEGORY_ICONS[cat]}"></i></div><div class="wh-label">${CATEGORY_NAMES[cat]}</div><div class="wh-count">${counts[cat]} товаров</div></div>`).join('')}
                 </div>`;
         }
 
         async function openWarehouseCategory(cat) {
             currentWarehouseCategory = cat;
+            openGroups = new Set();
             await renderWarehouseTable(cat);
         }
 
@@ -563,20 +537,26 @@
             return groups;
         }
 
-        function buildAccordionHTML(groups, groupBy, level) {
+        function getGroupId(cat, level, keys) {
+            return ['grp', cat, ...keys.slice(0, level + 1)].join('_');
+        }
+
+        function buildAccordionHTML(groups, groupBy, level, cat, parentKeys) {
             if (level >= groupBy.length) return '';
             let html = '';
             const entries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
             
             entries.forEach(([key, items]) => {
-                // Берём значение из первого товара для отображения (оригинальный регистр)
+                const currentKeys = [...parentKeys, key];
+                const groupId = getGroupId(cat, level, currentKeys);
                 const firstItem = items[0];
                 const rawLabel = groupBy[level] === 'manufacturer' ? firstItem.manufacturer : firstItem.lineup;
                 const label = rawLabel || key;
-                const groupId = 'grp_' + Math.random().toString(36).slice(2, 10);
+                // Табуляция для подгрупп
+                const tab = level > 0 ? '&emsp;&emsp;' : '';
                 
                 html += `<div class="accordion-group">`;
-                html += `<div class="accordion-header" onclick="window.toggleAcc('${groupId}')"><span>${label} (${items.length})</span><i class="bi bi-chevron-down accordion-arrow"></i></div>`;
+                html += `<div class="accordion-header" onclick="window.toggleAcc('${groupId}')"><span>${tab}${label} (${items.length})</span><i class="bi bi-chevron-down accordion-arrow"></i></div>`;
                 html += `<div class="accordion-body" id="${groupId}">`;
                 
                 if (level + 1 < groupBy.length) {
@@ -586,10 +566,10 @@
                         if (!subGroups[subKey]) subGroups[subKey] = [];
                         subGroups[subKey].push(item);
                     });
-                    html += buildAccordionHTML(subGroups, groupBy, level + 1);
+                    html += buildAccordionHTML(subGroups, groupBy, level + 1, cat, currentKeys);
                 } else {
                     const cols = CATEGORY_TABLE_COLS[currentWarehouseCategory];
-                    html += `<div class="table-header-row">${cols.map(col => `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}</div>`;
+                    html += `<div class="table-header-row">${cols.map(col => `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
                     items.forEach(item => {
                         html += `<div class="product-row" ondblclick="editProduct(${item.id})">`;
                         cols.forEach(col => {
@@ -597,6 +577,7 @@
                             if (col === 'purchase' || col === 'selling') val = fmtNum(val) + '₽';
                             html += `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${val}</div>`;
                         });
+                        html += `<div class="product-col copy-btn" onclick="event.stopPropagation(); copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div>`;
                         html += `</div>`;
                     });
                 }
@@ -609,9 +590,27 @@
             const body = document.getElementById(groupId);
             if (!body) return;
             const header = body.previousElementSibling;
-            body.classList.toggle('open');
-            header.classList.toggle('open');
+            const isOpen = body.classList.contains('open');
+            if (isOpen) {
+                body.classList.remove('open');
+                header.classList.remove('open');
+                openGroups.delete(groupId);
+            } else {
+                body.classList.add('open');
+                header.classList.add('open');
+                openGroups.add(groupId);
+            }
         };
+
+        function restoreOpenGroups() {
+            openGroups.forEach(groupId => {
+                const body = document.getElementById(groupId);
+                if (body) {
+                    body.classList.add('open');
+                    if (body.previousElementSibling) body.previousElementSibling.classList.add('open');
+                }
+            });
+        }
 
         async function renderWarehouseTable(cat, searchQuery = '') {
             currentWarehouseCategory = cat;
@@ -621,7 +620,11 @@
             if (searchQuery) {
                 const q = searchQuery.toLowerCase();
                 const cols = CATEGORY_TABLE_COLS[cat];
-                products = products.filter(p => cols.some(col => (p[col] || '').toString().toLowerCase().includes(q)));
+                // Также ищем по manufacturer и lineup для поиска
+                const allCols = [...cols, 'manufacturer', 'lineup'];
+                products = products.filter(p => allCols.some(col => (p[col] || '').toString().toLowerCase().includes(q)));
+                // При поиске сбрасываем открытые группы
+                openGroups = new Set();
             }
             
             const groupBy = CATEGORY_GROUPS[cat];
@@ -635,19 +638,38 @@
                         <button class="wh-add-btn" onclick="showAddProductModal()">+</button>
                     </div>
                     <input type="text" class="search-input" placeholder="Поиск..." value="${searchQuery}" oninput="onSearch(this.value)">
-                    ${products.length === 0 ? '<p class="text-center text-muted py-4">Нет товаров</p>' : buildAccordionHTML(groups, groupBy, 0)}
+                    ${products.length === 0 ? '<p class="text-center text-muted py-4">Нет товаров</p>' : buildAccordionHTML(groups, groupBy, 0, cat, [])}
                 </div>`;
             
+            // Восстанавливаем открытые группы
             setTimeout(() => {
-                const bodies = document.querySelectorAll('.accordion-body');
-                if (bodies.length === 1) {
-                    bodies[0].classList.add('open');
-                    bodies[0].previousElementSibling.classList.add('open');
+                if (openGroups.size > 0) {
+                    restoreOpenGroups();
+                } else {
+                    // Автооткрытие если одна группа
+                    const bodies = document.querySelectorAll('.accordion-body');
+                    if (bodies.length === 1) {
+                        const groupId = bodies[0].id;
+                        bodies[0].classList.add('open');
+                        bodies[0].previousElementSibling.classList.add('open');
+                        openGroups.add(groupId);
+                    }
                 }
             }, 50);
         }
 
         function onSearch(value) { renderWarehouseTable(currentWarehouseCategory, value); }
+
+        async function copyProduct(productId) {
+            const product = await db.get('products', productId);
+            if (!product) return;
+            
+            // Создаём копию без id (автоинкремент добавит новый)
+            const copy = { ...product };
+            delete copy.id;
+            await db.add('products', copy);
+            await renderWarehouseTable(currentWarehouseCategory, document.querySelector('.search-input')?.value || '');
+        }
 
         function getProductFormHTML(product = null) {
             const cat = currentWarehouseCategory;
