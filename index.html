@@ -135,12 +135,11 @@
         .accordion-header {
             display: flex; align-items: center; justify-content: space-between;
             padding: 14px 15px; background: var(--bg-primary); border-radius: 10px;
-            cursor: pointer; font-weight: 600; font-size: 14px;
-            min-height: 48px;
+            cursor: pointer; font-weight: 600; font-size: 14px; min-height: 48px;
         }
         .accordion-header-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
         .accordion-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .accordion-header .accordion-arrow { transition: transform 0.3s ease; font-size: 13px; }
+        .accordion-header .accordion-arrow { transition: transform 0.3s ease; font-size: 13px; pointer-events: none; }
         .accordion-header.open .accordion-arrow { transform: rotate(180deg); }
         .accordion-body { display: none; padding: 5px 0; }
         .accordion-body.open { display: block; }
@@ -148,8 +147,9 @@
 
         .group-edit-btn {
             background: none; border: none; color: var(--accent); cursor: pointer;
-            font-size: 17px; padding: 4px 6px; transition: all 0.2s ease;
+            font-size: 17px; padding: 6px 8px; transition: all 0.2s ease;
             display: flex; align-items: center; justify-content: center;
+            position: relative; z-index: 10;
         }
         .group-edit-btn:active { transform: scale(1.15); color: var(--accent-hover); }
 
@@ -205,7 +205,7 @@
     <div id="modalContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 10;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 11;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -264,16 +264,9 @@
         function getDateRange(p) {
             const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];
             let s,e,ps,pe;
-            switch(p){
-                case'today':s=t;e=t;ps=y;pe=y;break;
-                case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}
-                case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;
-                case'all':s='2020-01-01';e=t;ps=null;pe=null;break;
-                case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;
-            }
+            switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}
             return{s,e,ps,pe};
         }
-        async function getSalesInRange(s,e){try{return await db.g('sales',s)&&[]||[];}catch{const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}}
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
         function gdd(s,e){return Math.ceil((new Date(e)-new Date(s))/86400000)+1;}
         function getDailyData(sales,s,e){const sm=gdd(s,e)>31,m=new Map();sales.forEach(x=>{const d=new Date(x.date),k=sm?`${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear().toString().slice(2)}`:`${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`;m.set(k,(m.get(k)||0)+(x.profit||0));});return[...m.keys()].sort((a,b)=>{const[pa,pb]=[a.split('.'),b.split('.')];return sm?(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]):(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}).map(k=>({label:k,value:m.get(k)}));}
@@ -320,16 +313,6 @@
         }
         function getGroupId(cat,level,keys){return['grp',cat,...keys.slice(0,level+1)].join('_');}
 
-        // ГЛОБАЛЬНЫЙ ОБРАБОТЧИК через data-атрибуты
-        document.addEventListener('click',function(e){
-            const btn=e.target.closest('.group-edit-btn');
-            if(!btn)return;
-            e.stopPropagation();
-            const cat=btn.dataset.cat;
-            const keys=btn.dataset.keys.split('|||');
-            showGroupEditModal(cat,keys);
-        });
-
         function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){
             if(level>=groupBy.length)return'';
             let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));
@@ -341,6 +324,7 @@
                 const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;
                 const label=rl||key;
                 const tab=level>0?'&emsp;&emsp;':'';
+                // Кнопка показывается только на ПОСЛЕДНЕМ уровне группировки
                 const showEdit=isLast;
                 const ks=ck.join('|||');
                 const eb=showEdit?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';
@@ -389,7 +373,18 @@
             await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
         }
 
-        // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ ============
+        // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ ЦЕН ============
+        // Глобальный делегированный обработчик
+        document.addEventListener('click',function(e){
+            const btn=e.target.closest('.group-edit-btn');
+            if(!btn)return;
+            e.stopPropagation();
+            e.preventDefault();
+            const cat=btn.dataset.cat;
+            const keys=btn.dataset.keys.split('|||');
+            showGroupEditModal(cat,keys);
+        });
+
         async function showGroupEditModal(cat,currentKeys){
             const gb=CATEGORY_GROUPS[cat];
             const ap=await db.all('products');
