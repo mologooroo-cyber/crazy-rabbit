@@ -26,6 +26,11 @@
             --border: #4A6274;
             --green: #2ecc71;
             --red: #e74c3c;
+            --cat-liquid: #3498db;
+            --cat-supplies: #e67e22;
+            --cat-pods: #9b59b6;
+            --cat-disposable: #e74c3c;
+            --cat-snus: #1abc9c;
         }
 
         [data-theme="light"] {
@@ -40,6 +45,11 @@
             --border: #DEE2E6;
             --green: #27ae60;
             --red: #c0392b;
+            --cat-liquid: #2980b9;
+            --cat-supplies: #d35400;
+            --cat-pods: #8e44ad;
+            --cat-disposable: #c0392b;
+            --cat-snus: #16a085;
         }
 
         [data-theme="pink"] {
@@ -54,6 +64,11 @@
             --border: #FFB6C1;
             --green: #00b894;
             --red: #d63031;
+            --cat-liquid: #74b9ff;
+            --cat-supplies: #fab1a0;
+            --cat-pods: #a29bfe;
+            --cat-disposable: #ff7675;
+            --cat-snus: #55efc4;
         }
 
         * {
@@ -306,30 +321,12 @@
             transform: scale(0.9);
         }
 
-        /* Всплывающая подсказка */
-        .period-btn[title]:hover::after,
-        .period-btn[title]:active::after {
-            content: attr(title);
-            position: absolute;
-            bottom: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-sidebar);
-            color: var(--text-primary);
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            white-space: nowrap;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        /* Статистика */
+        /* Карточки статистики */
         .stats-cards {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .stat-card {
@@ -373,6 +370,138 @@
         .stat-card .stat-percent.negative {
             color: var(--red);
         }
+
+        /* Блоки с графиками */
+        .chart-block {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 20px 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-title i {
+            color: var(--accent);
+        }
+
+        /* График продаж по дням */
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            height: 220px;
+            padding-bottom: 30px;
+            position: relative;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .bar-chart::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .bar-chart::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .bar-chart::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .bar-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 30px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .bar-value {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .bar-fill {
+            width: 24px;
+            background: var(--accent);
+            border-radius: 6px 6px 0 0;
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 4px;
+        }
+
+        .bar-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            white-space: nowrap;
+            transform: rotate(-45deg);
+            transform-origin: top left;
+            position: absolute;
+            bottom: -5px;
+        }
+
+        /* График по категориям */
+        .category-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            height: 160px;
+            padding-bottom: 30px;
+        }
+
+        .category-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .category-value {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .category-fill {
+            width: 100%;
+            max-width: 50px;
+            border-radius: 8px 8px 0 0;
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 4px;
+        }
+
+        .category-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .cat-liquid { background: var(--cat-liquid); }
+        .cat-supplies { background: var(--cat-supplies); }
+        .cat-pods { background: var(--cat-pods); }
+        .cat-disposable { background: var(--cat-disposable); }
+        .cat-snus { background: var(--cat-snus); }
 
         /* Выбор дат */
         .date-range {
@@ -586,6 +715,16 @@
 
         const db = new Database();
 
+        // ============ КОНСТАНТЫ ============
+        const CATEGORIES = ['liquids', 'supplies', 'pods', 'disposable', 'snus'];
+        const CATEGORY_NAMES = {
+            'liquids': 'Жидкости',
+            'supplies': 'Расходники',
+            'pods': 'Поды',
+            'disposable': 'Одноразки',
+            'snus': 'Снюс'
+        };
+
         // ============ УПРАВЛЕНИЕ ТЕМАМИ ============
         const themes = ['dark', 'light', 'pink'];
         const themeNames = {
@@ -644,7 +783,7 @@
         let customStartDate = null;
         let customEndDate = null;
 
-        async function getStatsForPeriod(period) {
+        function getDateRange(period) {
             const now = new Date();
             let startDate, endDate, prevStartDate, prevEndDate;
             
@@ -699,6 +838,37 @@
                     break;
             }
             
+            return { startDate, endDate, prevStartDate, prevEndDate };
+        }
+
+        async function getSalesInRange(startDate, endDate) {
+            try {
+                return await db.getByDateRange('sales', startDate, endDate);
+            } catch (e) {
+                const allSales = await db.getAll('sales');
+                return allSales.filter(s => s.date >= startDate && s.date <= endDate);
+            }
+        }
+
+        function getDaysDiff(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        }
+
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        function formatPercent(percent) {
+            if (percent === null || percent === undefined) return null;
+            const sign = percent >= 0 ? '+' : '';
+            return `${sign}${percent.toFixed(1)}%`;
+        }
+
+        async function getStatsForPeriod(period) {
+            const { startDate, endDate, prevStartDate, prevEndDate } = getDateRange(period);
+            
             const currentSales = await getSalesInRange(startDate, endDate);
             const prevSales = (prevStartDate && prevEndDate) ? await getSalesInRange(prevStartDate, prevEndDate) : [];
             
@@ -716,33 +886,137 @@
                 count: currentCount,
                 revenuePercent: prevRevenue ? ((currentRevenue - prevRevenue) / prevRevenue * 100) : null,
                 profitPercent: prevProfit ? ((currentProfit - prevProfit) / prevProfit * 100) : null,
-                countPercent: prevCount ? ((currentCount - prevCount) / prevCount * 100) : null
+                countPercent: prevCount ? ((currentCount - prevCount) / prevCount * 100) : null,
+                sales: currentSales,
+                startDate,
+                endDate
             };
         }
 
-        async function getSalesInRange(startDate, endDate) {
-            try {
-                return await db.getByDateRange('sales', startDate, endDate);
-            } catch (e) {
-                const allSales = await db.getAll('sales');
-                return allSales.filter(s => s.date >= startDate && s.date <= endDate);
+        function getDailyData(sales, startDate, endDate) {
+            const daysDiff = getDaysDiff(startDate, endDate);
+            const showMonths = daysDiff > 31;
+            
+            const dataMap = new Map();
+            
+            sales.forEach(sale => {
+                const date = new Date(sale.date);
+                let key;
+                if (showMonths) {
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const year = date.getFullYear().toString().slice(2);
+                    key = `${month}.${year}`;
+                } else {
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    key = `${day}.${month}`;
+                }
+                
+                if (!dataMap.has(key)) {
+                    dataMap.set(key, 0);
+                }
+                dataMap.set(key, dataMap.get(key) + sale.profit);
+            });
+            
+            // Сортируем по дате
+            const sortedKeys = Array.from(dataMap.keys()).sort((a, b) => {
+                const partsA = a.split('.');
+                const partsB = b.split('.');
+                if (showMonths) {
+                    return (partsA[1] + partsA[0]).localeCompare(partsB[1] + partsB[0]);
+                } else {
+                    return (partsA[1] + partsA[0]).localeCompare(partsB[1] + partsB[0]);
+                }
+            });
+            
+            return sortedKeys.map(key => ({
+                label: key,
+                value: dataMap.get(key)
+            }));
+        }
+
+        function getCategoryData(sales) {
+            const dataMap = {};
+            CATEGORIES.forEach(cat => dataMap[cat] = 0);
+            
+            sales.forEach(sale => {
+                if (sale.category && dataMap[sale.category] !== undefined) {
+                    dataMap[sale.category] += sale.profit;
+                }
+            });
+            
+            return CATEGORIES.map(cat => ({
+                category: cat,
+                name: CATEGORY_NAMES[cat],
+                value: dataMap[cat]
+            }));
+        }
+
+        function buildBarChartHtml(dailyData, maxValue) {
+            if (dailyData.length === 0) {
+                return '<p class="text-center text-muted py-3">Нет данных за выбранный период</p>';
             }
+            
+            const minWidth = dailyData.length > 14 ? '30px' : `${Math.max(30, Math.floor(100 / dailyData.length))}px`;
+            
+            return `
+                <div class="bar-chart" style="${dailyData.length > 14 ? 'overflow-x: auto;' : ''}">
+                    ${dailyData.map(item => {
+                        const height = maxValue > 0 ? (item.value / maxValue * 100) : 0;
+                        return `
+                            <div class="bar-column" style="min-width: ${minWidth};">
+                                <div class="bar-value">${formatNumber(item.value)}₽</div>
+                                <div class="bar-fill" style="height: ${height}%;" data-height="${height}"></div>
+                                <div class="bar-label">${item.label}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
         }
 
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        function buildCategoryChartHtml(categoryData, maxValue) {
+            return `
+                <div class="category-chart">
+                    ${categoryData.map(item => {
+                        const height = maxValue > 0 ? (item.value / maxValue * 100) : 0;
+                        return `
+                            <div class="category-column">
+                                <div class="category-value">${formatNumber(item.value)}₽</div>
+                                <div class="category-fill cat-${item.category}" style="height: ${height}%;" data-height="${height}"></div>
+                                <div class="category-label">${item.name}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
         }
 
-        function formatPercent(percent) {
-            if (percent === null || percent === undefined) return null;
-            const sign = percent >= 0 ? '+' : '';
-            return `${sign}${percent.toFixed(1)}%`;
+        function shouldShowDailyChart(period, startDate, endDate) {
+            if (period === 'today') return false;
+            if (period === 'custom') {
+                const daysDiff = getDaysDiff(startDate, endDate);
+                return daysDiff >= 2;
+            }
+            return true; // week, month, all
         }
 
         async function renderStatistics(period) {
             currentPeriod = period;
             const stats = await getStatsForPeriod(period);
+            const showDailyChart = shouldShowDailyChart(period, stats.startDate, stats.endDate);
             
+            // Данные для графиков
+            let dailyData = [];
+            let categoryData = getCategoryData(stats.sales);
+            if (showDailyChart) {
+                dailyData = getDailyData(stats.sales, stats.startDate, stats.endDate);
+            }
+            
+            const maxDailyValue = Math.max(...dailyData.map(d => d.value), 1);
+            const maxCategoryValue = Math.max(...categoryData.map(d => d.value), 1);
+            
+            // Кнопки периодов
             const periodButtons = `
                 <button class="period-btn ${period === 'today' ? 'active' : ''}" data-period="today" onclick="renderStatistics('today')" title="Сегодня">
                     <i class="bi bi-calendar-day"></i>
@@ -771,6 +1045,29 @@
                     </div>
                 `;
             }
+            
+            // График по дням
+            let dailyChartHtml = '';
+            if (showDailyChart) {
+                dailyChartHtml = `
+                    <div class="chart-block">
+                        <div class="chart-title">
+                            <i class="bi bi-graph-up"></i> Продажи по дням
+                        </div>
+                        ${buildBarChartHtml(dailyData, maxDailyValue)}
+                    </div>
+                `;
+            }
+            
+            // График по категориям
+            const categoryChartHtml = `
+                <div class="chart-block">
+                    <div class="chart-title">
+                        <i class="bi bi-pie-chart"></i> Продажи по категориям
+                    </div>
+                    ${buildCategoryChartHtml(categoryData, maxCategoryValue)}
+                </div>
+            `;
             
             const html = `
                 <div class="stats-header">
@@ -818,53 +1115,63 @@
                     </div>
                 </div>
                 
+                ${categoryChartHtml}
+                ${dailyChartHtml}
                 ${dateRangeHtml}
             `;
             
             document.getElementById('contentBody').innerHTML = html;
             
-            // Анимация цифр
+            // Анимация цифр в карточках
             setTimeout(() => {
-                const revenueEl = document.getElementById('revenueValue');
-                const profitEl = document.getElementById('profitValue');
-                const countEl = document.getElementById('countValue');
-                
-                if (revenueEl) {
-                    const startTime = performance.now();
-                    function animateRev(currentTime) {
-                        const elapsed = currentTime - startTime;
-                        const progress = Math.min(elapsed / 800, 1);
-                        const value = Math.round(stats.revenue * progress);
-                        revenueEl.textContent = formatNumber(value) + '₽';
-                        if (progress < 1) requestAnimationFrame(animateRev);
-                    }
-                    requestAnimationFrame(animateRev);
-                }
-                
-                if (profitEl) {
-                    const startTime = performance.now();
-                    function animateProf(currentTime) {
-                        const elapsed = currentTime - startTime;
-                        const progress = Math.min(elapsed / 600, 1);
-                        const value = Math.round(stats.profit * progress);
-                        profitEl.textContent = formatNumber(value) + '₽';
-                        if (progress < 1) requestAnimationFrame(animateProf);
-                    }
-                    requestAnimationFrame(animateProf);
-                }
-                
-                if (countEl) {
-                    const startTime = performance.now();
-                    function animateCount(currentTime) {
-                        const elapsed = currentTime - startTime;
-                        const progress = Math.min(elapsed / 600, 1);
-                        const value = Math.round(stats.count * progress);
-                        countEl.textContent = formatNumber(value);
-                        if (progress < 1) requestAnimationFrame(animateCount);
-                    }
-                    requestAnimationFrame(animateCount);
-                }
+                animateNumber('revenueValue', stats.revenue, 800, '₽');
+                animateNumber('profitValue', stats.profit, 600, '₽');
+                animateCountNumber('countValue', stats.count, 600);
             }, 100);
+            
+            // Анимация столбцов
+            setTimeout(() => {
+                document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(bar => {
+                    const targetHeight = bar.getAttribute('data-height');
+                    bar.style.height = '0%';
+                    setTimeout(() => {
+                        bar.style.height = targetHeight + '%';
+                    }, 50);
+                });
+            }, 300);
+        }
+
+        function animateNumber(elementId, targetValue, duration, suffix) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            
+            const startTime = performance.now();
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // easeOutCubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const value = Math.round(targetValue * eased);
+                el.textContent = formatNumber(value) + suffix;
+                if (progress < 1) requestAnimationFrame(animate);
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function animateCountNumber(elementId, targetValue, duration) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            
+            const startTime = performance.now();
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const value = Math.round(targetValue * eased);
+                el.textContent = formatNumber(value);
+                if (progress < 1) requestAnimationFrame(animate);
+            }
+            requestAnimationFrame(animate);
         }
 
         function updateCustomDates() {
@@ -883,37 +1190,41 @@
             const demoSales = [];
             const now = new Date();
             
-            for (let i = 0; i < 50; i++) {
+            // Генерируем продажи за последние 90 дней
+            for (let i = 0; i < 60; i++) {
                 const date = new Date(now - Math.random() * 90 * 86400000);
                 const total = Math.floor(Math.random() * 5000) + 500;
                 const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
                 const profit = total - cost;
+                const category = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
                 
                 demoSales.push({
                     date: date.toISOString().split('T')[0],
                     total: total,
                     cost: cost,
                     profit: profit,
+                    category: category,
                     items: []
                 });
             }
             
+            // Добавляем сегодняшние продажи
             const today = now.toISOString().split('T')[0];
-            demoSales.push({
-                date: today,
-                total: 50000,
-                cost: 35000,
-                profit: 15000,
-                items: []
-            });
-            
-            demoSales.push({
-                date: today,
-                total: 12000,
-                cost: 8000,
-                profit: 4000,
-                items: []
-            });
+            for (let i = 0; i < 5; i++) {
+                const total = Math.floor(Math.random() * 15000) + 3000;
+                const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
+                const profit = total - cost;
+                const category = CATEGORIES[i % CATEGORIES.length];
+                
+                demoSales.push({
+                    date: today,
+                    total: total,
+                    cost: cost,
+                    profit: profit,
+                    category: category,
+                    items: []
+                });
+            }
             
             for (const sale of demoSales) {
                 await db.add('sales', sale);
@@ -1044,4 +1355,4 @@
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
-</html> 
+</html>
