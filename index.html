@@ -205,7 +205,7 @@
     <div id="modalContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 13;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 14;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -312,14 +312,14 @@
             let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));
             const isLastLevel=(level+1>=groupBy.length);
             entries.forEach(([key,items])=>{
-                // ПОЛНЫЙ ПУТЬ ключей: parentKeys + текущий key
+                // fullKeys = нормализованные ключи (КАК В groupProducts)
                 const fullKeys=[...parentKeys,key];
                 const gid=getGroupId(cat,level,fullKeys);
                 const fi=items[0];
                 const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;
                 const label=rl||key;
                 const tab=level>0?'&emsp;&emsp;':'';
-                // data-keys содержит ПОЛНЫЙ путь
+                // data-keys = НОРМАЛИЗОВАННЫЙ полный путь (key уже нормализован из groupProducts)
                 const ks=fullKeys.join('|||');
                 const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';
                 h+=`<div class="accordion-group">`;
@@ -327,7 +327,6 @@
                 h+=`<div class="accordion-body" id="${gid}">`;
                 if(!isLastLevel){
                     const sg={};items.forEach(item=>{const sk=groupBy.slice(0,level+2).map(g=>norm(item[g])).join('|||');if(!sg[sk])sg[sk]=[];sg[sk].push(item);});
-                    // Передаём fullKeys как parentKeys для следующего уровня
                     h+=buildAccordionHTML(sg,groupBy,level+1,cat,fullKeys);
                 }else{
                     const cols=CATEGORY_TABLE_COLS[cwc];
@@ -368,7 +367,7 @@
             await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
         }
 
-        // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ (ПОЛНОСТЬЮ ИСПРАВЛЕНО) ============
+        // ============ ГРУППОВОЕ РЕДАКТИРОВАНИЕ ============
         document.addEventListener('click',function(e){
             const btn=e.target.closest('.group-edit-btn');
             if(!btn)return;
@@ -376,20 +375,17 @@
             e.preventDefault();
             const cat=btn.getAttribute('data-cat');
             const keysStr=btn.getAttribute('data-keys');
-            console.log('Нажата кнопка:',cat,keysStr);
             if(!cat||!keysStr)return;
             const keys=keysStr.split('|||');
             showGroupEditModal(cat,keys);
         });
 
         async function showGroupEditModal(cat,currentKeys){
-            console.log('showGroupEditModal:',cat,currentKeys);
             const gb=CATEGORY_GROUPS[cat];
             const ap=await db.all('products');
             const cp=ap.filter(p=>p.category===cat);
-            // Фильтруем: для каждого уровня группировки проверяем нормализованное значение
+            // currentKeys УЖЕ нормализованные (из data-keys)
             const filtered=cp.filter(p=>currentKeys.every((key,idx)=>norm(p[gb[idx]])===key));
-            console.log('Найдено товаров:',filtered.length);
             if(filtered.length===0){alert('Нет товаров в группе');return;}
             const gl=currentKeys.join(' → ');
             const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';
