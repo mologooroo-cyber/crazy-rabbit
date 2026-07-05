@@ -71,16 +71,12 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            overflow-x: hidden;
-            transition: all 0.3s ease;
+            background: var(--bg-primary); color: var(--text-primary);
+            overflow-x: hidden; transition: all 0.3s ease;
         }
 
-        /* Кнопка меню */
         .menu-toggle-btn {
             position: fixed; top: 15px; left: 15px; z-index: 1000;
             background: var(--accent); color: white; border: none;
@@ -90,7 +86,6 @@
         }
         .menu-toggle-btn:active { transform: scale(0.95); }
 
-        /* Сайдбар */
         .sidebar-overlay {
             position: fixed; top: 0; left: -100%; width: 100%; height: 100%;
             z-index: 2000; transition: left 0.3s ease;
@@ -141,147 +136,13 @@
         }
         .theme-toggle-btn:active { transform: scale(0.97); }
 
-        /* Основной контент */
         .main-content { padding: 75px 12px 20px; min-height: 100vh; }
         .tab-title {
             display: inline-block; font-weight: 700; padding-bottom: 10px;
             border-bottom: 3px solid var(--accent); margin-bottom: 20px; font-size: 22px;
         }
 
-        /* Карточки склада */
-        .warehouse-cards {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;
-        }
-        .wh-card {
-            background: var(--bg-card); border-radius: 15px; padding: 15px;
-            cursor: pointer; transition: all 0.3s ease; position: relative;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .wh-card:active { transform: scale(0.97); }
-        .wh-card .wh-icon { font-size: 28px; margin-bottom: 8px; }
-        .wh-card .wh-label { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-        .wh-card .wh-count { font-size: 12px; color: var(--text-secondary); }
-
-        .wh-card.liquid { border-left: 4px solid var(--cat-liquid); }
-        .wh-card.liquid .wh-icon { color: var(--cat-liquid); }
-        .wh-card.supplies { border-left: 4px solid var(--cat-supplies); }
-        .wh-card.supplies .wh-icon { color: var(--cat-supplies); }
-        .wh-card.pods { border-left: 4px solid var(--cat-pods); }
-        .wh-card.pods .wh-icon { color: var(--cat-pods); }
-        .wh-card.disposable { border-left: 4px solid var(--cat-disposable); }
-        .wh-card.disposable .wh-icon { color: var(--cat-disposable); }
-        .wh-card.snus { border-left: 4px solid var(--cat-snus); }
-        .wh-card.snus .wh-icon { color: var(--cat-snus); }
-
-        @media (min-width: 500px) {
-            .warehouse-cards { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        /* Таблица склада */
-        .warehouse-table-section {
-            background: var(--bg-card); border-radius: 15px; padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .wh-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
-        }
-        .wh-back-btn {
-            background: none; border: none; color: var(--accent); font-size: 20px;
-            cursor: pointer; padding: 5px;
-        }
-        .wh-category-title { font-size: 16px; font-weight: 700; }
-        .wh-add-btn {
-            background: var(--accent); color: white; border: none;
-            width: 36px; height: 36px; border-radius: 10px; font-size: 20px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-        .search-input {
-            width: 100%; padding: 12px 15px; border: 2px solid var(--border);
-            border-radius: 12px; background: var(--bg-primary); color: var(--text-primary);
-            font-size: 14px; outline: none; margin-bottom: 15px; transition: all 0.3s ease;
-        }
-        .search-input:focus { border-color: var(--accent); }
-
-        /* Аккордеон */
-        .accordion-group { margin-bottom: 8px; }
-        .accordion-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 15px; background: var(--bg-primary); border-radius: 10px;
-            cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;
-        }
-        .accordion-header .accordion-arrow { transition: transform 0.3s ease; font-size: 12px; }
-        .accordion-header.open .accordion-arrow { transform: rotate(180deg); }
-        .accordion-body { display: none; padding: 5px 0; }
-        .accordion-body.open { display: block; }
-
-        /* Строка товара */
-        .product-row {
-            display: flex; align-items: center; padding: 10px 15px 10px 25px;
-            border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease;
-            font-size: 13px; gap: 8px;
-        }
-        .product-row:active { background: rgba(129,216,208,0.1); }
-        .product-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .product-col.price { text-align: right; flex: 0.7; }
-        .product-col.qty { text-align: center; flex: 0.5; }
-
-        /* Таблица-шапка */
-        .table-header-row {
-            display: flex; padding: 8px 15px 8px 25px; font-size: 11px;
-            color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 8px;
-        }
-        .table-header-row .product-col { font-weight: 600; }
-
-        /* Модальное окно */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 3000; display: flex;
-            align-items: center; justify-content: center; animation: fadeIn 0.2s ease;
-        }
-        .modal-dialog-custom {
-            background: var(--bg-secondary); border-radius: 20px; width: 90%;
-            max-width: 420px; max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: scaleIn 0.2s ease;
-        }
-        .modal-header-custom {
-            padding: 20px; display: flex; align-items: center; gap: 10px;
-            border-bottom: 1px solid var(--border); position: sticky; top: 0;
-            background: var(--bg-secondary); z-index: 1; border-radius: 20px 20px 0 0;
-        }
-        .modal-body-custom { padding: 20px; }
-        .modal-footer-custom {
-            padding: 15px 20px; border-top: 1px solid var(--border); display: flex;
-            gap: 10px; position: sticky; bottom: 0; background: var(--bg-secondary);
-            border-radius: 0 0 20px 20px;
-        }
-        .form-group { margin-bottom: 15px; }
-        .form-label {
-            display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;
-            color: var(--text-secondary);
-        }
-        .form-input {
-            width: 100%; padding: 12px 15px; border: 2px solid var(--border);
-            border-radius: 10px; background: var(--bg-primary); color: var(--text-primary);
-            font-size: 15px; outline: none; transition: all 0.3s ease;
-        }
-        .form-input:focus { border-color: var(--accent); }
-        .btn {
-            flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px;
-            font-weight: 600; cursor: pointer; transition: all 0.2s ease;
-        }
-        .btn-save { background: var(--accent); color: white; }
-        .btn-cancel { background: var(--border); color: var(--text-primary); }
-        .btn-delete { background: var(--red); color: white; flex: 0.5; }
-        .btn:active { transform: scale(0.96); }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .content-body { animation: fadeInUp 0.4s ease; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .spinner { animation: spin 1s linear infinite; display: inline-block; }
-
-        /* Статистика (сохраняем) */
+        /* Статистика */
         .stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
         .period-buttons { display: flex; gap: 4px; background: var(--bg-card); border-radius: 12px; padding: 4px; }
         .period-btn {
@@ -328,10 +189,10 @@
         }
         .switch-btn.active { background: var(--accent); color: white; }
         .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 160px; padding-bottom: 30px; overflow-x: auto; }
-        .bar-column { display: flex; flex-direction: column; align-items: center; min-width: 30px; flex-shrink: 0; }
+        .bar-column { display: flex; flex-direction: column; align-items: center; min-width: 30px; flex-shrink: 0; position: relative; }
         .bar-value { font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
         .bar-fill { width: 24px; background: var(--accent); border-radius: 6px 6px 0 0; transition: height 0.8s ease; min-height: 4px; }
-        .bar-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; transform: rotate(-45deg); transform-origin: top left; position: absolute; bottom: -5px; }
+        .bar-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; white-space: nowrap; }
         .category-chart { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-bottom: 30px; }
         .category-column { flex: 1; display: flex; flex-direction: column; align-items: center; }
         .category-value { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
@@ -344,11 +205,119 @@
         .date-input { flex: 1; padding: 8px 10px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-primary); color: var(--text-primary); font-size: 13px; outline: none; }
         .date-input:focus { border-color: var(--accent); }
         .date-separator { color: var(--text-secondary); font-size: 14px; }
+
+        /* Склад */
+        .warehouse-cards {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;
+        }
+        .wh-card {
+            background: var(--bg-card); border-radius: 15px; padding: 15px;
+            cursor: pointer; transition: all 0.3s ease; position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .wh-card:active { transform: scale(0.97); }
+        .wh-card .wh-icon { font-size: 28px; margin-bottom: 8px; }
+        .wh-card .wh-label { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .wh-card .wh-count { font-size: 12px; color: var(--text-secondary); }
+        .wh-card.liquid { border-left: 4px solid var(--cat-liquid); } .wh-card.liquid .wh-icon { color: var(--cat-liquid); }
+        .wh-card.supplies { border-left: 4px solid var(--cat-supplies); } .wh-card.supplies .wh-icon { color: var(--cat-supplies); }
+        .wh-card.pods { border-left: 4px solid var(--cat-pods); } .wh-card.pods .wh-icon { color: var(--cat-pods); }
+        .wh-card.disposable { border-left: 4px solid var(--cat-disposable); } .wh-card.disposable .wh-icon { color: var(--cat-disposable); }
+        .wh-card.snus { border-left: 4px solid var(--cat-snus); } .wh-card.snus .wh-icon { color: var(--cat-snus); }
+        @media (min-width: 500px) { .warehouse-cards { grid-template-columns: repeat(3, 1fr); } }
+
+        .warehouse-table-section {
+            background: var(--bg-card); border-radius: 15px; padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .wh-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .wh-back-btn { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; padding: 5px; }
+        .wh-category-title { font-size: 16px; font-weight: 700; }
+        .wh-add-btn {
+            background: var(--accent); color: white; border: none;
+            width: 36px; height: 36px; border-radius: 10px; font-size: 20px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .search-input {
+            width: 100%; padding: 12px 15px; border: 2px solid var(--border);
+            border-radius: 12px; background: var(--bg-primary); color: var(--text-primary);
+            font-size: 14px; outline: none; margin-bottom: 15px; transition: all 0.3s ease;
+        }
+        .search-input:focus { border-color: var(--accent); }
+
+        /* Аккордеон */
+        .accordion-group { margin-bottom: 8px; }
+        .accordion-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 15px; background: var(--bg-primary); border-radius: 10px;
+            cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;
+        }
+        .accordion-header .accordion-arrow { transition: transform 0.3s ease; font-size: 12px; }
+        .accordion-header.open .accordion-arrow { transform: rotate(180deg); }
+        .accordion-body { display: none; padding: 5px 0; }
+        .accordion-body.open { display: block; }
+
+        .product-row {
+            display: flex; align-items: center; padding: 10px 15px 10px 25px;
+            border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease;
+            font-size: 13px; gap: 8px;
+        }
+        .product-row:active { background: rgba(129,216,208,0.1); }
+        .product-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .product-col.price { text-align: right; flex: 0.7; }
+        .product-col.qty { text-align: center; flex: 0.5; }
+        .table-header-row {
+            display: flex; padding: 8px 15px 8px 25px; font-size: 11px;
+            color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 8px;
+        }
+        .table-header-row .product-col { font-weight: 600; }
+
+        /* Модальное окно */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 3000; display: flex;
+            align-items: center; justify-content: center; animation: fadeIn 0.2s ease;
+        }
+        .modal-dialog-custom {
+            background: var(--bg-secondary); border-radius: 20px; width: 90%;
+            max-width: 420px; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); animation: scaleIn 0.2s ease;
+        }
+        .modal-header-custom {
+            padding: 20px; display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0;
+            background: var(--bg-secondary); z-index: 1; border-radius: 20px 20px 0 0;
+        }
+        .modal-body-custom { padding: 20px; }
+        .modal-footer-custom {
+            padding: 15px 20px; border-top: 1px solid var(--border); display: flex;
+            gap: 10px; position: sticky; bottom: 0; background: var(--bg-secondary);
+            border-radius: 0 0 20px 20px;
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--text-secondary); }
+        .form-input {
+            width: 100%; padding: 12px 15px; border: 2px solid var(--border);
+            border-radius: 10px; background: var(--bg-primary); color: var(--text-primary);
+            font-size: 15px; outline: none; transition: all 0.3s ease;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        .btn-save { background: var(--accent); color: white; }
+        .btn-cancel { background: var(--border); color: var(--text-primary); }
+        .btn-delete { background: var(--red); color: white; flex: 0.5; }
+        .btn:active { transform: scale(0.96); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .content-body { animation: fadeInUp 0.4s ease; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spinner { animation: spin 1s linear infinite; display: inline-block; }
     </style>
 </head>
 <body>
     <button class="menu-toggle-btn" onclick="openSidebar()"><i class="bi bi-list"></i></button>
-
     <div class="sidebar-overlay" id="sidebar" onclick="closeSidebarOutside(event)">
         <div class="sidebar-content" onclick="event.stopPropagation()">
             <div class="sidebar-header">
@@ -367,7 +336,6 @@
             </div>
         </div>
     </div>
-
     <main class="main-content" id="mainContent">
         <div class="content-body" id="contentBody"></div>
     </main>
@@ -397,6 +365,18 @@
             async getByIndex(store, index, value) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readonly'); const idx = tx.objectStore(store).index(index); const req = idx.getAll(value); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
             async add(store, data) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readwrite'); const req = tx.objectStore(store).add(data); req.onsuccess = () => r(req.result); req.onerror = () => j(req.error); }); }
             async delete(store, id) { return new Promise((r, j) => { const tx = this.db.transaction([store], 'readwrite'); const req = tx.objectStore(store).delete(id); req.onsuccess = () => r(); req.onerror = () => j(req.error); }); }
+            async getByDateRange(store, start, end) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const tx = this.db.transaction([store], 'readonly');
+                        const index = tx.objectStore(store).index('date');
+                        const range = IDBKeyRange.bound(start, end);
+                        const req = index.getAll(range);
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => reject(req.error);
+                    } catch (e) { reject(e); }
+                });
+            }
         }
         const db = new Database();
 
@@ -405,8 +385,6 @@
         const CATEGORY_NAMES = { 'liquid': 'Жидкости', 'supplies': 'Расходники', 'pods': 'Поды', 'disposable': 'Одноразки', 'snus': 'Снюс' };
         const CATEGORY_ICONS = { 'liquid': 'bi-droplet', 'supplies': 'bi-tools', 'pods': 'bi-usb-plug', 'disposable': 'bi-phone', 'snus': 'bi-box2' };
         const CATEGORY_CLASS = { 'liquid': 'liquid', 'supplies': 'supplies', 'pods': 'pods', 'disposable': 'disposable', 'snus': 'snus' };
-        
-        // Какие поля есть у каждой категории (кроме общих: manufacturer, lineup, quantity, purchase, selling)
         const CATEGORY_EXTRA_FIELDS = {
             'liquid': [{ key: 'flavor', label: 'Вкус' }],
             'supplies': [],
@@ -414,8 +392,6 @@
             'disposable': [{ key: 'flavor', label: 'Вкус' }],
             'snus': [{ key: 'flavor', label: 'Вкус' }]
         };
-        
-        // Какие колонки показывать в таблице (порядок)
         const CATEGORY_TABLE_COLS = {
             'liquid': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling'],
             'supplies': ['manufacturer', 'lineup', 'quantity', 'purchase', 'selling'],
@@ -423,13 +399,10 @@
             'disposable': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling'],
             'snus': ['manufacturer', 'lineup', 'flavor', 'quantity', 'purchase', 'selling']
         };
-        
         const COL_LABELS = {
             'manufacturer': 'Производитель', 'lineup': 'Линейка', 'flavor': 'Вкус',
             'color': 'Цвет', 'quantity': 'Кол-во', 'purchase': 'Закупка', 'selling': 'Продажа'
         };
-
-        // Группировка: какие уровни для каждой категории
         const CATEGORY_GROUPS = {
             'liquid': ['manufacturer', 'lineup'],
             'supplies': ['manufacturer'],
@@ -444,10 +417,9 @@
         let currentThemeIndex = 0;
         async function toggleTheme() {
             currentThemeIndex = (currentThemeIndex + 1) % themes.length;
-            const theme = themes[currentThemeIndex];
-            document.documentElement.setAttribute('data-theme', theme);
-            document.getElementById('themeName').textContent = themeNames[theme];
-            try { await db.put('settings', { key: 'theme', value: theme }); } catch (e) {}
+            document.documentElement.setAttribute('data-theme', themes[currentThemeIndex]);
+            document.getElementById('themeName').textContent = themeNames[themes[currentThemeIndex]];
+            try { await db.put('settings', { key: 'theme', value: themes[currentThemeIndex] }); } catch (e) {}
         }
         async function loadTheme() {
             try { const s = await db.get('settings', 'theme'); if (s) { document.documentElement.setAttribute('data-theme', s.value); currentThemeIndex = themes.indexOf(s.value); document.getElementById('themeName').textContent = themeNames[s.value]; } } catch (e) {}
@@ -458,20 +430,23 @@
         function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); }
         function closeSidebarOutside(e) { if (e.target === document.getElementById('sidebar')) closeSidebar(); }
 
+        // ============ ФОРМАТИРОВАНИЕ ============
+        function fmtNum(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+        function fmtPct(p) { if (p === null || p === undefined) return null; return `${p >= 0 ? '+' : ''}${p.toFixed(1)}%`; }
+
         // ============ МОДАЛЬНЫЕ ОКНА ============
         function showModal(title, icon, iconColor, bodyHtml, footerHtml) {
-            const html = `
+            document.getElementById('modalContainer').innerHTML = `
                 <div class="modal-overlay" onclick="closeModal(event)">
                     <div class="modal-dialog-custom" onclick="event.stopPropagation()">
                         <div class="modal-header-custom">
-                            <i class="${icon} modal-icon" style="color:${iconColor};font-size:22px;"></i>
+                            <i class="${icon}" style="color:${iconColor};font-size:22px;"></i>
                             <h3 style="color:${iconColor};font-size:18px;font-weight:700;margin:0;">${title}</h3>
                         </div>
                         <div class="modal-body-custom">${bodyHtml}</div>
                         ${footerHtml ? `<div class="modal-footer-custom">${footerHtml}</div>` : ''}
                     </div>
                 </div>`;
-            document.getElementById('modalContainer').innerHTML = html;
         }
         function closeModal(event) {
             if (!event || event.target.classList.contains('modal-overlay')) {
@@ -479,15 +454,11 @@
             }
         }
 
-        // ============ ФОРМАТИРОВАНИЕ ============
-        function fmtNum(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
-        function fmtPct(p) { if (p === null || p === undefined) return null; return `${p >= 0 ? '+' : ''}${p.toFixed(1)}%`; }
-
-        // ============ ДЕМО-ДАННЫЕ ДЛЯ СКЛАДА ============
-        const DEMO_MANUFACTURERS = ['HUSKY', 'CHASER', 'BRUSKO', 'VAPESOUL', 'SMOK', 'VOOPOO', 'GEEKVAPE', 'LOST VAPE'];
-        const DEMO_LINEUPS = { 'liquid': ['Ice Cream', 'Fruit Mix', 'Classic', 'Fresh', 'Berry Bomb'], 'supplies': ['Cotton', 'Wire', 'Coils', 'Tools'], 'pods': ['Nord', 'RPM', 'PnP', 'GTX'], 'disposable': ['Crystal', 'Elf Bar', 'Waka', 'Lost Mary'], 'snus': ['Siberia', 'Oden\'s', 'Thunder', 'General'] };
-        const DEMO_FLAVORS = ['Манго-клубника', 'Арбуз-мята', 'Табак-вишня', 'Киви-яблоко', 'Лесные ягоды', 'Мята-лайм', 'Персик-манго', 'Черника-малина', 'Ананас-кокос', 'Виноград-дыня'];
-        const DEMO_COLORS = ['Чёрный', 'Белый', 'Красный', 'Синий', 'Зелёный', 'Розовый', 'Серебристый', 'Золотой'];
+        // ============ ДЕМО-ДАННЫЕ ============
+        const DEMO_MANUFACTURERS = ['HUSKY', 'CHASER', 'BRUSKO', 'VAPESOUL', 'SMOK', 'VOOPOO', 'GEEKVAPE'];
+        const DEMO_LINEUPS = { 'liquid': ['Ice Cream', 'Fruit Mix', 'Classic', 'Fresh'], 'supplies': ['Cotton', 'Wire', 'Coils'], 'pods': ['Nord', 'RPM', 'PnP'], 'disposable': ['Crystal', 'Elf Bar', 'Waka'], 'snus': ['Siberia', 'Oden\'s', 'Thunder'] };
+        const DEMO_FLAVORS = ['Манго-клубника', 'Арбуз-мята', 'Табак-вишня', 'Киви-яблоко', 'Лесные ягоды', 'Мята-лайм', 'Персик-манго', 'Черника-малина'];
+        const DEMO_COLORS = ['Чёрный', 'Белый', 'Красный', 'Синий', 'Зелёный', 'Розовый'];
 
         function generateDemoProducts() {
             const products = [];
@@ -497,27 +468,17 @@
                 for (let i = 0; i < 20; i++) {
                     const manufacturer = DEMO_MANUFACTURERS[Math.floor(Math.random() * DEMO_MANUFACTURERS.length)];
                     const lineup = lineups[Math.floor(Math.random() * lineups.length)];
-                    const quantity = Math.floor(Math.random() * 30);
-                    const purchase = Math.floor(Math.random() * 400) + 100;
-                    const selling = purchase + Math.floor(purchase * (0.3 + Math.random() * 0.7));
-                    
                     const product = {
-                        id: ++id,
-                        category: cat,
-                        manufacturer,
-                        lineup,
-                        quantity,
-                        purchase,
-                        selling
+                        id: ++id, category: cat, manufacturer, lineup,
+                        quantity: Math.floor(Math.random() * 30),
+                        purchase: Math.floor(Math.random() * 400) + 100,
+                        selling: Math.floor(Math.random() * 600) + 200
                     };
-                    
-                    // Добавляем специфичные поля
                     const extras = CATEGORY_EXTRA_FIELDS[cat];
                     extras.forEach(ext => {
                         if (ext.key === 'flavor') product.flavor = DEMO_FLAVORS[Math.floor(Math.random() * DEMO_FLAVORS.length)];
                         if (ext.key === 'color') product.color = DEMO_COLORS[Math.floor(Math.random() * DEMO_COLORS.length)];
                     });
-                    
                     products.push(product);
                 }
             });
@@ -531,265 +492,29 @@
             for (const p of products) await db.add('products', p);
         }
 
-        // ============ СКЛАД ============
-        let currentWarehouseCategory = null;
-
-        async function renderWarehouseCards() {
-            const allProducts = await db.getAll('products');
-            const counts = {};
-            CATEGORIES.forEach(cat => {
-                counts[cat] = allProducts.filter(p => p.category === cat).length;
-            });
-
-            const html = `
-                <h2 class="tab-title">Склад</h2>
-                <div class="warehouse-cards">
-                    ${CATEGORIES.map(cat => `
-                        <div class="wh-card ${CATEGORY_CLASS[cat]}" onclick="openWarehouseCategory('${cat}')">
-                            <div class="wh-icon"><i class="bi ${CATEGORY_ICONS[cat]}"></i></div>
-                            <div class="wh-label">${CATEGORY_NAMES[cat]}</div>
-                            <div class="wh-count">${counts[cat]} товаров</div>
-                        </div>
-                    `).join('')}
-                </div>`;
-            document.getElementById('contentBody').innerHTML = html;
-        }
-
-        async function openWarehouseCategory(cat) {
-            currentWarehouseCategory = cat;
-            await renderWarehouseTable(cat);
-        }
-
-        function groupProducts(products, groupBy) {
-            if (groupBy.length === 0) return { '_root': products };
-            
-            const groups = {};
-            products.forEach(p => {
-                const key = groupBy.map(g => p[g] || '').join('|||');
-                if (!groups[key]) groups[key] = [];
-                groups[key].push(p);
-            });
-            return groups;
-        }
-
-        function buildAccordionHTML(groups, groupBy, level, searchQuery) {
-            if (level >= groupBy.length) return '';
-            
-            let html = '';
-            const entries = Object.entries(groups);
-            
-            // Сортируем по ключу
-            entries.sort((a, b) => a[0].localeCompare(b[0]));
-            
-            entries.forEach(([key, items]) => {
-                const label = key.split('|||')[level] || key;
-                const groupId = 'grp_' + Math.random().toString(36).slice(2, 8);
-                const count = items.length;
-                
-                html += `<div class="accordion-group">`;
-                html += `<div class="accordion-header" onclick="toggleAccordion('${groupId}')">`;
-                html += `<span>${label} (${count})</span>`;
-                html += `<i class="bi bi-chevron-down accordion-arrow"></i>`;
-                html += `</div>`;
-                html += `<div class="accordion-body" id="${groupId}">`;
-                
-                // Если есть ещё уровни группировки
-                if (level + 1 < groupBy.length) {
-                    const subGroups = {};
-                    items.forEach(item => {
-                        const subKey = groupBy.slice(0, level + 2).map(g => item[g] || '').join('|||');
-                        if (!subGroups[subKey]) subGroups[subKey] = [];
-                        subGroups[subKey].push(item);
-                    });
-                    html += buildAccordionHTML(subGroups, groupBy, level + 1, searchQuery);
-                } else {
-                    // Показываем товары
-                    const cols = CATEGORY_TABLE_COLS[currentWarehouseCategory];
-                    // Шапка таблицы
-                    html += `<div class="table-header-row">`;
-                    cols.forEach(col => {
-                        html += `<div class="product-col${col === 'quantity' ? ' qty' : (col === 'purchase' || col === 'selling' ? ' price' : '')}">${COL_LABELS[col]}</div>`;
-                    });
-                    html += `</div>`;
-                    
-                    items.forEach(item => {
-                        html += `<div class="product-row" ondblclick="editProduct(${item.id})">`;
-                        cols.forEach(col => {
-                            let val = item[col] || '';
-                            if (col === 'purchase' || col === 'selling') val = fmtNum(val) + '₽';
-                            html += `<div class="product-col${col === 'quantity' ? ' qty' : (col === 'purchase' || col === 'selling' ? ' price' : '')}">${val}</div>`;
-                        });
-                        html += `</div>`;
-                    });
-                }
-                
-                html += `</div></div>`;
-            });
-            
-            return html;
-        }
-
-        function toggleAccordion(groupId) {
-            const body = document.getElementById(groupId);
-            const header = body.previousElementSibling;
-            body.classList.toggle('open');
-            header.classList.toggle('open');
-        }
-
-        async function renderWarehouseTable(cat, searchQuery = '') {
-            currentWarehouseCategory = cat;
-            let products = await db.getByIndex('products', 'category', cat);
-            
-            // Поиск
-            if (searchQuery) {
-                const q = searchQuery.toLowerCase();
-                products = products.filter(p => {
-                    const cols = CATEGORY_TABLE_COLS[cat];
-                    return cols.some(col => {
-                        const val = (p[col] || '').toString().toLowerCase();
-                        return val.includes(q);
-                    });
+        async function addDemoSales() {
+            const existing = await db.getAll('sales');
+            if (existing.length > 0) return;
+            const now = new Date();
+            for (let i = 0; i < 60; i++) {
+                const d = new Date(now - Math.random() * 90 * 86400000);
+                const total = Math.floor(Math.random() * 5000) + 500;
+                const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
+                await db.add('sales', {
+                    date: d.toISOString().split('T')[0], total, cost, profit: total - cost,
+                    category: ['liquid','supplies','pods','disposable','snus'][Math.floor(Math.random()*5)], items: []
                 });
             }
-            
-            const groupBy = CATEGORY_GROUPS[cat];
-            const groups = groupProducts(products, groupBy);
-            
-            const html = `
-                <div class="warehouse-table-section">
-                    <div class="wh-header">
-                        <button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button>
-                        <span class="wh-category-title">${CATEGORY_NAMES[cat]}</span>
-                        <button class="wh-add-btn" onclick="showAddProductModal()">+</button>
-                    </div>
-                    <input type="text" class="search-input" placeholder="Поиск..." value="${searchQuery}" oninput="onSearch(this.value)">
-                    ${products.length === 0 ? '<p class="text-center text-muted py-4">Ничего не найдено</p>' : buildAccordionHTML(groups, groupBy, 0, searchQuery)}
-                </div>`;
-            
-            document.getElementById('contentBody').innerHTML = html;
-            
-            // Если только одна группа — автоматически открываем
-            const allBodies = document.querySelectorAll('.accordion-body');
-            if (allBodies.length === 1) {
-                allBodies[0].classList.add('open');
-                allBodies[0].previousElementSibling.classList.add('open');
+            // Сегодняшние продажи
+            const today = now.toISOString().split('T')[0];
+            for (let i = 0; i < 5; i++) {
+                const total = Math.floor(Math.random() * 15000) + 3000;
+                const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
+                await db.add('sales', { date: today, total, cost, profit: total - cost, category: ['liquid','supplies','pods','disposable','snus'][i%5], items: [] });
             }
         }
 
-        function onSearch(value) {
-            renderWarehouseTable(currentWarehouseCategory, value);
-        }
-
-        function getProductFormHTML(product = null) {
-            const cat = currentWarehouseCategory;
-            const extras = CATEGORY_EXTRA_FIELDS[cat];
-            const isEdit = !!product;
-            
-            return `
-                <div class="form-group">
-                    <label class="form-label">Производитель</label>
-                    <input type="text" class="form-input" id="prod_manufacturer" value="${product ? product.manufacturer : ''}" placeholder="HUSKY">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Линейка</label>
-                    <input type="text" class="form-input" id="prod_lineup" value="${product ? product.lineup : ''}" placeholder="Ice Cream">
-                </div>
-                ${extras.map(ext => `
-                <div class="form-group">
-                    <label class="form-label">${ext.label}</label>
-                    <input type="text" class="form-input" id="prod_${ext.key}" value="${product ? (product[ext.key] || '') : ''}" placeholder="${ext.label}">
-                </div>`).join('')}
-                <div class="form-group">
-                    <label class="form-label">Количество</label>
-                    <input type="number" class="form-input" id="prod_quantity" value="${product ? product.quantity : 0}" min="0">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Закупка (₽)</label>
-                    <input type="number" class="form-input" id="prod_purchase" value="${product ? product.purchase : ''}" placeholder="350">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Продажа (₽)</label>
-                    <input type="number" class="form-input" id="prod_selling" value="${product ? product.selling : ''}" placeholder="550">
-                </div>
-                <input type="hidden" id="prod_id" value="${product ? product.id : ''}">
-            `;
-        }
-
-        async function saveProduct() {
-            const cat = currentWarehouseCategory;
-            const extras = CATEGORY_EXTRA_FIELDS[cat];
-            const id = document.getElementById('prod_id').value;
-            
-            const product = {
-                category: cat,
-                manufacturer: document.getElementById('prod_manufacturer').value.trim(),
-                lineup: document.getElementById('prod_lineup').value.trim(),
-                quantity: parseInt(document.getElementById('prod_quantity').value) || 0,
-                purchase: parseInt(document.getElementById('prod_purchase').value) || 0,
-                selling: parseInt(document.getElementById('prod_selling').value) || 0
-            };
-            
-            extras.forEach(ext => {
-                product[ext.key] = document.getElementById('prod_' + ext.key).value.trim();
-            });
-            
-            // Валидация
-            if (!product.manufacturer) { alert('Введите производителя'); return; }
-            
-            if (id) {
-                product.id = parseInt(id);
-                await db.put('products', product);
-            } else {
-                await db.add('products', product);
-            }
-            
-            closeModal();
-            await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
-        }
-
-        function showAddProductModal() {
-            const cat = currentWarehouseCategory;
-            const catClass = CATEGORY_CLASS[cat];
-            const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + catClass.replace('liquid','liquid').replace('supplies','supplies').replace('pods','pods').replace('disposable','disposable').replace('snus','snus')).trim() || 'var(--accent)';
-            
-            showModal(
-                'Добавить товар',
-                'bi ' + CATEGORY_ICONS[cat],
-                color,
-                getProductFormHTML(),
-                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>
-                 <button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`
-            );
-        }
-
-        async function editProduct(productId) {
-            const product = await db.get('products', productId);
-            if (!product) return;
-            
-            const cat = product.category;
-            currentWarehouseCategory = cat;
-            const catClass = CATEGORY_CLASS[cat];
-            const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + catClass).trim() || 'var(--accent)';
-            
-            showModal(
-                'Редактировать товар',
-                'bi ' + CATEGORY_ICONS[cat],
-                color,
-                getProductFormHTML(product),
-                `<button class="btn btn-delete" onclick="deleteProduct(${product.id})">Удалить</button>
-                 <button class="btn btn-cancel" onclick="closeModal()">Отмена</button>
-                 <button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`
-            );
-        }
-
-        async function deleteProduct(productId) {
-            if (!confirm('Удалить товар?')) return;
-            await db.delete('products', productId);
-            closeModal();
-            await renderWarehouseTable(currentWarehouseCategory, document.querySelector('.search-input')?.value || '');
-        }
-
-        // ============ СТАТИСТИКА (сохраняем) ============
+        // ============ СТАТИСТИКА ============
         let currentPeriod = 'today';
         let currentCategoryMode = 'sum';
         let customStartDate = null;
@@ -820,8 +545,46 @@
         }
 
         async function getSalesInRange(start, end) {
-            try { return await db.getByDateRange ? db.getByDateRange('sales', start, end) : []; }
+            try { return await db.getByDateRange('sales', start, end); }
             catch { const all = await db.getAll('sales'); return all.filter(s => s.date >= start && s.date <= end); }
+        }
+
+        function getDaysDiff(start, end) { return Math.ceil((new Date(end) - new Date(start)) / 86400000) + 1; }
+
+        function getDailyData(sales, start, end) {
+            const showMonths = getDaysDiff(start, end) > 31;
+            const map = new Map();
+            sales.forEach(s => {
+                const d = new Date(s.date);
+                const key = showMonths
+                    ? `${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear().toString().slice(2)}`
+                    : `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+                map.set(key, (map.get(key) || 0) + (s.profit || 0));
+            });
+            const sorted = [...map.keys()].sort((a, b) => {
+                const [pa, pb] = [a.split('.'), b.split('.')];
+                return showMonths ? (pa[1] + pa[0]).localeCompare(pb[1] + pb[0]) : (pa[1] + pa[0]).localeCompare(pb[1] + pb[0]);
+            });
+            return sorted.map(k => ({ label: k, value: map.get(k) }));
+        }
+
+        function getCategoryData(sales, mode) {
+            const map = {};
+            ['liquid','supplies','pods','disposable','snus'].forEach(c => map[c] = 0);
+            sales.forEach(s => {
+                if (s.category && map[s.category] !== undefined) {
+                    map[s.category] += (mode === 'sum' ? (s.profit || 0) : 1);
+                }
+            });
+            return ['liquid','supplies','pods','disposable','snus'].map(c => ({
+                category: c, name: CATEGORY_NAMES[c], value: map[c]
+            }));
+        }
+
+        function shouldShowDaily(period, start, end) {
+            if (period === 'today') return false;
+            if (period === 'custom') return getDaysDiff(start, end) >= 2;
+            return true;
         }
 
         async function renderStatistics(period) {
@@ -837,6 +600,12 @@
             const pProf = prevSales.reduce((s, x) => s + (x.profit || 0), 0);
             const pCnt = prevSales.length;
 
+            const showDaily = shouldShowDaily(period, start, end);
+            const dailyData = showDaily ? getDailyData(sales, start, end) : [];
+            const catData = getCategoryData(sales, currentCategoryMode);
+            const maxDaily = Math.max(...dailyData.map(d => d.value), 1);
+            const maxCat = Math.max(...catData.map(d => d.value), 1);
+
             const booking = Math.floor(Math.random() * 30000) + 5000;
             const debt = Math.floor(Math.random() * 15000) + 1000;
             const newClients = Math.floor(Math.random() * 20) + 1;
@@ -845,31 +614,270 @@
             const pLeavingClients = Math.floor(Math.random() * 8) + 1;
 
             const periodBtns = ['today','week','month','all','custom'].map(p => 
-                `<button class="period-btn ${period === p ? 'active' : ''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`
-            ).join('');
+                `<button class="period-btn ${period === p ? 'active' : ''}" onclick="renderStatistics('${p}')" title="${p==='today'?'Сегодня':p==='week'?'Неделя':p==='month'?'Месяц':p==='all'?'Всё время':'Период'}">
+                    <i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i>
+                </button>`).join('');
+
+            const dateRangeHtml = period === 'custom' ? `
+                <div class="date-range">
+                    <input type="date" class="date-input" id="startDate" value="${customStartDate||''}" onchange="updateCustomDates()">
+                    <span class="date-separator">—</span>
+                    <input type="date" class="date-input" id="endDate" value="${customEndDate||''}" onchange="updateCustomDates()">
+                </div>` : '';
+
+            const catSwitchHtml = `
+                <div class="chart-switch">
+                    <button class="switch-btn ${currentCategoryMode==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button>
+                    <button class="switch-btn ${currentCategoryMode==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button>
+                </div>`;
+
+            const dailyBlock = showDaily ? `
+                <div class="chart-block">
+                    <div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> Продажи по дням</div></div>
+                    ${dailyData.length ? `<div class="bar-chart">${dailyData.map(d => {
+                        const h = maxDaily > 0 ? (d.value / maxDaily * 100) : 0;
+                        return `<div class="bar-column"><div class="bar-value">${fmtNum(d.value)}₽</div><div class="bar-fill" style="height:${h}%;" data-height="${h}"></div><div class="bar-label">${d.label}</div></div>`;
+                    }).join('')}</div>` : '<p class="text-muted text-center py-3">Нет данных</p>'}
+                </div>` : '';
+
+            const catBlock = `
+                <div class="chart-block">
+                    <div class="chart-header">
+                        <div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div>
+                        ${catSwitchHtml}
+                    </div>
+                    <div class="category-chart">
+                        ${catData.map(d => {
+                            const h = maxCat > 0 ? (d.value / maxCat * 100) : 0;
+                            const suffix = currentCategoryMode === 'sum' ? '₽' : ' шт.';
+                            return `<div class="category-column"><div class="category-value">${fmtNum(d.value)}${suffix}</div><div class="category-fill cat-${d.category}" style="height:${h}%;" data-height="${h}"></div><div class="category-label">${d.name}</div></div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
 
             const html = `
                 <div class="stats-header"><h2 class="tab-title">Статистика</h2><div class="period-buttons">${periodBtns}</div></div>
                 <div class="stats-cards">
-                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fmtNum(rev)}₽</div></div>
-                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fmtNum(prof)}₽</div></div>
-                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value">${fmtNum(cnt)}</div></div>
+                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fmtNum(rev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}">${fmtPct((rev-pRev)/pRev*100)}</div>`:''}</div>
+                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fmtNum(prof)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}">${fmtPct((prof-pProf)/pProf*100)}</div>`:''}</div>
+                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value">${fmtNum(cnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}">${fmtPct((cnt-pCnt)/pCnt*100)}</div>`:''}</div>
                 </div>
                 <div class="summary-row">
                     <div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">${fmtNum(booking)}₽</div></div>
                     <div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value">${fmtNum(debt)}₽</div></div>
-                    <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">${newClients} чел.</div></div>
-                    <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">${leavingClients} чел.</div></div>
+                    <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">${newClients} чел.</div>${period!=='all'?`<div class="summary-percent">${fmtPct((newClients-pNewClients)/pNewClients*100)}</div>`:''}</div>
+                    <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">${leavingClients} чел.</div>${period!=='all'?`<div class="summary-percent">${fmtPct((leavingClients-pLeavingClients)/pLeavingClients*100)}</div>`:''}</div>
                 </div>
-                <p class="text-center text-muted py-3">Графики временно скрыты</p>`;
+                ${catBlock}
+                ${dailyBlock}
+                ${dateRangeHtml}`;
+
+            document.getElementById('contentBody').innerHTML = html;
+            setTimeout(() => {
+                document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(b => {
+                    const h = b.getAttribute('data-height');
+                    b.style.height = '0%';
+                    setTimeout(() => b.style.height = h + '%', 50);
+                });
+            }, 100);
+        }
+
+        async function setCategoryMode(mode) { currentCategoryMode = mode; await renderStatistics(currentPeriod); }
+        function updateCustomDates() {
+            customStartDate = document.getElementById('startDate').value;
+            customEndDate = document.getElementById('endDate').value;
+            if (customStartDate && customEndDate) renderStatistics('custom');
+        }
+
+        function showBookingModal() { showModal('Бронь', 'bi bi-calendar-check', 'var(--green)', '<p class="text-muted">Список забронированных товаров</p>', ''); }
+        function showDebtModal() { showModal('Долг', 'bi bi-cash-coin', 'var(--red)', '<p class="text-muted">Список должников</p>', ''); }
+        function showNewClientsModal() { showModal('Новые клиенты', 'bi bi-person-plus', 'var(--accent)', '<p class="text-muted">Список новых клиентов</p>', ''); }
+        function showLeavingClientsModal() { showModal('Уходящие клиенты', 'bi bi-person-dash', 'var(--accent)', '<p class="text-muted">Список уходящих клиентов</p>', ''); }
+
+        // ============ СКЛАД ============
+        let currentWarehouseCategory = null;
+
+        async function renderWarehouseCards() {
+            currentWarehouseCategory = null;
+            const allProducts = await db.getAll('products');
+            const counts = {};
+            CATEGORIES.forEach(cat => counts[cat] = allProducts.filter(p => p.category === cat).length);
+
+            const html = `
+                <h2 class="tab-title">Склад</h2>
+                <div class="warehouse-cards">
+                    ${CATEGORIES.map(cat => `
+                        <div class="wh-card ${CATEGORY_CLASS[cat]}" onclick="openWarehouseCategory('${cat}')">
+                            <div class="wh-icon"><i class="bi ${CATEGORY_ICONS[cat]}"></i></div>
+                            <div class="wh-label">${CATEGORY_NAMES[cat]}</div>
+                            <div class="wh-count">${counts[cat]} товаров</div>
+                        </div>
+                    `).join('')}
+                </div>`;
             document.getElementById('contentBody').innerHTML = html;
         }
 
-        // Заглушки модалок для статистики
-        function showBookingModal() { showModal('Бронь', 'bi bi-calendar-check', 'var(--green)', '<p class="text-muted">Демо-данные брони</p>', ''); }
-        function showDebtModal() { showModal('Долг', 'bi bi-cash-coin', 'var(--red)', '<p class="text-muted">Демо-данные долгов</p>', ''); }
-        function showNewClientsModal() { showModal('Новые клиенты', 'bi bi-person-plus', 'var(--accent)', '<p class="text-muted">Демо-данные клиентов</p>', ''); }
-        function showLeavingClientsModal() { showModal('Уходящие клиенты', 'bi bi-person-dash', 'var(--accent)', '<p class="text-muted">Демо-данные клиентов</p>', ''); }
+        async function openWarehouseCategory(cat) {
+            currentWarehouseCategory = cat;
+            await renderWarehouseTable(cat);
+        }
+
+        function groupProducts(products, groupBy) {
+            if (groupBy.length === 0) return { '_root': products };
+            const groups = {};
+            products.forEach(p => {
+                const key = groupBy.map(g => p[g] || '').join('|||');
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(p);
+            });
+            return groups;
+        }
+
+        function buildAccordionHTML(groups, groupBy, level, searchQuery) {
+            if (level >= groupBy.length) return '';
+            let html = '';
+            const entries = Object.entries(groups);
+            entries.sort((a, b) => a[0].localeCompare(b[0]));
+            
+            entries.forEach(([key, items]) => {
+                const label = key.split('|||')[level] || key;
+                const groupId = 'grp_' + Math.random().toString(36).slice(2, 8);
+                
+                html += `<div class="accordion-group">`;
+                html += `<div class="accordion-header" onclick="toggleAccordion('${groupId}')">`;
+                html += `<span>${label} (${items.length})</span>`;
+                html += `<i class="bi bi-chevron-down accordion-arrow"></i>`;
+                html += `</div>`;
+                html += `<div class="accordion-body" id="${groupId}">`;
+                
+                if (level + 1 < groupBy.length) {
+                    const subGroups = {};
+                    items.forEach(item => {
+                        const subKey = groupBy.slice(0, level + 2).map(g => item[g] || '').join('|||');
+                        if (!subGroups[subKey]) subGroups[subKey] = [];
+                        subGroups[subKey].push(item);
+                    });
+                    html += buildAccordionHTML(subGroups, groupBy, level + 1, searchQuery);
+                } else {
+                    const cols = CATEGORY_TABLE_COLS[currentWarehouseCategory];
+                    html += `<div class="table-header-row">${cols.map(col => `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}</div>`;
+                    items.forEach(item => {
+                        html += `<div class="product-row" ondblclick="editProduct(${item.id})">`;
+                        cols.forEach(col => {
+                            let val = item[col] || '';
+                            if (col === 'purchase' || col === 'selling') val = fmtNum(val) + '₽';
+                            html += `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${val}</div>`;
+                        });
+                        html += `</div>`;
+                    });
+                }
+                html += `</div></div>`;
+            });
+            return html;
+        }
+
+        function toggleAccordion(groupId) {
+            const body = document.getElementById(groupId);
+            if (!body) return;
+            const header = body.previousElementSibling;
+            body.classList.toggle('open');
+            header.classList.toggle('open');
+        }
+
+        async function renderWarehouseTable(cat, searchQuery = '') {
+            currentWarehouseCategory = cat;
+            let products = await db.getByIndex('products', 'category', cat);
+            
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                products = products.filter(p => {
+                    const cols = CATEGORY_TABLE_COLS[cat];
+                    return cols.some(col => (p[col] || '').toString().toLowerCase().includes(q));
+                });
+            }
+            
+            const groupBy = CATEGORY_GROUPS[cat];
+            const groups = groupProducts(products, groupBy);
+            
+            const html = `
+                <div class="warehouse-table-section">
+                    <div class="wh-header">
+                        <button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button>
+                        <span class="wh-category-title">${CATEGORY_NAMES[cat]}</span>
+                        <button class="wh-add-btn" onclick="showAddProductModal()">+</button>
+                    </div>
+                    <input type="text" class="search-input" placeholder="Поиск..." value="${searchQuery}" oninput="onSearch(this.value)">
+                    ${products.length === 0 ? '<p class="text-center text-muted py-4">Ничего не найдено</p>' : buildAccordionHTML(groups, groupBy, 0, searchQuery)}
+                </div>`;
+            
+            document.getElementById('contentBody').innerHTML = html;
+            
+            const allBodies = document.querySelectorAll('.accordion-body');
+            if (allBodies.length === 1) {
+                allBodies[0].classList.add('open');
+                allBodies[0].previousElementSibling.classList.add('open');
+            }
+        }
+
+        function onSearch(value) { renderWarehouseTable(currentWarehouseCategory, value); }
+
+        function getProductFormHTML(product = null) {
+            const cat = currentWarehouseCategory;
+            const extras = CATEGORY_EXTRA_FIELDS[cat];
+            return `
+                <div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${product?.manufacturer||''}"></div>
+                <div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${product?.lineup||''}"></div>
+                ${extras.map(ext => `<div class="form-group"><label class="form-label">${ext.label}</label><input type="text" class="form-input" id="prod_${ext.key}" value="${product?.[ext.key]||''}"></div>`).join('')}
+                <div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="prod_quantity" value="${product?.quantity||0}" min="0"></div>
+                <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value="${product?.purchase||''}"></div>
+                <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value="${product?.selling||''}"></div>
+                <input type="hidden" id="prod_id" value="${product?.id||''}">`;
+        }
+
+        async function saveProduct() {
+            const cat = currentWarehouseCategory;
+            const extras = CATEGORY_EXTRA_FIELDS[cat];
+            const id = document.getElementById('prod_id').value;
+            const product = {
+                category: cat,
+                manufacturer: document.getElementById('prod_manufacturer').value.trim(),
+                lineup: document.getElementById('prod_lineup').value.trim(),
+                quantity: parseInt(document.getElementById('prod_quantity').value) || 0,
+                purchase: parseInt(document.getElementById('prod_purchase').value) || 0,
+                selling: parseInt(document.getElementById('prod_selling').value) || 0
+            };
+            extras.forEach(ext => product[ext.key] = document.getElementById('prod_' + ext.key).value.trim());
+            if (!product.manufacturer) { alert('Введите производителя'); return; }
+            
+            if (id) { product.id = parseInt(id); await db.put('products', product); }
+            else { await db.add('products', product); }
+            
+            closeModal();
+            await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+        }
+
+        function showAddProductModal() {
+            const cat = currentWarehouseCategory;
+            const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)';
+            showModal('Добавить товар', 'bi ' + CATEGORY_ICONS[cat], color, getProductFormHTML(),
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`);
+        }
+
+        async function editProduct(productId) {
+            const product = await db.get('products', productId);
+            if (!product) return;
+            currentWarehouseCategory = product.category;
+            const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[product.category]).trim() || 'var(--accent)';
+            showModal('Редактировать товар', 'bi ' + CATEGORY_ICONS[product.category], color, getProductFormHTML(product),
+                `<button class="btn btn-delete" onclick="deleteProduct(${product.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`);
+        }
+
+        async function deleteProduct(productId) {
+            if (!confirm('Удалить товар?')) return;
+            await db.delete('products', productId);
+            closeModal();
+            await renderWarehouseTable(currentWarehouseCategory, document.querySelector('.search-input')?.value || '');
+        }
 
         // ============ ВКЛАДКИ ============
         async function switchTab(tab) {
@@ -877,7 +885,7 @@
             const body = document.getElementById('contentBody');
             body.style.opacity = '0'; body.style.transform = 'translateY(20px)';
             setTimeout(async () => {
-                if (tab === 'statistics') await renderStatistics('today');
+                if (tab === 'statistics') await renderStatistics(currentPeriod);
                 else if (tab === 'warehouse') await renderWarehouseCards();
                 else {
                     const titles = { 'sales': 'Продажи', 'clients': 'Клиенты' };
@@ -886,20 +894,6 @@
                 body.style.opacity = '1'; body.style.transform = '';
             }, 200);
             if (innerWidth < 768) closeSidebar();
-        }
-
-        // ============ ДЕМО-ДАННЫЕ ПРОДАЖ ============
-        async function addDemoSales() {
-            if ((await db.getAll('sales')).length > 0) return;
-            const now = new Date();
-            const sales = [];
-            for (let i = 0; i < 60; i++) {
-                const d = new Date(now - Math.random() * 90 * 86400000);
-                const total = Math.floor(Math.random() * 5000) + 500;
-                const cost = Math.floor(total * (0.4 + Math.random() * 0.3));
-                sales.push({ date: d.toISOString().split('T')[0], total, cost, profit: total - cost, category: ['liquids','supplies','pods','disposable','snus'][Math.floor(Math.random()*5)], items: [] });
-            }
-            for (const s of sales) await db.add('sales', s);
         }
 
         // ============ PULL-TO-REFRESH ============
@@ -926,12 +920,14 @@
 
         // ============ ИНИТ ============
         async function init() {
-            await db.init();
-            await loadTheme();
-            await addDemoSales();
-            await addDemoProducts();
-            await renderWarehouseCards();
-            if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+            try {
+                await db.init();
+                await loadTheme();
+                await addDemoSales();
+                await addDemoProducts();
+                await renderWarehouseCards();
+                if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+            } catch (e) { console.error('Ошибка инициализации:', e); }
         }
 
         let tx = 0;
