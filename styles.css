@@ -1,0 +1,325 @@
+:root {
+    /* Тёмная тема (по умолчанию) */
+    --bg-primary: #2C3E50;
+    --bg-secondary: #34495E;
+    --bg-sidebar: #1a252f;
+    --text-primary: #FFFFFF;
+    --text-secondary: #BDC3C7;
+    --accent: #81D8D0;
+    --accent-hover: #6ECBC3;
+    --border: #4A6274;
+    --sidebar-width: 300px;
+    --header-height: 60px;
+}
+
+/* Светлая тема */
+[data-theme="light"] {
+    --bg-primary: #F8F9FA;
+    --bg-secondary: #FFFFFF;
+    --bg-sidebar: #E9ECEF;
+    --text-primary: #2C3E50;
+    --text-secondary: #6C757D;
+    --accent: #81D8D0;
+    --accent-hover: #6ECBC3;
+    --border: #DEE2E6;
+}
+
+/* Девчачья тема */
+[data-theme="pink"] {
+    --bg-primary: #FFF0F3;
+    --bg-secondary: #FFFFFF;
+    --bg-sidebar: #FFE0E6;
+    --text-primary: #FF69B4;
+    --text-secondary: #FFB6C1;
+    --accent: #FF69B4;
+    --accent-hover: #FF1493;
+    --border: #FFB6C1;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Кнопка меню */
+.menu-toggle-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1000;
+    background: var(--accent);
+    color: white;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.menu-toggle-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Сайдбар */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    transition: left 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    left: 0;
+}
+
+.sidebar-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active::before {
+    opacity: 1;
+}
+
+.sidebar-content {
+    position: relative;
+    width: var(--sidebar-width);
+    height: 100%;
+    background: var(--bg-sidebar);
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar-header {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header h3 {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.btn-close-custom {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    transition: transform 0.2s ease;
+}
+
+.btn-close-custom:hover {
+    transform: rotate(90deg);
+}
+
+/* Навигация */
+.sidebar-nav {
+    flex: 1;
+    padding: 20px 0;
+    overflow-y: auto;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+    margin: 5px 0;
+}
+
+.nav-item i {
+    font-size: 20px;
+    margin-right: 15px;
+    width: 24px;
+    text-align: center;
+}
+
+.nav-item:hover, .nav-item.active {
+    background: rgba(129, 216, 208, 0.1);
+    border-left-color: var(--accent);
+    color: var(--accent);
+}
+
+.nav-item.active {
+    background: rgba(129, 216, 208, 0.15);
+    font-weight: 600;
+}
+
+/* Футер сайдбара */
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.theme-selector {
+    margin-bottom: 15px;
+}
+
+.theme-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.theme-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.theme-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.theme-btn i {
+    font-size: 18px;
+}
+
+.theme-btn.active {
+    border-color: var(--accent);
+    background: rgba(129, 216, 208, 0.1);
+}
+
+.install-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.install-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+/* Основной контент */
+.main-content {
+    padding: 80px 20px 20px;
+    min-height: 100vh;
+    transition: all 0.3s ease;
+}
+
+.content-header {
+    margin-bottom: 30px;
+}
+
+.tab-title {
+    display: inline-block;
+    font-weight: 700;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--accent);
+    transition: all 0.3s ease;
+}
+
+.content-body {
+    background: var(--bg-secondary);
+    border-radius: 20px;
+    padding: 20px;
+    min-height: 300px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Анимации для модальных окон */
+.modal-content {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border);
+}
+
+/* Адаптация под телефон */
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width: 280px;
+    }
+    
+    .main-content {
+        padding: 70px 15px 15px;
+    }
+    
+    .content-body {
+        padding: 15px;
+        border-radius: 15px;
+    }
+}
+
+/* Анимация переключения вкладок */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.content-body {
+    animation: fadeInUp 0.4s ease;
+      }
