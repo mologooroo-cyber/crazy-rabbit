@@ -179,6 +179,15 @@
         .sale-checkbox-col { flex: 0 0 24px; display: none; align-items: center; }
         .sale-checkbox-col.visible { display: flex; }
 
+        /* Клиенты */
+        .clients-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
+        .clients-table-section { background: var(--bg-card); border-radius: 15px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .client-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 13px; gap: 6px; background: var(--bg-card); }
+        .client-row:last-child { border-bottom: none; }
+        .client-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .client-col.price { text-align: right; }
+        .client-table-header { display: flex; padding: 8px 15px; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 6px; font-weight: 600; }
+
         .pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 15px; }
         .pagination button { background: var(--bg-primary); color: var(--text-primary); border: 2px solid var(--border); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
         .pagination button:active { transform: scale(0.93); }
@@ -221,7 +230,7 @@
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spinner { animation: spin 1s linear infinite; display: inline-block; }
 
-        .warehouse-table-section, .warehouse-table-section *, .product-row, .product-row *, .accordion-header, .accordion-header *, .table-header-row, .table-header-row *, .product-row-wrapper, .product-row-wrapper *, .sales-table-section, .sales-table-section *, .sale-row, .sale-row *, .sale-row-wrapper, .sale-row-wrapper *, .sale-table-header, .sale-table-header * {
+        .warehouse-table-section, .warehouse-table-section *, .product-row, .product-row *, .accordion-header, .accordion-header *, .table-header-row, .table-header-row *, .product-row-wrapper, .product-row-wrapper *, .sales-table-section, .sales-table-section *, .sale-row, .sale-row *, .sale-row-wrapper, .sale-row-wrapper *, .sale-table-header, .sale-table-header *, .clients-table-section, .clients-table-section *, .client-row, .client-row *, .client-table-header, .client-table-header * {
             -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none;
         }
     </style>
@@ -233,8 +242,8 @@
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item" onclick="switchTab('statistics')" data-tab="statistics"><i class="bi bi-graph-up-arrow"></i>Статистика</a>
                 <a href="#" class="nav-item" onclick="switchTab('warehouse')" data-tab="warehouse"><i class="bi bi-box-seam"></i>Склад</a>
-                <a href="#" class="nav-item active" onclick="switchTab('sales')" data-tab="sales"><i class="bi bi-cart3"></i>Продажи</a>
-                <a href="#" class="nav-item" onclick="switchTab('clients')" data-tab="clients"><i class="bi bi-people"></i>Клиенты</a>
+                <a href="#" class="nav-item" onclick="switchTab('sales')" data-tab="sales"><i class="bi bi-cart3"></i>Продажи</a>
+                <a href="#" class="nav-item active" onclick="switchTab('clients')" data-tab="clients"><i class="bi bi-people"></i>Клиенты</a>
             </nav>
             <div class="sidebar-footer"><div class="theme-indicator"><span class="theme-dot"></span><span id="themeName">Тёмная тема</span></div><button class="theme-toggle-btn" onclick="toggleTheme()"><i class="bi bi-palette"></i> Сменить тему</button></div>
         </div>
@@ -244,7 +253,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 25;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 26;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -257,7 +266,7 @@
                         if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' });
                         if (!d.objectStoreNames.contains('sales')) { const s = d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }); s.createIndex('date', 'date', { unique: false }); s.createIndex('client', 'client', { unique: false }); }
                         if (!d.objectStoreNames.contains('products')) { const p = d.createObjectStore('products', { keyPath: 'id', autoIncrement: true }); p.createIndex('category', 'category', { unique: false }); }
-                        if (!d.objectStoreNames.contains('clients')) d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true });
+                        if (!d.objectStoreNames.contains('clients')) { const c = d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true }); c.createIndex('name', 'name', { unique: false }); }
                     };
                 });
             }
@@ -305,7 +314,7 @@
             setTimeout(() => { const el = document.getElementById(id); if (el) el.remove(); }, 3000);
         }
 
-        document.addEventListener('selectstart', function(e) { if (e.target.closest('.warehouse-table-section')||e.target.closest('.sales-table-section')) { e.preventDefault(); } });
+        document.addEventListener('selectstart', function(e) { if (e.target.closest('.warehouse-table-section')||e.target.closest('.sales-table-section')||e.target.closest('.clients-table-section')) { e.preventDefault(); } });
 
         // ============ СТАТИСТИКА ============
         let cp='today',ccm='sum',csd=null,ced=null;
@@ -444,15 +453,15 @@
             const filterBtnClass=filterActive?'active':'filter';
             let paginationHTML='';
             if(totalPages>1){
-                paginationHTML=`<div class="pagination"><button onclick="goToPage(${salesPage-1})" ${salesPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;
+                paginationHTML=`<div class="pagination"><button onclick="goToSalesPage(${salesPage-1})" ${salesPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;
                 for(let i=1;i<=totalPages;i++){
                     if(i===1||i===totalPages||(i>=salesPage-1&&i<=salesPage+1)){
-                        paginationHTML+=`<button class="${i===salesPage?'active':''}" onclick="goToPage(${i})">${i}</button>`;
+                        paginationHTML+=`<button class="${i===salesPage?'active':''}" onclick="goToSalesPage(${i})">${i}</button>`;
                     }else if(i===salesPage-2||i===salesPage+2){
                         paginationHTML+=`<span class="page-info">...</span>`;
                     }
                 }
-                paginationHTML+=`<button onclick="goToPage(${salesPage+1})" ${salesPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;
+                paginationHTML+=`<button onclick="goToSalesPage(${salesPage+1})" ${salesPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;
             }
             document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Продажи</h2>
             <div class="sales-header">
@@ -476,7 +485,7 @@
             </div>`;
             setTimeout(()=>{if(salesSelectMode)updateSalesSelectUI();setupSalesSwipe();},50);
         }
-        function goToPage(p){salesPage=p;renderSalesTable();}
+        function goToSalesPage(p){salesPage=p;renderSalesTable();}
         function setupSalesSwipe(){
             document.querySelectorAll('.sale-row').forEach(row=>{let sx=0,sy=0,sw=false,lt=null;const w=row.parentElement,bg=w.querySelector('.sales-delete-bg');
                 row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!salesSelectMode){enterSalesSelectMode();toggleSalesSelect(parseInt(row.dataset.sid));sw=true;row.style.transform='translateX(0)';}},1000);},{passive:false});
@@ -526,10 +535,8 @@
             dropdown.querySelectorAll('.combo-option').forEach(opt=>{opt.addEventListener('click',()=>{input.value=opt.textContent;dropdown.classList.remove('open');onProductChange(input.value);});});
         }
 
-        // ============ АВТОРАСЧЁТ СУММЫ ============
         let saleAutoCalc=true;
         let saleUnitPrice=0;
-
         function recalcTotal(){
             if(!saleAutoCalc)return;
             const qty=parseInt(document.getElementById('sale_quantity').value)||1;
@@ -538,7 +545,6 @@
             if(note==='приз'){totalInput.value='0';return;}
             totalInput.value=saleUnitPrice*qty;
         }
-
         async function onProductChange(val){
             const totalInput=document.getElementById('sale_total');
             if(val){
@@ -547,14 +553,12 @@
                 if(found&&found.selling){saleUnitPrice=found.selling;saleAutoCalc=true;recalcTotal();}
             }
         }
-
         function onSaleNoteChange(){
             const note=document.getElementById('sale_note').value;
             const totalInput=document.getElementById('sale_total');
             if(note==='приз'){totalInput.value='0';totalInput.disabled=true;saleAutoCalc=false;}
             else{totalInput.disabled=false;saleAutoCalc=true;recalcTotal();}
         }
-
         async function showAddSaleModal(sale=null){
             const isEdit=!!sale;
             saleAutoCalc=!isEdit;
@@ -563,7 +567,6 @@
                 const found=products.find(p=>{const name=(p.manufacturer+' '+p.lineup+(p.flavor?' '+p.flavor:'')+(p.color?' '+p.color:'')).trim();return name===sale.product;});
                 saleUnitPrice=found?found.selling:(sale.quantity>0?Math.round(sale.total/sale.quantity):0);
             }else{saleUnitPrice=0;}
-
             const productList=await getProductListForSelect();
             const productOptions=productList.map(p=>`<div class="combo-option">${p}</div>`).join('');
             showModal(isEdit?'Редактировать продажу':'Добавить продажу','bi bi-cart3','var(--accent)',
@@ -603,6 +606,75 @@
         async function editSale(sid){const s=await db.g('sales',sid);if(!s)return;showAddSaleModal(s);}
         async function deleteSaleFromModal(){const id=document.getElementById('sale_id').value;if(!confirm('Удалить продажу?'))return;await db.del('sales',parseInt(id));closeModal();salesPage=1;await renderSalesTable();}
 
+        // ============ КЛИЕНТЫ ============
+        let clientsSearch='',clientsPage=1;
+        async function getClientStats(){
+            const clients=await db.all('clients');
+            const sales=await db.all('sales');
+            const stats=[];
+            for(const c of clients){
+                const clientSales=sales.filter(s=>norm(s.client)===norm(c.name));
+                clientSales.sort((a,b)=>b.date.localeCompare(a.date));
+                const totalSum=clientSales.reduce((s,x)=>s+(x.total||0),0);
+                const lastSale=clientSales[0]||null;
+                const firstSale=clientSales[clientSales.length-1]||null;
+                stats.push({
+                    id:c.id,
+                    name:c.name,
+                    created:c.created||(firstSale?firstSale.date:'-'),
+                    count:clientSales.length,
+                    lastDate:lastSale?lastSale.date:'-',
+                    totalSum:totalSum
+                });
+            }
+            stats.sort((a,b)=>b.lastDate.localeCompare(a.lastDate));
+            return stats;
+        }
+        async function renderClientsTable(){
+            let stats=await getClientStats();
+            if(clientsSearch){
+                const q=clientsSearch.toLowerCase();
+                stats=stats.filter(s=>s.name.toLowerCase().includes(q));
+            }
+            const totalPages=Math.ceil(stats.length/PAGE_SIZE)||1;
+            if(clientsPage>totalPages)clientsPage=totalPages;
+            const start=(clientsPage-1)*PAGE_SIZE;
+            const pageStats=stats.slice(start,start+PAGE_SIZE);
+            let paginationHTML='';
+            if(totalPages>1){
+                paginationHTML=`<div class="pagination"><button onclick="goToClientsPage(${clientsPage-1})" ${clientsPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;
+                for(let i=1;i<=totalPages;i++){
+                    if(i===1||i===totalPages||(i>=clientsPage-1&&i<=clientsPage+1)){
+                        paginationHTML+=`<button class="${i===clientsPage?'active':''}" onclick="goToClientsPage(${i})">${i}</button>`;
+                    }else if(i===clientsPage-2||i===clientsPage+2){
+                        paginationHTML+=`<span class="page-info">...</span>`;
+                    }
+                }
+                paginationHTML+=`<button onclick="goToClientsPage(${clientsPage+1})" ${clientsPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${clientsPage}/${totalPages}</span></div>`;
+            }
+            document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Клиенты</h2>
+            <div class="clients-header"><button class="sales-header-btn" onclick="showAddClientModal()"><i class="bi bi-plus-lg"></i> Клиент</button></div>
+            <input type="text" class="search-input" placeholder="Поиск по имени..." value="${clientsSearch}" oninput="onClientsSearch(this.value)">
+            <div class="clients-table-section">
+                <div class="client-table-header"><div class="client-col">Имя</div><div class="client-col">Дата</div><div class="client-col">До 10-й</div><div class="client-col">Последняя покупка</div><div class="client-col price">Общая сумма</div></div>
+                ${pageStats.length===0?'<p class="text-center text-muted py-4">Нет клиентов</p>':pageStats.map(s=>`<div class="client-row"><div class="client-col">${s.name}</div><div class="client-col">${s.created}</div><div class="client-col">${s.count>=10?'10+':s.count}</div><div class="client-col">${s.lastDate}</div><div class="client-col price">${fn(s.totalSum)}₽</div></div>`).join('')}
+                ${paginationHTML}
+            </div>`;
+        }
+        function onClientsSearch(v){clientsSearch=v;clientsPage=1;renderClientsTable();}
+        function goToClientsPage(p){clientsPage=p;renderClientsTable();}
+        function showAddClientModal(){
+            showModal('Добавить клиента','bi bi-person-plus','var(--accent)',
+                `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="new_client_name" placeholder="Имя"></div>`,
+                `<button class="btn btn-cancel" onclick="closeModal()">Отменить</button><button class="btn btn-save" onclick="addClient()">Добавить</button>`);
+        }
+        async function addClient(){
+            const name=document.getElementById('new_client_name').value.trim();
+            if(!name){alert('Введите имя');return;}
+            await db.add('clients',{name:name,created:new Date().toISOString().split('T')[0]});
+            closeModal();clientsPage=1;await renderClientsTable();
+        }
+
         // ============ ВКЛАДКИ ============
         async function switchTab(tab){
             document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));
@@ -611,14 +683,15 @@
                 if(tab==='statistics')await renderStatistics(cp);
                 else if(tab==='warehouse')await renderWarehouseCards();
                 else if(tab==='sales')await renderSalesTable();
-                else body.innerHTML=`<h2 class="tab-title" onclick="openSidebar()">${tab==='clients'?'Клиенты':'Вкладка'}</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
+                else if(tab==='clients')await renderClientsTable();
+                else body.innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Вкладка</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
                 body.style.opacity='1';body.style.transform='';
             },200);
             closeSidebar();
         }
 
-        async function init(){try{await db.init();await loadTheme();await renderSalesTable();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');}catch(e){console.error(e);}}
+        async function init(){try{await db.init();await loadTheme();await renderClientsTable();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');}catch(e){console.error(e);}}
         document.addEventListener('DOMContentLoaded',init);
     </script>
 </body>
-</html> 
+</html>
