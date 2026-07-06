@@ -181,11 +181,19 @@
 
         /* Клиенты */
         .clients-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
+        .clients-header-left { display: flex; gap: 8px; align-items: center; }
         .clients-table-section { background: var(--bg-card); border-radius: 15px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .client-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 13px; gap: 6px; background: var(--bg-card); }
+        .client-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 13px; gap: 6px; background: var(--bg-card); cursor: pointer; transition: opacity 0.2s ease; }
         .client-row:last-child { border-bottom: none; }
+        .client-row:active { background: rgba(129,216,208,0.1); }
+        .client-row.leaving { opacity: 0.5; }
         .client-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .client-col.price { text-align: right; }
+        .client-col.prize-progress { flex: 0.8; text-align: center; }
+        .prize-bar { display: inline-block; height: 6px; border-radius: 3px; background: var(--border); width: 60px; vertical-align: middle; margin-right: 6px; }
+        .prize-bar-fill { height: 100%; border-radius: 3px; background: var(--cat-liquid); transition: width 0.3s ease; }
+        .prize-text { font-size: 11px; color: var(--text-secondary); vertical-align: middle; }
+        .prize-complete { color: var(--green); font-weight: 700; }
         .client-table-header { display: flex; padding: 8px 15px; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 6px; font-weight: 600; }
 
         .pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 15px; }
@@ -253,7 +261,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 26;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 27;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -607,10 +615,29 @@
         async function deleteSaleFromModal(){const id=document.getElementById('sale_id').value;if(!confirm('Удалить продажу?'))return;await db.del('sales',parseInt(id));closeModal();salesPage=1;await renderSalesTable();}
 
         // ============ КЛИЕНТЫ ============
-        let clientsSearch='',clientsPage=1;
+        let clientsSearch='',clientsPage=1,clientsFilter='all';
+        function isLeaving(lastDate){
+            if(!lastDate||lastDate==='-')return false;
+            const days=(new Date()-new Date(lastDate))/86400000;
+            return days>30;
+        }
+        function getLiquidCount(clientSales){
+            let count=0;
+            const sorted=[...clientSales].sort((a,b)=>a.date.localeCompare(b.date));
+            for(const s of sorted){
+                if(s.note==='приз'){count=0;continue;}
+                const products=window._allProducts||[];
+                const found=products.find(p=>{const name=(p.manufacturer+' '+p.lineup+(p.flavor?' '+p.flavor:'')+(p.color?' '+p.color:'')).trim();return name===s.product;});
+                if(found&&found.category==='liquid')count++;
+                else{const name=(s.product||'').toLowerCase();if(name.includes('жидк')||name.includes('liquid'))count++;}
+                if(count>=9)count=9;
+            }
+            return count;
+        }
         async function getClientStats(){
             const clients=await db.all('clients');
             const sales=await db.all('sales');
+            window._allProducts=await db.all('products');
             const stats=[];
             for(const c of clients){
                 const clientSales=sales.filter(s=>norm(s.client)===norm(c.name));
@@ -618,13 +645,16 @@
                 const totalSum=clientSales.reduce((s,x)=>s+(x.total||0),0);
                 const lastSale=clientSales[0]||null;
                 const firstSale=clientSales[clientSales.length-1]||null;
+                const liquidCount=getLiquidCount(clientSales);
                 stats.push({
                     id:c.id,
                     name:c.name,
                     created:c.created||(firstSale?firstSale.date:'-'),
                     count:clientSales.length,
                     lastDate:lastSale?lastSale.date:'-',
-                    totalSum:totalSum
+                    totalSum:totalSum,
+                    liquidCount:liquidCount,
+                    leaving:isLeaving(lastSale?lastSale.date:null)
                 });
             }
             stats.sort((a,b)=>b.lastDate.localeCompare(a.lastDate));
@@ -636,6 +666,7 @@
                 const q=clientsSearch.toLowerCase();
                 stats=stats.filter(s=>s.name.toLowerCase().includes(q));
             }
+            if(clientsFilter==='leaving'){stats=stats.filter(s=>s.leaving);}
             const totalPages=Math.ceil(stats.length/PAGE_SIZE)||1;
             if(clientsPage>totalPages)clientsPage=totalPages;
             const start=(clientsPage-1)*PAGE_SIZE;
@@ -652,15 +683,26 @@
                 }
                 paginationHTML+=`<button onclick="goToClientsPage(${clientsPage+1})" ${clientsPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${clientsPage}/${totalPages}</span></div>`;
             }
+            const leavingBtnClass=clientsFilter==='leaving'?'active':'filter';
             document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Клиенты</h2>
-            <div class="clients-header"><button class="sales-header-btn" onclick="showAddClientModal()"><i class="bi bi-plus-lg"></i> Клиент</button></div>
+            <div class="clients-header">
+                <div class="clients-header-left">
+                    <button class="sales-header-btn ${leavingBtnClass}" onclick="toggleClientsFilter()"><i class="bi bi-person-dash"></i> Уходящие</button>
+                </div>
+                <button class="sales-header-btn" onclick="showAddClientModal()"><i class="bi bi-plus-lg"></i> Клиент</button>
+            </div>
             <input type="text" class="search-input" placeholder="Поиск по имени..." value="${clientsSearch}" oninput="onClientsSearch(this.value)">
             <div class="clients-table-section">
-                <div class="client-table-header"><div class="client-col">Имя</div><div class="client-col">Дата</div><div class="client-col">До 10-й</div><div class="client-col">Последняя покупка</div><div class="client-col price">Общая сумма</div></div>
-                ${pageStats.length===0?'<p class="text-center text-muted py-4">Нет клиентов</p>':pageStats.map(s=>`<div class="client-row"><div class="client-col">${s.name}</div><div class="client-col">${s.created}</div><div class="client-col">${s.count>=10?'10+':s.count}</div><div class="client-col">${s.lastDate}</div><div class="client-col price">${fn(s.totalSum)}₽</div></div>`).join('')}
+                <div class="client-table-header"><div class="client-col">Имя</div><div class="client-col">Дата</div><div class="client-col prize-progress">До приза</div><div class="client-col">Последняя покупка</div><div class="client-col price">Общая сумма</div></div>
+                ${pageStats.length===0?'<p class="text-center text-muted py-4">Нет клиентов</p>':pageStats.map(s=>{
+                    const barWidth=(s.liquidCount/9*100);
+                    const prizeText=s.liquidCount>=9?'<span class="prize-complete">🎁</span>':`${s.liquidCount}/9`;
+                    return`<div class="client-row ${s.leaving?'leaving':''}" onclick="showClientModal(${s.id},'${s.name.replace(/'/g,"\\'")}')"><div class="client-col">${s.name}</div><div class="client-col">${s.created}</div><div class="client-col prize-progress"><span class="prize-bar"><span class="prize-bar-fill" style="width:${barWidth}%;"></span></span><span class="prize-text">${prizeText}</span></div><div class="client-col">${s.lastDate}</div><div class="client-col price">${fn(s.totalSum)}₽</div></div>`;
+                }).join('')}
                 ${paginationHTML}
             </div>`;
         }
+        function toggleClientsFilter(){clientsFilter=clientsFilter==='leaving'?'all':'leaving';clientsPage=1;renderClientsTable();}
         function onClientsSearch(v){clientsSearch=v;clientsPage=1;renderClientsTable();}
         function goToClientsPage(p){clientsPage=p;renderClientsTable();}
         function showAddClientModal(){
@@ -672,6 +714,49 @@
             const name=document.getElementById('new_client_name').value.trim();
             if(!name){alert('Введите имя');return;}
             await db.add('clients',{name:name,created:new Date().toISOString().split('T')[0]});
+            closeModal();clientsPage=1;await renderClientsTable();
+        }
+        let clientModalPage=1;
+        async function showClientModal(clientId,clientName){
+            clientModalPage=1;
+            const sales=await db.all('sales');
+            const clientSales=sales.filter(s=>norm(s.client)===norm(clientName));
+            clientSales.sort((a,b)=>b.date.localeCompare(a.date));
+            renderClientModal(clientId,clientName,clientSales);
+        }
+        function renderClientModal(clientId,clientName,clientSales){
+            const totalPages=Math.ceil(clientSales.length/5)||1;
+            if(clientModalPage>totalPages)clientModalPage=totalPages;
+            const start=(clientModalPage-1)*5;
+            const pageSales=clientSales.slice(start,start+5);
+            let paginationHTML='';
+            if(totalPages>1){
+                paginationHTML=`<div class="pagination"><button onclick="clientModalGoToPage(${clientModalPage-1},${clientId},'${clientName.replace(/'/g,"\\'")}')" ${clientModalPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button><span class="page-info">${clientModalPage}/${totalPages}</span><button onclick="clientModalGoToPage(${clientModalPage+1},${clientId},'${clientName.replace(/'/g,"\\'")}')" ${clientModalPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button></div>`;
+            }
+            showModal(clientName,'bi bi-person','var(--accent)',
+                `<div class="sale-table-header"><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>
+                ${pageSales.length===0?'<p class="text-muted text-center py-3">Нет покупок</p>':pageSales.map(s=>`<div class="sale-row"><div class="sale-col">${s.product||'-'}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${s.date||'-'}</div><div class="sale-col">${s.note||'-'}</div></div>`).join('')}
+                ${paginationHTML}`,
+                `<button class="btn btn-cancel" onclick="editClientName(${clientId},'${clientName.replace(/'/g,"\\'")}')"><i class="bi bi-pencil"></i> Имя</button><button class="btn btn-delete" onclick="deleteClient(${clientId},'${clientName.replace(/'/g,"\\'")}')"><i class="bi bi-trash"></i> Удалить</button>`);
+        }
+        function clientModalGoToPage(p,clientId,clientName){clientModalPage=p;const sales=db.all('sales').then(s=>{const cs=s.filter(x=>norm(x.client)===norm(clientName));cs.sort((a,b)=>b.date.localeCompare(a.date));renderClientModal(clientId,clientName,cs);});}
+        function editClientName(clientId,oldName){
+            showModal('Редактировать имя','bi bi-pencil','var(--accent)',
+                `<div class="form-group"><label class="form-label">Новое имя</label><input type="text" class="form-input" id="edit_client_name" value="${oldName}"></div>`,
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveClientName(${clientId},'${oldName.replace(/'/g,"\\'")}')">Сохранить</button>`);
+        }
+        async function saveClientName(clientId,oldName){
+            const newName=document.getElementById('edit_client_name').value.trim();
+            if(!newName){alert('Введите имя');return;}
+            const client=await db.g('clients',clientId);
+            if(client){client.name=newName;await db.pu('clients',client);}
+            const sales=await db.all('sales');
+            for(const s of sales){if(norm(s.client)===norm(oldName)){s.client=newName;await db.pu('sales',s);}}
+            closeModal();clientsPage=1;await renderClientsTable();
+        }
+        async function deleteClient(clientId,clientName){
+            if(!confirm(`Удалить клиента "${clientName}"? Продажи останутся.`))return;
+            await db.del('clients',clientId);
             closeModal();clientsPage=1;await renderClientsTable();
         }
 
