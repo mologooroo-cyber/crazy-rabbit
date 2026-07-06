@@ -57,9 +57,8 @@
         .theme-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
         .theme-toggle-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 600; }
         .main-content { padding: 20px 12px 20px; min-height: 100vh; }
-        .tab-title { display: inline-block; font-weight: 700; padding-bottom: 10px; border-bottom: 3px solid var(--accent); margin-bottom: 20px; font-size: 22px; }
+        .tab-title { display: inline-block; font-weight: 700; padding-bottom: 10px; border-bottom: 3px solid var(--accent); margin-bottom: 20px; font-size: 22px; cursor: pointer; }
 
-        /* Статистика */
         .stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
         .period-buttons { display: flex; gap: 4px; background: var(--bg-card); border-radius: 12px; padding: 4px; }
         .period-btn { width: 36px; height: 36px; border: none; background: transparent; color: var(--text-secondary); border-radius: 10px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
@@ -104,7 +103,6 @@
         .date-input:focus { border-color: var(--accent); }
         .date-separator { color: var(--text-secondary); font-size: 14px; }
 
-        /* Склад */
         .warehouse-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px; }
         @media (min-width: 500px) { .warehouse-cards { grid-template-columns: repeat(3, 1fr); } }
         .wh-card { background: var(--bg-card); border-radius: 15px; padding: 15px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -159,7 +157,6 @@
         @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
         .product-row.pop-anim { animation: popIn 0.4s ease; }
 
-        /* Продажи */
         .sales-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; }
         .sales-header-left { display: flex; gap: 8px; align-items: center; }
         .sales-header-btn { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
@@ -182,7 +179,6 @@
         .sale-checkbox-col { flex: 0 0 24px; display: none; align-items: center; }
         .sale-checkbox-col.visible { display: flex; }
 
-        /* Пагинация */
         .pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 15px; }
         .pagination button { background: var(--bg-primary); color: var(--text-primary); border: 2px solid var(--border); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
         .pagination button:active { transform: scale(0.93); }
@@ -190,7 +186,6 @@
         .pagination button:disabled { opacity: 0.3; pointer-events: none; }
         .pagination .page-info { font-size: 13px; color: var(--text-secondary); padding: 0 8px; }
 
-        /* Кастомный выпадающий список */
         .combo-box { position: relative; }
         .combo-box .form-input { width: 100%; padding-right: 40px; }
         .combo-box .combo-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary); font-size: 12px; }
@@ -249,7 +244,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 23;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 24;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -312,26 +307,7 @@
 
         document.addEventListener('selectstart', function(e) { if (e.target.closest('.warehouse-table-section')||e.target.closest('.sales-table-section')) { e.preventDefault(); } });
 
-        // ============ САЙДБАР СВАЙПОМ (230px) ============
-        document.addEventListener('touchstart', function(e) {
-            if (e.touches.length === 1) {
-                window._sidebarSwipeStart = e.touches[0].clientX;
-                window._sidebarSwipeY = e.touches[0].clientY;
-                window._sidebarSwipeDetected = false;
-            }
-        }, { passive: true });
-        document.addEventListener('touchmove', function(e) {
-            if (!window._sidebarSwipeStart) return;
-            const dx = e.touches[0].clientX - window._sidebarSwipeStart;
-            const dy = e.touches[0].clientY - window._sidebarSwipeY;
-            if (dx > 10 && Math.abs(dx) > Math.abs(dy) && window._sidebarSwipeStart < 40) window._sidebarSwipeDetected = true;
-        }, { passive: true });
-        document.addEventListener('touchend', function(e) {
-            if (window._sidebarSwipeDetected && (e.changedTouches[0]?.clientX||0) - window._sidebarSwipeStart > 230) openSidebar();
-            window._sidebarSwipeStart = 0; window._sidebarSwipeDetected = false;
-        });
-
-        // ============ СТАТИСТИКА (компактно) ============
+        // ============ СТАТИСТИКА ============
         let cp='today',ccm='sum',csd=null,ced=null;
         function getDateRange(p){const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];let s,e,ps,pe;switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}return{s,e,ps,pe};}
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
@@ -345,7 +321,7 @@
             const pRev=prevSales.reduce((s,x)=>s+(x.total||0),0),pProf=prevSales.reduce((s,x)=>s+(x.profit||0),0),pCnt=prevSales.length;
             const sd=ssd(period,s,e);const dd=sd?getDailyData(sales,s,e):[],cd=getCategoryData(sales,ccm);
             const md=Math.max(...dd.map(d=>d.value),1),mc=Math.max(...cd.map(d=>d.value),1);
-            document.getElementById('contentBody').innerHTML=`<div class="stats-header"><h2 class="tab-title">Статистика</h2><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div>
+            document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Статистика</h2><div class="stats-header"><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div>
             <div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fn(rev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}">${fp((rev-pRev)/pRev*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fn(prof)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}">${fp((prof-pProf)/pProf*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value">${fn(cnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div></div>
             <div class="summary-row"><div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">0₽</div></div><div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value">0₽</div></div><div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">0 чел.</div></div><div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">0 чел.</div></div></div>
             <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>{const h=mc>0?(d.value/mc*100):0;return`<div class="category-column"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill cat-${d.category}" style="height:${h}%;" data-height="${h}"></div><div class="category-label">${d.name}</div></div>`;}).join('')}</div></div>
@@ -360,7 +336,7 @@
         function showNewClientsModal(){showModal('Новые клиенты','bi bi-person-plus','var(--accent)','<p class="text-muted py-4 text-center">Список новых клиентов</p>','');}
         function showLeavingClientsModal(){showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)','<p class="text-muted py-4 text-center">Список уходящих клиентов</p>','');}
 
-        // ============ СКЛАД (компактно) ============
+        // ============ СКЛАД ============
         let cwc=null,og=new Set(),selectMode=false,selectedIds=new Set(),deletedProducts=[];
         function enterSelectMode() { selectMode=true; selectedIds=new Set(); updateSelectUI(); }
         function exitSelectMode() { selectMode=false; selectedIds=new Set(); updateSelectUI(); }
@@ -385,7 +361,7 @@
         async function renderWarehouseCards(){
             cwc=null;og=new Set();selectMode=false;selectedIds=new Set();
             const ap=await db.all('products'); const counts={}; CATEGORIES.forEach(c=>counts[c]=ap.filter(p=>p.category===c).reduce((s,p)=>s+(p.quantity||0),0));
-            document.getElementById('contentBody').innerHTML=`<h2 class="tab-title">Склад</h2><div class="warehouse-cards">${CATEGORIES.map(c=>`<div class="wh-card ${CATEGORY_CLASS[c]}" onclick="openWarehouseCategory('${c}')"><div class="wh-icon"><i class="bi ${CATEGORY_ICONS[c]}"></i></div><div class="wh-label">${CATEGORY_NAMES[c]}</div><div class="wh-count">${counts[c]} шт.</div></div>`).join('')}</div>`;
+            document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Склад</h2><div class="warehouse-cards">${CATEGORIES.map(c=>`<div class="wh-card ${CATEGORY_CLASS[c]}" onclick="openWarehouseCategory('${c}')"><div class="wh-icon"><i class="bi ${CATEGORY_ICONS[c]}"></i></div><div class="wh-label">${CATEGORY_NAMES[c]}</div><div class="wh-count">${counts[c]} шт.</div></div>`).join('')}</div>`;
         }
         async function openWarehouseCategory(c){cwc=c;og=new Set();selectMode=false;selectedIds=new Set();await renderWarehouseTable(c);}
         function groupProducts(products,groupBy){if(groupBy.length===0)return{'_root':products};const g={};products.forEach(p=>{const k=groupBy.map(g=>norm(p[g])).join('|||');if(!g[k])g[k]=[];g[k].push(p);});return g;}
@@ -428,7 +404,6 @@
         // ============ ПРОДАЖИ ============
         let salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''},salesSelectMode=false,salesSelectedIds=new Set(),deletedSales=[],salesPage=1;
         const PAGE_SIZE=10;
-
         function enterSalesSelectMode(){salesSelectMode=true;salesSelectedIds=new Set();updateSalesSelectUI();}
         function exitSalesSelectMode(){salesSelectMode=false;salesSelectedIds=new Set();updateSalesSelectUI();}
         function toggleSalesSelect(id){if(salesSelectedIds.has(id))salesSelectedIds.delete(id);else salesSelectedIds.add(id);updateSalesSelectUI();}
@@ -465,10 +440,8 @@
             if(salesPage>totalPages)salesPage=totalPages;
             const start=(salesPage-1)*PAGE_SIZE;
             const pageSales=allSales.slice(start,start+PAGE_SIZE);
-
             const filterActive=hasActiveFilters();
             const filterBtnClass=filterActive?'active':'filter';
-
             let paginationHTML='';
             if(totalPages>1){
                 paginationHTML=`<div class="pagination"><button onclick="goToPage(${salesPage-1})" ${salesPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;
@@ -481,8 +454,7 @@
                 }
                 paginationHTML+=`<button onclick="goToPage(${salesPage+1})" ${salesPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;
             }
-
-            document.getElementById('contentBody').innerHTML=`<h2 class="tab-title">Продажи</h2>
+            document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Продажи</h2>
             <div class="sales-header">
                 <div class="sales-header-left">
                     <button class="sales-header-btn ${filterBtnClass}" onclick="showFilterModal()"><i class="bi bi-funnel"></i> Фильтры</button>
@@ -596,17 +568,11 @@
                 cost:0,profit:total,category:'liquid',items:[]
             };
             if(!sale.client||!sale.product){alert('Заполните имя и товар');return;}
-            
-            // Списываем количество со склада
             if(!id&&quantity>0){
                 const products=await db.all('products');
                 const found=products.find(p=>{const name=(p.manufacturer+' '+p.lineup+(p.flavor?' '+p.flavor:'')+(p.color?' '+p.color:'')).trim();return name===product;});
-                if(found){
-                    found.quantity=Math.max(0,(found.quantity||0)-quantity);
-                    await db.pu('products',found);
-                }
+                if(found){found.quantity=Math.max(0,(found.quantity||0)-quantity);await db.pu('products',found);}
             }
-            
             if(id){sale.id=parseInt(id);await db.pu('sales',sale);}else{await db.add('sales',sale);}
             closeModal();salesPage=1;await renderSalesTable();
         }
@@ -621,7 +587,7 @@
                 if(tab==='statistics')await renderStatistics(cp);
                 else if(tab==='warehouse')await renderWarehouseCards();
                 else if(tab==='sales')await renderSalesTable();
-                else body.innerHTML=`<h2 class="tab-title">${tab==='clients'?'Клиенты':'Вкладка'}</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
+                else body.innerHTML=`<h2 class="tab-title" onclick="openSidebar()">${tab==='clients'?'Клиенты':'Вкладка'}</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
                 body.style.opacity='1';body.style.transform='';
             },200);
             closeSidebar();
@@ -631,4 +597,4 @@
         document.addEventListener('DOMContentLoaded',init);
     </script>
 </body>
-</html> 
+</html>
