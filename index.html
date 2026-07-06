@@ -244,7 +244,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 24;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 25;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -525,34 +525,58 @@
             input.addEventListener('blur',()=>{setTimeout(()=>dropdown.classList.remove('open'),200);});
             dropdown.querySelectorAll('.combo-option').forEach(opt=>{opt.addEventListener('click',()=>{input.value=opt.textContent;dropdown.classList.remove('open');onProductChange(input.value);});});
         }
+
+        // ============ АВТОРАСЧЁТ СУММЫ ============
+        let saleAutoCalc=true;
+        let saleUnitPrice=0;
+
+        function recalcTotal(){
+            if(!saleAutoCalc)return;
+            const qty=parseInt(document.getElementById('sale_quantity').value)||1;
+            const totalInput=document.getElementById('sale_total');
+            const note=document.getElementById('sale_note').value;
+            if(note==='приз'){totalInput.value='0';return;}
+            totalInput.value=saleUnitPrice*qty;
+        }
+
+        async function onProductChange(val){
+            const totalInput=document.getElementById('sale_total');
+            if(val){
+                const products=await db.all('products');
+                const found=products.find(p=>{const name=(p.manufacturer+' '+p.lineup+(p.flavor?' '+p.flavor:'')+(p.color?' '+p.color:'')).trim();return name===val;});
+                if(found&&found.selling){saleUnitPrice=found.selling;saleAutoCalc=true;recalcTotal();}
+            }
+        }
+
+        function onSaleNoteChange(){
+            const note=document.getElementById('sale_note').value;
+            const totalInput=document.getElementById('sale_total');
+            if(note==='приз'){totalInput.value='0';totalInput.disabled=true;saleAutoCalc=false;}
+            else{totalInput.disabled=false;saleAutoCalc=true;recalcTotal();}
+        }
+
         async function showAddSaleModal(sale=null){
             const isEdit=!!sale;
+            saleAutoCalc=!isEdit;
+            if(isEdit){
+                const products=await db.all('products');
+                const found=products.find(p=>{const name=(p.manufacturer+' '+p.lineup+(p.flavor?' '+p.flavor:'')+(p.color?' '+p.color:'')).trim();return name===sale.product;});
+                saleUnitPrice=found?found.selling:(sale.quantity>0?Math.round(sale.total/sale.quantity):0);
+            }else{saleUnitPrice=0;}
+
             const productList=await getProductListForSelect();
             const productOptions=productList.map(p=>`<div class="combo-option">${p}</div>`).join('');
             showModal(isEdit?'Редактировать продажу':'Добавить продажу','bi bi-cart3','var(--accent)',
                 `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="sale_client" value="${sale?.client||''}"></div>
                 <div class="form-group"><label class="form-label">Товар</label><div class="combo-box"><input type="text" class="form-input" id="sale_product" value="${sale?.product||''}" placeholder="Начните вводить..." autocomplete="off"><i class="bi bi-chevron-down combo-arrow"></i><div class="combo-dropdown" id="combo_dropdown">${productOptions}</div></div></div>
-                <div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="sale_quantity" value="${sale?.quantity||1}" min="1"></div>
-                <div class="form-group"><label class="form-label">Сумма (₽)</label><input type="number" class="form-input" id="sale_total" value="${sale?.total||''}" ${sale?.note==='приз'?'disabled':''}></div>
+                <div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="sale_quantity" value="${sale?.quantity||1}" min="1" onchange="recalcTotal()" oninput="saleAutoCalc=true;recalcTotal()"></div>
+                <div class="form-group"><label class="form-label">Сумма (₽)</label><input type="number" class="form-input" id="sale_total" value="${sale?.total||''}" ${sale?.note==='приз'?'disabled':''} oninput="saleAutoCalc=false"></div>
                 <div class="form-group"><label class="form-label">Дата</label><input type="date" class="form-input" id="sale_date" value="${sale?.date||new Date().toISOString().split('T')[0]}"></div>
                 <div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="sale_note" onchange="onSaleNoteChange()"><option value="без заметки" ${(sale?.note||'без заметки')==='без заметки'?'selected':''}>Без заметки</option><option value="бронь" ${sale?.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${sale?.note==='долг'?'selected':''}>Долг</option><option value="приз" ${sale?.note==='приз'?'selected':''}>Приз</option></select></div>
                 <input type="hidden" id="sale_id" value="${sale?.id||''}">`,
                 `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>${isEdit?`<button class="btn btn-delete" onclick="deleteSaleFromModal()">Удалить</button>`:''}<button class="btn btn-save" onclick="saveSale()">Применить</button>`);
             setTimeout(()=>{setupComboBox('sale_product','combo_dropdown',productList);},50);
             if(sale?.note==='приз'){setTimeout(()=>{const ti=document.getElementById('sale_total');if(ti){ti.value='0';ti.disabled=true;}},50);}
-        }
-        async function onProductChange(val){
-            const totalInput=document.getElementById('sale_total');
-            if(val){
-                const products=await db.all('products');
-                const found=products.find(p=>{const name=(p.manufacturer+' '+p.lineup+(p.flavor?' '+p.flavor:'')+(p.color?' '+p.color:'')).trim();return name===val;});
-                if(found&&found.selling){totalInput.value=found.selling;}
-            }
-        }
-        function onSaleNoteChange(){
-            const note=document.getElementById('sale_note').value;
-            const totalInput=document.getElementById('sale_total');
-            if(note==='приз'){totalInput.value='0';totalInput.disabled=true;}else{totalInput.disabled=false;if(totalInput.value==='0')totalInput.value='';}
         }
         async function saveSale(){
             const id=document.getElementById('sale_id').value;
@@ -597,4 +621,4 @@
         document.addEventListener('DOMContentLoaded',init);
     </script>
 </body>
-</html> 
+</html>
