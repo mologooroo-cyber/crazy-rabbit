@@ -251,8 +251,8 @@
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item" onclick="switchTab('statistics')" data-tab="statistics"><i class="bi bi-graph-up-arrow"></i>Статистика</a>
                 <a href="#" class="nav-item" onclick="switchTab('warehouse')" data-tab="warehouse"><i class="bi bi-box-seam"></i>Склад</a>
-                <a href="#" class="nav-item active" onclick="switchTab('sales')" data-tab="sales"><i class="bi bi-cart3"></i>Продажи</a>
-                <a href="#" class="nav-item" onclick="switchTab('clients')" data-tab="clients"><i class="bi bi-people"></i>Клиенты</a>
+                <a href="#" class="nav-item" onclick="switchTab('sales')" data-tab="sales"><i class="bi bi-cart3"></i>Продажи</a>
+                <a href="#" class="nav-item active" onclick="switchTab('clients')" data-tab="clients"><i class="bi bi-people"></i>Клиенты</a>
             </nav>
             <div class="sidebar-footer"><div class="theme-indicator"><span class="theme-dot"></span><span id="themeName">Тёмная тема</span></div><button class="theme-toggle-btn" onclick="toggleTheme()"><i class="bi bi-palette"></i> Сменить тему</button></div>
         </div>
@@ -262,7 +262,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 28;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 29;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -325,7 +325,6 @@
 
         document.addEventListener('selectstart', function(e) { if (e.target.closest('.warehouse-table-section')||e.target.closest('.sales-table-section')||e.target.closest('.clients-table-section')) { e.preventDefault(); } });
 
-        // ============ ФУНКЦИИ ДЛЯ ТОВАРОВ ============
         async function findProductByName(productName) {
             const products = await db.all('products');
             return products.find(p => {
@@ -348,11 +347,7 @@
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
         function gdd(s,e){return Math.ceil((new Date(e)-new Date(s))/86400000)+1;}
         function getDailyData(sales,s,e){const sm=gdd(s,e)>31,m=new Map();sales.forEach(x=>{const d=new Date(x.date);let k;if(sm){k=`${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear().toString().slice(2)}`;}else{k=`${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`;}m.set(k,(m.get(k)||0)+(x.profit||0));});return[...m.keys()].sort((a,b)=>{const[pa,pb]=[a.split('.'),b.split('.')];if(sm){return(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}else{return(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}}).map(k=>({label:k,value:m.get(k)}));}
-        function getCategoryData(sales,mode){
-            const map={};CATEGORIES.forEach(c=>map[c]=0);
-            sales.forEach(x=>{const cat=x.category||'liquid';if(map[cat]!==undefined){map[cat]+=(mode==='sum'?(x.profit||0):1);}});
-            return CATEGORIES.map(c=>({category:c,name:CATEGORY_NAMES[c],value:map[c]||0}));
-        }
+        function getCategoryData(sales,mode){const map={};CATEGORIES.forEach(c=>map[c]=0);sales.forEach(x=>{const cat=x.category||'liquid';if(map[cat]!==undefined){map[cat]+=(mode==='sum'?(x.profit||0):1);}});return CATEGORIES.map(c=>({category:c,name:CATEGORY_NAMES[c],value:map[c]||0}));}
         function ssd(p,s,e){if(p==='today')return false;if(p==='custom')return gdd(s,e)>=2;return true;}
 
         async function renderStatistics(period){
@@ -366,8 +361,9 @@
             const debtSum=debtSales.reduce((s,x)=>s+(x.total||0),0);
 
             const allClients=await db.all('clients');
+            const allSalesAllTime=await db.all('sales');
             const newClients=allClients.filter(c=>c.created>=s&&c.created<=e).length;
-            const leavingClients=allClients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;}).length;
+            const leavingClients=allClients.filter(c=>{const cs=allSalesAllTime.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;}).length;
 
             const sd=ssd(period,s,e);const dd=sd?getDailyData(sales,s,e):[],cd=getCategoryData(sales,ccm);
             const md=Math.max(...dd.map(d=>d.value),1),mc=Math.max(...cd.map(d=>d.value),1);
@@ -382,23 +378,23 @@
                 <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">${newClients} чел.</div></div>
                 <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">${leavingClients} чел.</div></div>
             </div>
-            <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>`<div class="category-column"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill cat-${d.category}" style="height:0%;" data-h="${mc>0?(d.value/mc*100):0}"></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>
-            ${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill" style="height:0%;" data-h="${md>0?(d.value/md*100):0}"></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}
+            <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>`<div class="category-column"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill cat-${d.category}" style="height:0%;" data-height="${mc>0?(d.value/mc*100):0}"></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>
+            ${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill" style="height:0%;" data-height="${md>0?(d.value/md*100):0}"></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}
             ${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`:''}`;
 
-            // Анимация столбцов
-            setTimeout(()=>{
-                document.querySelectorAll('.bar-fill[data-h], .category-fill[data-h]').forEach(b=>{
-                    const h=b.getAttribute('data-h');
-                    b.style.transition='height 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-                    b.style.height=h+'%';
+            requestAnimationFrame(()=>{
+                requestAnimationFrame(()=>{
+                    document.querySelectorAll('.bar-fill[data-height], .category-fill[data-height]').forEach(b=>{
+                        const h=b.getAttribute('data-height');
+                        b.style.transition='height 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                        b.style.height=h+'%';
+                    });
                 });
-            },50);
+            });
         }
         async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
         function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
 
-        // Модальные окна сводки
         async function showBookingModal(){
             const{s,e}=getDateRange(cp);const sales=await getSalesInRange2(s,e);const bs=sales.filter(s=>s.note==='бронь');
             showModal('Бронь','bi bi-calendar-check','var(--green)',
@@ -425,7 +421,7 @@
                 `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div><div class="sale-col">Дней назад</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];const days=Math.floor((new Date()-new Date(last.date))/86400000);return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${last.date}</div><div class="sale-col">${days} дн.</div></div>`;}).join('')}`,'');
         }
 
-        // ============ СКЛАД (без изменений) ============
+        // ============ СКЛАД ============
         let cwc=null,og=new Set(),selectMode=false,selectedIds=new Set(),deletedProducts=[];
         function enterSelectMode() { selectMode=true; selectedIds=new Set(); updateSelectUI(); }
         function exitSelectMode() { selectMode=false; selectedIds=new Set(); updateSelectUI(); }
@@ -671,7 +667,6 @@
 
             if(!client||!product){alert('Заполните имя и товар');return;}
 
-            // Находим товар в складе
             const foundProduct=await findProductByName(product);
             if(!foundProduct){alert('Товар не найден в складе');return;}
 
@@ -686,7 +681,6 @@
                 cost:cost,profit:profit,category:category,items:[]
             };
 
-            // Списываем со склада
             if(!id&&quantity>0){
                 foundProduct.quantity=Math.max(0,(foundProduct.quantity||0)-quantity);
                 await db.pu('products',foundProduct);
@@ -694,7 +688,6 @@
 
             if(id){sale.id=parseInt(id);await db.pu('sales',sale);}else{await db.add('sales',sale);}
 
-            // Авто-добавление клиента
             await autoAddClient(client);
 
             closeModal();salesPage=1;await renderSalesTable();
