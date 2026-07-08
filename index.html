@@ -264,7 +264,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 34;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 35;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -344,8 +344,24 @@
             }
         }
 
+        function animateValue(element, start, end, duration, suffix) {
+            if (start === end) { element.textContent = fn(end) + suffix; return; }
+            const startTime = performance.now();
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(start + (end - start) * eased);
+                element.textContent = fn(current) + suffix;
+                if (progress < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        }
+
         // ============ СТАТИСТИКА ============
         let cp='today',ccm='sum',csd=null,ced=null;
+        let prevStats={revenue:0,profit:0,count:0,bookingSum:0,debtSum:0,newClients:0,leavingClients:0};
+
         function getDateRange(p){const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];let s,e,ps,pe;switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}return{s,e,ps,pe};}
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
         function gdd(s,e){return Math.ceil((new Date(e)-new Date(s))/86400000)+1;}
@@ -354,6 +370,10 @@
         function ssd(p,s,e){if(p==='today')return false;if(p==='custom')return gdd(s,e)>=2;return true;}
 
         async function renderStatistics(period){
+            const prevRev=prevStats.revenue,prevProf=prevStats.profit,prevCnt=prevStats.count;
+            const prevBooking=prevStats.bookingSum,prevDebt=prevStats.debtSum;
+            const prevNew=prevStats.newClients,prevLeaving=prevStats.leavingClients;
+
             cp=period;const{s,e,ps,pe}=getDateRange(period);const sales=await getSalesInRange2(s,e),prevSales=(ps&&pe)?await getSalesInRange2(ps,pe):[];
             const rev=sales.reduce((s,x)=>s+(x.total||0),0),prof=sales.reduce((s,x)=>s+(x.profit||0),0),cnt=sales.length;
             const pRev=prevSales.reduce((s,x)=>s+(x.total||0),0),pProf=prevSales.reduce((s,x)=>s+(x.profit||0),0),pCnt=prevSales.length;
@@ -366,22 +386,53 @@
             const newClients=allClients.filter(c=>c.created>=s&&c.created<=e).length;
             const leavingClients=allClients.filter(c=>{const cs=allSalesAllTime.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;}).length;
 
+            prevStats={revenue:rev,profit:prof,count:cnt,bookingSum,debtSum,newClients,leavingClients};
+
             const sd=ssd(period,s,e);const dd=sd?getDailyData(sales,s,e):[],cd=getCategoryData(sales,ccm);
             const md=Math.max(...dd.map(d=>d.value),1),mc=Math.max(...cd.map(d=>d.value),1);
             const showMonths=period==='all'||(period==='custom'&&gdd(s,e)>31);
             const dailyTitle=showMonths?'Прибыль по месяцам':'Прибыль по дням';
 
             document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Статистика</h2><div class="stats-header"><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div>
-            <div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fn(rev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}">${fp((rev-pRev)/pRev*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fn(prof)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}">${fp((prof-pProf)/pProf*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value">${fn(cnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div></div>
+            <div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value" id="stat_revenue">${fn(prevRev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}" id="stat_rev_pct">${fp((rev-pRev)/pRev*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value" id="stat_profit">${fn(prevProf)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}" id="stat_prof_pct">${fp((prof-pProf)/pProf*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value" id="stat_count">${fn(prevCnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}" id="stat_cnt_pct">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div></div>
             <div class="summary-row">
-                <div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">${fn(bookingSum)}₽</div></div>
-                <div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value">${fn(debtSum)}₽</div></div>
-                <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">${newClients} чел.</div></div>
-                <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">${leavingClients} чел.</div></div>
+                <div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value" id="sum_booking">${fn(prevBooking)}₽</div></div>
+                <div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value" id="sum_debt">${fn(prevDebt)}₽</div></div>
+                <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value" id="sum_new">${prevNew} чел.</div></div>
+                <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value" id="sum_leaving">${prevLeaving} чел.</div></div>
             </div>
             <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>`<div class="category-column cat-${d.category}"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill-wrap"><div class="category-fill-inner" style="height:${mc>0?(d.value/mc*100):0}%;"></div></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>
             ${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill-wrap"><div class="bar-fill-inner" style="height:${md>0?(d.value/md*100):0}%;"></div></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}
             ${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`:''}`;
+
+            // Анимация чисел
+            setTimeout(()=>{
+                const revEl=document.getElementById('stat_revenue');
+                const profEl=document.getElementById('stat_profit');
+                const cntEl=document.getElementById('stat_count');
+                const bookEl=document.getElementById('sum_booking');
+                const debtEl=document.getElementById('sum_debt');
+                const newEl=document.getElementById('sum_new');
+                const leavingEl=document.getElementById('sum_leaving');
+
+                if(revEl)animateValue(revEl,prevRev,rev,600,'₽');
+                if(profEl)animateValue(profEl,prevProf,prof,600,'₽');
+                if(cntEl)animateValue(cntEl,prevCnt,cnt,600,'');
+                if(bookEl)animateValue(bookEl,prevBooking,bookingSum,600,'₽');
+                if(debtEl)animateValue(debtEl,prevDebt,debtSum,600,'₽');
+                if(newEl)animateValue(newEl,prevNew,newClients,600,' чел.');
+                if(leavingEl)animateValue(leavingEl,prevLeaving,leavingClients,600,' чел.');
+
+                // Обновляем проценты после анимации
+                setTimeout(()=>{
+                    const rp=document.getElementById('stat_rev_pct');
+                    const pp=document.getElementById('stat_prof_pct');
+                    const cp=document.getElementById('stat_cnt_pct');
+                    if(rp&&pRev)rp.textContent=fp((rev-pRev)/pRev*100);
+                    if(pp&&pProf)pp.textContent=fp((prof-pProf)/pProf*100);
+                    if(cp&&pCnt)cp.textContent=fp((cnt-pCnt)/pCnt*100);
+                },700);
+            },100);
         }
         async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
         function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
