@@ -91,12 +91,12 @@
         .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 160px; padding-bottom: 30px; overflow-x: auto; }
         .bar-column { display: flex; flex-direction: column; align-items: center; min-width: 30px; flex-shrink: 0; position: relative; }
         .bar-value { font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
-        .bar-fill { width: 24px; background: var(--accent); border-radius: 6px 6px 0 0; min-height: 4px; }
+        .bar-fill { width: 24px; background: var(--accent); border-radius: 6px 6px 0 0; transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
         .bar-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; white-space: nowrap; }
         .category-chart { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-bottom: 30px; }
         .category-column { flex: 1; display: flex; flex-direction: column; align-items: center; }
         .category-value { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
-        .category-fill { width: 100%; max-width: 50px; border-radius: 8px 8px 0 0; min-height: 4px; }
+        .category-fill { width: 100%; max-width: 50px; border-radius: 8px 8px 0 0; transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
         .category-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; text-align: center; }
         .cat-liquid { background: var(--cat-liquid); } .cat-supplies { background: var(--cat-supplies); }
         .cat-pods { background: var(--cat-pods); } .cat-disposable { background: var(--cat-disposable); } .cat-snus { background: var(--cat-snus); }
@@ -262,7 +262,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 30;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 31;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -350,16 +350,6 @@
         function getCategoryData(sales,mode){const map={};CATEGORIES.forEach(c=>map[c]=0);sales.forEach(x=>{const cat=x.category||'liquid';if(map[cat]!==undefined){map[cat]+=(mode==='sum'?(x.profit||0):1);}});return CATEGORIES.map(c=>({category:c,name:CATEGORY_NAMES[c],value:map[c]||0}));}
         function ssd(p,s,e){if(p==='today')return false;if(p==='custom')return gdd(s,e)>=2;return true;}
 
-        function animateBars(){
-            const bars=document.querySelectorAll('.bar-fill[data-h], .category-fill[data-h]');
-            bars.forEach(b=>{
-                const h=b.getAttribute('data-h');
-                if(h!==null&&h!==undefined){
-                    b.style.height=h+'%';
-                }
-            });
-        }
-
         async function renderStatistics(period){
             cp=period;const{s,e,ps,pe}=getDateRange(period);const sales=await getSalesInRange2(s,e),prevSales=(ps&&pe)?await getSalesInRange2(ps,pe):[];
             const rev=sales.reduce((s,x)=>s+(x.total||0),0),prof=sales.reduce((s,x)=>s+(x.profit||0),0),cnt=sales.length;
@@ -380,16 +370,7 @@
             const showMonths=period==='all'||(period==='custom'&&gdd(s,e)>31);
             const dailyTitle=showMonths?'Прибыль по месяцам':'Прибыль по дням';
 
-            let dailyChartHTML='';
-            if(sd){
-                if(dd.length>0){
-                    dailyChartHTML=`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill" style="height:0%;" data-h="${md>0?(d.value/md*100):0}"></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`;
-                }else{
-                    dailyChartHTML='<p class="text-muted text-center py-3">Нет данных</p>';
-                }
-            }
-
-            document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Статистика</h2><div class="stats-header"><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div>
+            let html=`<h2 class="tab-title" onclick="openSidebar()">Статистика</h2><div class="stats-header"><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div>
             <div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value">${fn(rev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}">${fp((rev-pRev)/pRev*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value">${fn(prof)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}">${fp((prof-pProf)/pProf*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value">${fn(cnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div></div>
             <div class="summary-row">
                 <div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">${fn(bookingSum)}₽</div></div>
@@ -397,12 +378,25 @@
                 <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">${newClients} чел.</div></div>
                 <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">${leavingClients} чел.</div></div>
             </div>
-            <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>`<div class="category-column"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill cat-${d.category}" style="height:0%;" data-h="${mc>0?(d.value/mc*100):0}"></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>
-            ${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dailyChartHTML}</div>`:''}
-            ${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`:''}`;
+            <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>`<div class="category-column"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill cat-${d.category}"><div class="category-fill-inner" style="height:${mc>0?(d.value/mc*100):0}%;"></div></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>`;
 
-            setTimeout(animateBars,100);
+            if(sd){
+                html+=`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>`;
+                if(dd.length>0){
+                    html+=`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill"><div class="bar-fill-inner" style="height:${md>0?(d.value/md*100):0}%;"></div></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`;
+                }else{
+                    html+='<p class="text-muted text-center py-3">Нет данных</p>';
+                }
+                html+=`</div>`;
+            }
+
+            if(period==='custom'){
+                html+=`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`;
+            }
+
+            document.getElementById('contentBody').innerHTML=html;
         }
+
         async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
         function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
 
@@ -432,7 +426,7 @@
                 `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div><div class="sale-col">Дней назад</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];const days=Math.floor((new Date()-new Date(last.date))/86400000);return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${last.date}</div><div class="sale-col">${days} дн.</div></div>`;}).join('')}`,'');
         }
 
-        // ============ СКЛАД ============
+        // ============ СКЛАД (без изменений) ============
         let cwc=null,og=new Set(),selectMode=false,selectedIds=new Set(),deletedProducts=[];
         function enterSelectMode() { selectMode=true; selectedIds=new Set(); updateSelectUI(); }
         function exitSelectMode() { selectMode=false; selectedIds=new Set(); updateSelectUI(); }
@@ -497,7 +491,7 @@
         async function editProduct(pid){const p=await db.g('products',pid);if(!p)return;cwc=p.category;const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[p.category]).trim()||'var(--accent)';showModal('Редактировать товар','bi '+CATEGORY_ICONS[p.category],color,getProductFormHTML(p),`<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`);}
         async function deleteProduct(pid){if(!confirm('Удалить товар?'))return;await db.del('products',pid);closeModal();await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');}
 
-        // ============ ПРОДАЖИ ============
+        // ============ ПРОДАЖИ (без изменений) ============
         let salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''},salesSelectMode=false,salesSelectedIds=new Set(),deletedSales=[],salesPage=1;
         const PAGE_SIZE=10;
         function enterSalesSelectMode(){salesSelectMode=true;salesSelectedIds=new Set();updateSalesSelectUI();}
@@ -675,38 +669,30 @@
             const total=note==='приз'?0:(parseInt(document.getElementById('sale_total').value)||0);
             const quantity=parseInt(document.getElementById('sale_quantity').value)||1;
             const client=document.getElementById('sale_client').value.trim();
-
             if(!client||!product){alert('Заполните имя и товар');return;}
-
             const foundProduct=await findProductByName(product);
             if(!foundProduct){alert('Товар не найден в складе');return;}
-
             const cost=(foundProduct.purchase||0)*quantity;
             const profit=total-cost;
             const category=foundProduct.category||'liquid';
-
             const sale={
                 client:client,product:product,quantity:quantity,total:total,
                 date:document.getElementById('sale_date').value,
                 note:note==='без заметки'?'':note,
                 cost:cost,profit:profit,category:category,items:[]
             };
-
             if(!id&&quantity>0){
                 foundProduct.quantity=Math.max(0,(foundProduct.quantity||0)-quantity);
                 await db.pu('products',foundProduct);
             }
-
             if(id){sale.id=parseInt(id);await db.pu('sales',sale);}else{await db.add('sales',sale);}
-
             await autoAddClient(client);
-
             closeModal();salesPage=1;await renderSalesTable();
         }
         async function editSale(sid){const s=await db.g('sales',sid);if(!s)return;showAddSaleModal(s);}
         async function deleteSaleFromModal(){const id=document.getElementById('sale_id').value;if(!confirm('Удалить продажу?'))return;await db.del('sales',parseInt(id));closeModal();salesPage=1;await renderSalesTable();}
 
-        // ============ КЛИЕНТЫ ============
+        // ============ КЛИЕНТЫ (без изменений) ============
         let clientsSearch='',clientsPage=1,clientsFilter='all';
         function isLeaving(lastDate){if(!lastDate||lastDate==='-')return false;return(new Date()-new Date(lastDate))/86400000>30;}
         function getLiquidCount(clientSales){
