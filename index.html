@@ -264,7 +264,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 33;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 34;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -358,13 +358,11 @@
             const rev=sales.reduce((s,x)=>s+(x.total||0),0),prof=sales.reduce((s,x)=>s+(x.profit||0),0),cnt=sales.length;
             const pRev=prevSales.reduce((s,x)=>s+(x.total||0),0),pProf=prevSales.reduce((s,x)=>s+(x.profit||0),0),pCnt=prevSales.length;
 
-            const bookingSales=sales.filter(s=>s.note==='бронь');
-            const debtSales=sales.filter(s=>s.note==='долг');
-            const bookingSum=bookingSales.reduce((s,x)=>s+(x.total||0),0);
-            const debtSum=debtSales.reduce((s,x)=>s+(x.total||0),0);
+            const allSalesAllTime=await db.all('sales');
+            const bookingSum=allSalesAllTime.filter(s=>s.note==='бронь').reduce((s,x)=>s+(x.total||0),0);
+            const debtSum=allSalesAllTime.filter(s=>s.note==='долг').reduce((s,x)=>s+(x.total||0),0);
 
             const allClients=await db.all('clients');
-            const allSalesAllTime=await db.all('sales');
             const newClients=allClients.filter(c=>c.created>=s&&c.created<=e).length;
             const leavingClients=allClients.filter(c=>{const cs=allSalesAllTime.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;}).length;
 
@@ -389,13 +387,15 @@
         function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
 
         async function showBookingModal(){
-            const{s,e}=getDateRange(cp);const sales=await getSalesInRange2(s,e);const bs=sales.filter(s=>s.note==='бронь');
+            const allSales=await db.all('sales');
+            const bs=allSales.filter(s=>s.note==='бронь');
             showModal('Бронь','bi bi-calendar-check','var(--green)',
                 bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':
                 `<div class="sale-table-header"><div class="sale-col">Клиент</div><div class="sale-col">Товар</div></div>${bs.map(s=>`<div class="sale-row"><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${s.product||'-'}</div></div>`).join('')}`,'');
         }
         async function showDebtModal(){
-            const{s,e}=getDateRange(cp);const sales=await getSalesInRange2(s,e);const ds=sales.filter(s=>s.note==='долг');
+            const allSales=await db.all('sales');
+            const ds=allSales.filter(s=>s.note==='долг');
             showModal('Долги','bi bi-cash-coin','var(--red)',
                 ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':
                 `<div class="sale-table-header"><div class="sale-col">Клиент</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div></div>${ds.map(s=>`<div class="sale-row"><div class="sale-col">${s.client||'-'}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div></div>`).join('')}`,'');
@@ -411,7 +411,7 @@
             const lc=clients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;});
             showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',
                 lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':
-                `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div><div class="sale-col">Дней назад</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];const days=Math.floor((new Date()-new Date(last.date))/86400000);return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div><div class="sale-col">${days} дн.</div></div>`;}).join('')}`,'');
+                `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;}).join('')}`,'');
         }
 
         // ============ СКЛАД ============
