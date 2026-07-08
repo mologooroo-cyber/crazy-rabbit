@@ -144,7 +144,7 @@
         .group-edit-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 17px; padding: 6px 8px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; position: relative; z-index: 10; }
 
         .product-row-wrapper { position: relative; overflow: hidden; }
-        .product-row { display: flex; align-items: center; padding: 10px 15px 10px 25px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease, background 0.2s ease; position: relative; z-index: 1; background: var(--bg-card); }
+        .product-row { display: flex; align-items: center; padding: 10px 15px 10px 25px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease; position: relative; z-index: 1; background: var(--bg-card); }
         .product-row:active { background: rgba(129,216,208,0.1); }
         .product-row.selected { background: rgba(129,216,208,0.2); }
         .swipe-delete-bg { position: absolute; top: 0; right: 0; height: 100%; background: var(--red); z-index: 0; width: 100%; }
@@ -264,7 +264,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 35;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 36;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -361,7 +361,6 @@
         // ============ СТАТИСТИКА ============
         let cp='today',ccm='sum',csd=null,ced=null;
         let prevStats={revenue:0,profit:0,count:0,bookingSum:0,debtSum:0,newClients:0,leavingClients:0};
-
         function getDateRange(p){const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];let s,e,ps,pe;switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}return{s,e,ps,pe};}
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
         function gdd(s,e){return Math.ceil((new Date(e)-new Date(s))/86400000)+1;}
@@ -373,21 +372,16 @@
             const prevRev=prevStats.revenue,prevProf=prevStats.profit,prevCnt=prevStats.count;
             const prevBooking=prevStats.bookingSum,prevDebt=prevStats.debtSum;
             const prevNew=prevStats.newClients,prevLeaving=prevStats.leavingClients;
-
             cp=period;const{s,e,ps,pe}=getDateRange(period);const sales=await getSalesInRange2(s,e),prevSales=(ps&&pe)?await getSalesInRange2(ps,pe):[];
             const rev=sales.reduce((s,x)=>s+(x.total||0),0),prof=sales.reduce((s,x)=>s+(x.profit||0),0),cnt=sales.length;
             const pRev=prevSales.reduce((s,x)=>s+(x.total||0),0),pProf=prevSales.reduce((s,x)=>s+(x.profit||0),0),pCnt=prevSales.length;
-
             const allSalesAllTime=await db.all('sales');
             const bookingSum=allSalesAllTime.filter(s=>s.note==='бронь').reduce((s,x)=>s+(x.total||0),0);
             const debtSum=allSalesAllTime.filter(s=>s.note==='долг').reduce((s,x)=>s+(x.total||0),0);
-
             const allClients=await db.all('clients');
             const newClients=allClients.filter(c=>c.created>=s&&c.created<=e).length;
             const leavingClients=allClients.filter(c=>{const cs=allSalesAllTime.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;}).length;
-
             prevStats={revenue:rev,profit:prof,count:cnt,bookingSum,debtSum,newClients,leavingClients};
-
             const sd=ssd(period,s,e);const dd=sd?getDailyData(sales,s,e):[],cd=getCategoryData(sales,ccm);
             const md=Math.max(...dd.map(d=>d.value),1),mc=Math.max(...cd.map(d=>d.value),1);
             const showMonths=period==='all'||(period==='custom'&&gdd(s,e)>31);
@@ -405,16 +399,9 @@
             ${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill-wrap"><div class="bar-fill-inner" style="height:${md>0?(d.value/md*100):0}%;"></div></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}
             ${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`:''}`;
 
-            // Анимация чисел
             setTimeout(()=>{
-                const revEl=document.getElementById('stat_revenue');
-                const profEl=document.getElementById('stat_profit');
-                const cntEl=document.getElementById('stat_count');
-                const bookEl=document.getElementById('sum_booking');
-                const debtEl=document.getElementById('sum_debt');
-                const newEl=document.getElementById('sum_new');
-                const leavingEl=document.getElementById('sum_leaving');
-
+                const revEl=document.getElementById('stat_revenue'),profEl=document.getElementById('stat_profit'),cntEl=document.getElementById('stat_count');
+                const bookEl=document.getElementById('sum_booking'),debtEl=document.getElementById('sum_debt'),newEl=document.getElementById('sum_new'),leavingEl=document.getElementById('sum_leaving');
                 if(revEl)animateValue(revEl,prevRev,rev,600,'₽');
                 if(profEl)animateValue(profEl,prevProf,prof,600,'₽');
                 if(cntEl)animateValue(cntEl,prevCnt,cnt,600,'');
@@ -422,48 +409,21 @@
                 if(debtEl)animateValue(debtEl,prevDebt,debtSum,600,'₽');
                 if(newEl)animateValue(newEl,prevNew,newClients,600,' чел.');
                 if(leavingEl)animateValue(leavingEl,prevLeaving,leavingClients,600,' чел.');
-
-                // Обновляем проценты после анимации
                 setTimeout(()=>{
-                    const rp=document.getElementById('stat_rev_pct');
-                    const pp=document.getElementById('stat_prof_pct');
-                    const cp=document.getElementById('stat_cnt_pct');
+                    const rp=document.getElementById('stat_rev_pct'),pp=document.getElementById('stat_prof_pct'),cp2=document.getElementById('stat_cnt_pct');
                     if(rp&&pRev)rp.textContent=fp((rev-pRev)/pRev*100);
                     if(pp&&pProf)pp.textContent=fp((prof-pProf)/pProf*100);
-                    if(cp&&pCnt)cp.textContent=fp((cnt-pCnt)/pCnt*100);
+                    if(cp2&&pCnt)cp2.textContent=fp((cnt-pCnt)/pCnt*100);
                 },700);
             },100);
         }
         async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
         function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
 
-        async function showBookingModal(){
-            const allSales=await db.all('sales');
-            const bs=allSales.filter(s=>s.note==='бронь');
-            showModal('Бронь','bi bi-calendar-check','var(--green)',
-                bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':
-                `<div class="sale-table-header"><div class="sale-col">Клиент</div><div class="sale-col">Товар</div></div>${bs.map(s=>`<div class="sale-row"><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${s.product||'-'}</div></div>`).join('')}`,'');
-        }
-        async function showDebtModal(){
-            const allSales=await db.all('sales');
-            const ds=allSales.filter(s=>s.note==='долг');
-            showModal('Долги','bi bi-cash-coin','var(--red)',
-                ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':
-                `<div class="sale-table-header"><div class="sale-col">Клиент</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div></div>${ds.map(s=>`<div class="sale-row"><div class="sale-col">${s.client||'-'}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div></div>`).join('')}`,'');
-        }
-        async function showNewClientsModal(){
-            const{s,e}=getDateRange(cp);const clients=await db.all('clients');const nc=clients.filter(c=>c.created>=s&&c.created<=e);
-            showModal('Новые клиенты','bi bi-person-plus','var(--accent)',
-                nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':
-                `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');
-        }
-        async function showLeavingClientsModal(){
-            const clients=await db.all('clients');const sales=await db.all('sales');
-            const lc=clients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;});
-            showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',
-                lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':
-                `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;}).join('')}`,'');
-        }
+        async function showBookingModal(){const allSales=await db.all('sales');const bs=allSales.filter(s=>s.note==='бронь');showModal('Бронь','bi bi-calendar-check','var(--green)',bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':`<div class="sale-table-header"><div class="sale-col">Клиент</div><div class="sale-col">Товар</div></div>${bs.map(s=>`<div class="sale-row"><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${s.product||'-'}</div></div>`).join('')}`,'');}
+        async function showDebtModal(){const allSales=await db.all('sales');const ds=allSales.filter(s=>s.note==='долг');showModal('Долги','bi bi-cash-coin','var(--red)',ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':`<div class="sale-table-header"><div class="sale-col">Клиент</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div></div>${ds.map(s=>`<div class="sale-row"><div class="sale-col">${s.client||'-'}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div></div>`).join('')}`,'');}
+        async function showNewClientsModal(){const{s,e}=getDateRange(cp);const clients=await db.all('clients');const nc=clients.filter(c=>c.created>=s&&c.created<=e);showModal('Новые клиенты','bi bi-person-plus','var(--accent)',nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');}
+        async function showLeavingClientsModal(){const clients=await db.all('clients');const sales=await db.all('sales');const lc=clients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;});showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;}).join('')}`,'');}
 
         // ============ СКЛАД ============
         let cwc=null,og=new Set(),selectMode=false,selectedIds=new Set(),deletedProducts=[];
@@ -472,7 +432,12 @@
         function toggleSelectProduct(id) { if(selectedIds.has(id))selectedIds.delete(id);else selectedIds.add(id); updateSelectUI(); }
         function updateSelectUI() {
             document.querySelectorAll('.checkbox-col').forEach(c=>c.classList.toggle('visible',selectMode));
-            document.querySelectorAll('.product-row').forEach(r=>r.classList.toggle('selected',selectMode&&selectedIds.has(parseInt(r.dataset.pid))));
+            document.querySelectorAll('.product-row').forEach(r=>{
+                const pid=parseInt(r.dataset.pid);
+                r.classList.toggle('selected',selectMode&&selectedIds.has(pid));
+                const cb=r.querySelector('.select-checkbox');
+                if(cb)cb.checked=selectMode&&selectedIds.has(pid);
+            });
             const delBtn=document.querySelector('.wh-delete-selected-btn'), cancelBtn=document.querySelector('.wh-cancel-select-btn');
             if(delBtn)delBtn.classList.toggle('visible',selectMode);
             if(cancelBtn)cancelBtn.classList.toggle('visible',selectMode);
@@ -497,19 +462,36 @@
         function getGroupId(cat,level,keys){return['grp',cat,...keys.slice(0,level+1)].join('_');}
         function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){
             if(level>=groupBy.length)return'';let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));const isLastLevel=(level+1>=groupBy.length);
-            entries.forEach(([key,items])=>{const fi=items[0];const currentLevelKeys=[];for(let i=0;i<=level;i++){currentLevelKeys.push(norm(fi[groupBy[i]]));}const gid=getGroupId(cat,level,currentLevelKeys);const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;const label=rl||currentLevelKeys[level];const tab=level>0?'&emsp;&emsp;':'';const ks=currentLevelKeys.join('|||');const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';
-            h+=`<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;
-            if(!isLastLevel){const sg={};items.forEach(item=>{const sk=groupBy.slice(0,level+2).map(g=>norm(item[g])).join('|||');if(!sg[sk])sg[sk]=[];sg[sk].push(item);});h+=buildAccordionHTML(sg,groupBy,level+1,cat,currentLevelKeys);}
-            else{const cols=CATEGORY_TABLE_COLS[cwc];h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;items.forEach(item=>{h+=`<div class="product-row-wrapper"><div class="swipe-delete-bg"></div><div class="product-row" data-pid="${item.id}" ondblclick="if(!selectMode)editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="toggleSelectProduct(${item.id})" onclick="event.stopPropagation()"></div>`;cols.forEach(col=>{let v=item[col]||'';if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;});h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;});}
-            h+=`</div></div>`;});return h;
+            entries.forEach(([key,items])=>{
+                const keyParts=key.split('|||');
+                const currentLevelKeys=keyParts.slice(0,level+1);
+                const gid=getGroupId(cat,level,currentLevelKeys);
+                const fi=items[0];
+                const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;
+                const label=rl||currentLevelKeys[level];
+                const tab=level>0?'&emsp;&emsp;':'';
+                const ks=currentLevelKeys.join('|||');
+                const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';
+                h+=`<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;
+                if(!isLastLevel){
+                    const sg={};items.forEach(item=>{const sk=groupBy.slice(0,level+2).map(g=>norm(item[g])).join('|||');if(!sg[sk])sg[sk]=[];sg[sk].push(item);});
+                    h+=buildAccordionHTML(sg,groupBy,level+1,cat,currentLevelKeys);
+                }else{
+                    const cols=CATEGORY_TABLE_COLS[cwc];
+                    h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
+                    items.forEach(item=>{h+=`<div class="product-row-wrapper"><div class="swipe-delete-bg"></div><div class="product-row" data-pid="${item.id}" ondblclick="if(!selectMode)editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="toggleSelectProduct(${item.id})" onclick="event.stopPropagation()"></div>`;cols.forEach(col=>{let v=item[col]||'';if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;});h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;});}
+                h+=`</div></div>`;
+            });
+            return h;
         }
         window.toggleAcc=function(gid){const body=document.getElementById(gid);if(!body)return;const hdr=document.getElementById('hdr_'+gid);if(!hdr)return;if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}else{body.classList.add('open');hdr.classList.add('open');og.add(gid);}};
         function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
         function setupWarehouseSwipe(){
             document.querySelectorAll('.product-row').forEach(row=>{let sx=0,sy=0,sw=false,lt=null;const w=row.parentElement,bg=w.querySelector('.swipe-delete-bg');
-                row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!selectMode){enterSelectMode();toggleSelectProduct(parseInt(row.dataset.pid));sw=true;row.style.transform='translateX(0)';}},1000);},{passive:false});
+                row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!selectMode){enterSelectMode();const pid=parseInt(row.dataset.pid);toggleSelectProduct(pid);sw=true;row.style.transform='translateX(0)';}},1000);},{passive:false});
                 row.addEventListener('touchmove',e=>{clearTimeout(lt);const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;if(Math.abs(dx)>Math.abs(dy)&&dx<0&&!selectMode){e.preventDefault();sw=true;const ms=w.offsetWidth*0.5;row.style.transition='none';row.style.transform=`translateX(${Math.max(-ms,dx)}px)`;if(bg)bg.style.opacity=Math.min(1,Math.abs(dx)/ms);}},{passive:false});
                 row.addEventListener('touchend',async e=>{clearTimeout(lt);if(sw&&!selectMode){const dx=(e.changedTouches[0]?.clientX||sx)-sx;if(Math.abs(dx)>w.offsetWidth*0.5){const pid=parseInt(row.dataset.pid);const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});}else{row.style.transition='transform 0.2s ease';row.style.transform='translateX(0)';if(bg)bg.style.opacity='0';}}sw=false;});
+                row.addEventListener('click',e=>{if(selectMode&&!e.target.classList.contains('select-checkbox')&&!e.target.closest('.copy-btn')){const pid=parseInt(row.dataset.pid);toggleSelectProduct(pid);}});
             });
         }
         async function renderWarehouseTable(cat,sq=''){
@@ -544,72 +526,17 @@
             if(cancelBtn)cancelBtn.classList.toggle('visible',salesSelectMode);
             if(delBtn)delBtn.textContent=`Удалить (${salesSelectedIds.size})`;
         }
-        async function deleteSelectedSales(){
-            if(salesSelectedIds.size===0)return;
-            if(!confirm(`Удалить ${salesSelectedIds.size} продаж?`))return;
-            deletedSales=[];
-            for(const id of salesSelectedIds){const s=await db.g('sales',id);if(s){deletedSales.push(s);await db.del('sales',id);}}
-            exitSalesSelectMode();await renderSalesTable();
-            showSnackbar(`Удалено ${deletedSales.length} продаж`,async()=>{for(const s of deletedSales){const cp={...s};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});
-        }
-        async function getFilteredSales(){
-            let sales=await db.all('sales');
-            if(salesFilter.client){const q=salesFilter.client.toLowerCase();sales=sales.filter(s=>(s.client||'').toLowerCase().includes(q));}
-            if(salesFilter.product){const q=salesFilter.product.toLowerCase();sales=sales.filter(s=>(s.product||'').toLowerCase().includes(q));}
-            if(salesFilter.dateFrom){sales=sales.filter(s=>s.date>=salesFilter.dateFrom);}
-            if(salesFilter.dateTo){sales=sales.filter(s=>s.date<=salesFilter.dateTo);}
-            if(salesFilter.note){sales=sales.filter(s=>(s.note||'')===salesFilter.note);}
-            sales.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
-            return sales;
-        }
+        async function deleteSelectedSales(){if(salesSelectedIds.size===0)return;if(!confirm(`Удалить ${salesSelectedIds.size} продаж?`))return;deletedSales=[];for(const id of salesSelectedIds){const s=await db.g('sales',id);if(s){deletedSales.push(s);await db.del('sales',id);}}exitSalesSelectMode();await renderSalesTable();showSnackbar(`Удалено ${deletedSales.length} продаж`,async()=>{for(const s of deletedSales){const cp={...s};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});}
+        async function getFilteredSales(){let sales=await db.all('sales');if(salesFilter.client){const q=salesFilter.client.toLowerCase();sales=sales.filter(s=>(s.client||'').toLowerCase().includes(q));}if(salesFilter.product){const q=salesFilter.product.toLowerCase();sales=sales.filter(s=>(s.product||'').toLowerCase().includes(q));}if(salesFilter.dateFrom){sales=sales.filter(s=>s.date>=salesFilter.dateFrom);}if(salesFilter.dateTo){sales=sales.filter(s=>s.date<=salesFilter.dateTo);}if(salesFilter.note){sales=sales.filter(s=>(s.note||'')===salesFilter.note);}sales.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);return sales;}
         function hasActiveFilters(){return !!(salesFilter.client||salesFilter.product||salesFilter.dateFrom||salesFilter.dateTo||salesFilter.note);}
-        async function renderSalesTable(){
-            const allSales=await getFilteredSales();
-            const totalPages=Math.ceil(allSales.length/PAGE_SIZE)||1;
-            if(salesPage>totalPages)salesPage=totalPages;
-            const start=(salesPage-1)*PAGE_SIZE;
-            const pageSales=allSales.slice(start,start+PAGE_SIZE);
-            const filterActive=hasActiveFilters();
-            const filterBtnClass=filterActive?'active':'filter';
-            let paginationHTML='';
-            if(totalPages>1){
-                paginationHTML=`<div class="pagination"><button onclick="goToSalesPage(${salesPage-1})" ${salesPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;
-                for(let i=1;i<=totalPages;i++){
-                    if(i===1||i===totalPages||(i>=salesPage-1&&i<=salesPage+1)){paginationHTML+=`<button class="${i===salesPage?'active':''}" onclick="goToSalesPage(${i})">${i}</button>`;}
-                    else if(i===salesPage-2||i===salesPage+2){paginationHTML+=`<span class="page-info">...</span>`;}
-                }
-                paginationHTML+=`<button onclick="goToSalesPage(${salesPage+1})" ${salesPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;
-            }
-            document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Продажи</h2>
-            <div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterBtnClass}" onclick="showFilterModal()"><i class="bi bi-funnel"></i> Фильтры</button>${filterActive?`<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i> Сбросить</button>`:''}</div><button class="sales-header-btn" onclick="showAddSaleModal()"><i class="bi bi-plus-lg"></i> Продажа</button></div>
-            <div class="sales-table-section"><div class="wh-header"><span style="font-weight:600;">${allSales.length} продаж</span><div class="wh-header-actions"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="exitSalesSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash"></i> Удалить</button></div></div>
-            <div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>
-            ${pageSales.length===0?'<p class="text-center text-muted py-4">Нет продаж</p>':pageSales.map(s=>{let noteClass='';if(s.note==='бронь')noteClass='booking';else if(s.note==='долг')noteClass='debt';else if(s.note==='приз')noteClass='prize';return`<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesSelectMode)editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="toggleSalesSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${s.product||'-'}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note||'-'}</div></div></div>`;}).join('')}
-            ${paginationHTML}</div>`;
-            setTimeout(()=>{if(salesSelectMode)updateSalesSelectUI();setupSalesSwipe();},50);
-        }
+        async function renderSalesTable(){const allSales=await getFilteredSales();const totalPages=Math.ceil(allSales.length/PAGE_SIZE)||1;if(salesPage>totalPages)salesPage=totalPages;const start=(salesPage-1)*PAGE_SIZE;const pageSales=allSales.slice(start,start+PAGE_SIZE);const filterActive=hasActiveFilters();const filterBtnClass=filterActive?'active':'filter';let paginationHTML='';if(totalPages>1){paginationHTML=`<div class="pagination"><button onclick="goToSalesPage(${salesPage-1})" ${salesPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;for(let i=1;i<=totalPages;i++){if(i===1||i===totalPages||(i>=salesPage-1&&i<=salesPage+1)){paginationHTML+=`<button class="${i===salesPage?'active':''}" onclick="goToSalesPage(${i})">${i}</button>`;}else if(i===salesPage-2||i===salesPage+2){paginationHTML+=`<span class="page-info">...</span>`;}}paginationHTML+=`<button onclick="goToSalesPage(${salesPage+1})" ${salesPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;}document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Продажи</h2><div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterBtnClass}" onclick="showFilterModal()"><i class="bi bi-funnel"></i> Фильтры</button>${filterActive?`<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i> Сбросить</button>`:''}</div><button class="sales-header-btn" onclick="showAddSaleModal()"><i class="bi bi-plus-lg"></i> Продажа</button></div><div class="sales-table-section"><div class="wh-header"><span style="font-weight:600;">${allSales.length} продаж</span><div class="wh-header-actions"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="exitSalesSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash"></i> Удалить</button></div></div><div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p class="text-center text-muted py-4">Нет продаж</p>':pageSales.map(s=>{let noteClass='';if(s.note==='бронь')noteClass='booking';else if(s.note==='долг')noteClass='debt';else if(s.note==='приз')noteClass='prize';return`<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesSelectMode)editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="toggleSalesSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${s.product||'-'}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note||'-'}</div></div></div>`;}).join('')}${paginationHTML}</div>`;setTimeout(()=>{if(salesSelectMode)updateSalesSelectUI();setupSalesSwipe();},50);}
         function goToSalesPage(p){salesPage=p;renderSalesTable();}
-        function setupSalesSwipe(){
-            document.querySelectorAll('.sale-row').forEach(row=>{let sx=0,sy=0,sw=false,lt=null;const w=row.parentElement,bg=w.querySelector('.sales-delete-bg');
-                row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!salesSelectMode){enterSalesSelectMode();toggleSalesSelect(parseInt(row.dataset.sid));sw=true;row.style.transform='translateX(0)';}},1000);},{passive:false});
-                row.addEventListener('touchmove',e=>{clearTimeout(lt);const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;if(Math.abs(dx)>Math.abs(dy)&&dx<0&&!salesSelectMode){e.preventDefault();sw=true;const ms=w.offsetWidth*0.5;row.style.transition='none';row.style.transform=`translateX(${Math.max(-ms,dx)}px)`;if(bg)bg.style.opacity=Math.min(1,Math.abs(dx)/ms);}},{passive:false});
-                row.addEventListener('touchend',async e=>{clearTimeout(lt);if(sw&&!salesSelectMode){const dx=(e.changedTouches[0]?.clientX||sx)-sx;if(Math.abs(dx)>w.offsetWidth*0.5){const sid=parseInt(row.dataset.sid);const s=await db.g('sales',sid);if(s){deletedSales=[s];await db.del('sales',sid);}await renderSalesTable();showSnackbar('Продажа удалена',async()=>{for(const ds of deletedSales){const cp={...ds};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});}else{row.style.transition='transform 0.2s ease';row.style.transform='translateX(0)';if(bg)bg.style.opacity='0';}}sw=false;});
-            });
-        }
-        function showFilterModal(){
-            showModal('Фильтры','bi bi-funnel','var(--accent)',
-                `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="flt_client" value="${salesFilter.client}" placeholder="Любое"></div>
-                <div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="flt_product" value="${salesFilter.product}" placeholder="Любой"></div>
-                <div class="form-group"><label class="form-label">Дата с</label><input type="date" class="form-input" id="flt_dateFrom" value="${salesFilter.dateFrom}"></div>
-                <div class="form-group"><label class="form-label">Дата по</label><input type="date" class="form-input" id="flt_dateTo" value="${salesFilter.dateTo}"></div>
-                <div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="flt_note"><option value="">Все</option><option value="бронь" ${salesFilter.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${salesFilter.note==='долг'?'selected':''}>Долг</option><option value="приз" ${salesFilter.note==='приз'?'selected':''}>Приз</option><option value="без заметки" ${salesFilter.note==='без заметки'?'selected':''}>Без заметки</option></select></div>`,
-                `<button class="btn btn-reset" onclick="resetFilters()">Сброс</button><button class="btn btn-save" onclick="applyFilters()">Применить</button>`);
-        }
+        function setupSalesSwipe(){document.querySelectorAll('.sale-row').forEach(row=>{let sx=0,sy=0,sw=false,lt=null;const w=row.parentElement,bg=w.querySelector('.sales-delete-bg');row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!salesSelectMode){enterSalesSelectMode();toggleSalesSelect(parseInt(row.dataset.sid));sw=true;row.style.transform='translateX(0)';}},1000);},{passive:false});row.addEventListener('touchmove',e=>{clearTimeout(lt);const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;if(Math.abs(dx)>Math.abs(dy)&&dx<0&&!salesSelectMode){e.preventDefault();sw=true;const ms=w.offsetWidth*0.5;row.style.transition='none';row.style.transform=`translateX(${Math.max(-ms,dx)}px)`;if(bg)bg.style.opacity=Math.min(1,Math.abs(dx)/ms);}},{passive:false});row.addEventListener('touchend',async e=>{clearTimeout(lt);if(sw&&!salesSelectMode){const dx=(e.changedTouches[0]?.clientX||sx)-sx;if(Math.abs(dx)>w.offsetWidth*0.5){const sid=parseInt(row.dataset.sid);const s=await db.g('sales',sid);if(s){deletedSales=[s];await db.del('sales',sid);}await renderSalesTable();showSnackbar('Продажа удалена',async()=>{for(const ds of deletedSales){const cp={...ds};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});}else{row.style.transition='transform 0.2s ease';row.style.transform='translateX(0)';if(bg)bg.style.opacity='0';}}sw=false;});});}
+        function showFilterModal(){showModal('Фильтры','bi bi-funnel','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="flt_client" value="${salesFilter.client}" placeholder="Любое"></div><div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="flt_product" value="${salesFilter.product}" placeholder="Любой"></div><div class="form-group"><label class="form-label">Дата с</label><input type="date" class="form-input" id="flt_dateFrom" value="${salesFilter.dateFrom}"></div><div class="form-group"><label class="form-label">Дата по</label><input type="date" class="form-input" id="flt_dateTo" value="${salesFilter.dateTo}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="flt_note"><option value="">Все</option><option value="бронь" ${salesFilter.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${salesFilter.note==='долг'?'selected':''}>Долг</option><option value="приз" ${salesFilter.note==='приз'?'selected':''}>Приз</option><option value="без заметки" ${salesFilter.note==='без заметки'?'selected':''}>Без заметки</option></select></div>`,`<button class="btn btn-reset" onclick="resetFilters()">Сброс</button><button class="btn btn-save" onclick="applyFilters()">Применить</button>`);}
         function resetFilters(){salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''};salesPage=1;closeModal();renderSalesTable();}
         function applyFilters(){salesFilter.client=document.getElementById('flt_client').value.trim();salesFilter.product=document.getElementById('flt_product').value.trim();salesFilter.dateFrom=document.getElementById('flt_dateFrom').value;salesFilter.dateTo=document.getElementById('flt_dateTo').value;salesFilter.note=document.getElementById('flt_note').value;salesPage=1;closeModal();renderSalesTable();}
         async function getProductListForSelect(){const products=await db.all('products');const names=new Set();products.forEach(p=>{if(p.manufacturer&&p.lineup){let name=p.manufacturer+' '+p.lineup;if(p.flavor)name+=' '+p.flavor;if(p.color)name+=' '+p.color;names.add(name);}});return[...names].sort();}
         function setupComboBox(inputId,dropdownId,options){const input=document.getElementById(inputId);const dropdown=document.getElementById(dropdownId);if(!input||!dropdown)return;input.addEventListener('input',()=>{const val=input.value.toLowerCase();let visible=0;dropdown.querySelectorAll('.combo-option').forEach(opt=>{if(val===''||opt.textContent.toLowerCase().includes(val)){opt.style.display='block';visible++;}else{opt.style.display='none';}});dropdown.classList.toggle('open',visible>0&&document.activeElement===input);});input.addEventListener('focus',()=>{const val=input.value.toLowerCase();let visible=0;dropdown.querySelectorAll('.combo-option').forEach(opt=>{if(val===''||opt.textContent.toLowerCase().includes(val)){opt.style.display='block';visible++;}else{opt.style.display='none';}});dropdown.classList.toggle('open',visible>0);});input.addEventListener('blur',()=>{setTimeout(()=>dropdown.classList.remove('open'),200);});dropdown.querySelectorAll('.combo-option').forEach(opt=>{opt.addEventListener('click',()=>{input.value=opt.textContent;dropdown.classList.remove('open');onProductChange(input.value);});});}
-
         let saleAutoCalc=true;let saleUnitPrice=0;let saleUnitCost=0;
         function recalcTotal(){if(!saleAutoCalc)return;const qty=parseInt(document.getElementById('sale_quantity').value)||1;const totalInput=document.getElementById('sale_total');const note=document.getElementById('sale_note').value;if(note==='приз'){totalInput.value='0';return;}totalInput.value=saleUnitPrice*qty;}
         async function onProductChange(val){const totalInput=document.getElementById('sale_total');if(val){const found=await findProductByName(val);if(found&&found.selling){saleUnitPrice=found.selling;saleUnitCost=found.purchase||0;saleAutoCalc=true;recalcTotal();}}}
