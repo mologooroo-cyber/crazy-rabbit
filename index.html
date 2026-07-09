@@ -284,7 +284,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 40;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 41;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -478,32 +478,65 @@
             document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Склад</h2><div class="warehouse-cards">${CATEGORIES.map(c=>`<div class="wh-card ${CATEGORY_CLASS[c]}" onclick="openWarehouseCategory('${c}')"><div class="wh-icon"><i class="bi ${CATEGORY_ICONS[c]}"></i></div><div class="wh-label">${CATEGORY_NAMES[c]}</div><div class="wh-count">${counts[c]} шт.</div></div>`).join('')}</div>`;
         }
         async function openWarehouseCategory(c){cwc=c;og=new Set();selectMode=false;selectedIds=new Set();await renderWarehouseTable(c);}
-        function groupProducts(products,groupBy){if(groupBy.length===0)return{'_root':products};const g={};products.forEach(p=>{const k=groupBy.map(g=>norm(p[g])).join('|||');if(!g[k])g[k]=[];g[k].push(p);});return g;}
+
+        // НОВАЯ ФУНКЦИЯ ГРУППИРОВКИ — ВЛОЖЕННЫЕ ОБЪЕКТЫ
+        function groupProductsNested(products, groupBy) {
+            if (groupBy.length === 0) return { _root: products };
+            const root = {};
+            products.forEach(p => {
+                let current = root;
+                for (let i = 0; i < groupBy.length; i++) {
+                    const field = groupBy[i];
+                    const key = norm(p[field]);
+                    if (!current[key]) current[key] = i === groupBy.length - 1 ? [] : {};
+                    if (i === groupBy.length - 1) {
+                        current[key].push(p);
+                    } else {
+                        current = current[key];
+                    }
+                }
+            });
+            return root;
+        }
+
         function getGroupId(cat,level,keys){return['grp',cat,...keys.slice(0,level+1)].join('_');}
-        function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){
-            if(level>=groupBy.length)return'';let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));const isLastLevel=(level+1>=groupBy.length);
-            entries.forEach(([key,items])=>{
-                const keyParts=key.split('|||');
-                const currentLevelKeys=keyParts.slice(0,level+1);
-                const gid=getGroupId(cat,level,currentLevelKeys);
-                const fi=items[0];
-                const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;
-                const label=rl||currentLevelKeys[level];
-                const tab=level>0?'&emsp;&emsp;':'';
-                const ks=currentLevelKeys.join('|||');
-                const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';
-                h+=`<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;
-                if(!isLastLevel){
-                    const sg={};items.forEach(item=>{const sk=groupBy.slice(0,level+2).map(g=>norm(item[g])).join('|||');if(!sg[sk])sg[sk]=[];sg[sk].push(item);});
-                    h+=buildAccordionHTML(sg,groupBy,level+1,cat,currentLevelKeys);
-                }else{
-                    const cols=CATEGORY_TABLE_COLS[cwc];
-                    h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
-                    items.forEach(item=>{h+=`<div class="product-row-wrapper"><div class="swipe-delete-bg"></div><div class="product-row" data-pid="${item.id}" ondblclick="if(!selectMode)editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="toggleSelectProduct(${item.id})" onclick="event.stopPropagation()"></div>`;cols.forEach(col=>{let v=item[col]||'';if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;});h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;});}
-                h+=`</div></div>`;
+
+        function buildAccordionHTML(groups, groupBy, level, cat, parentKeys) {
+            if (level >= groupBy.length) return '';
+            let h = '';
+            const entries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+            const isLastLevel = (level + 1 >= groupBy.length);
+
+            entries.forEach(([key, value]) => {
+                const currentLevelKeys = [...parentKeys, key];
+                const gid = getGroupId(cat, level, currentLevelKeys);
+                const items = isLastLevel ? value : [];
+                const firstItem = isLastLevel ? value[0] : Object.values(value)[0]?.[0];
+                
+                const fieldName = groupBy[level];
+                const label = firstItem ? firstItem[fieldName] : key;
+                const tab = level > 0 ? '&emsp;&emsp;' : '';
+                const ks = currentLevelKeys.join('|||');
+                const eb = isLastLevel ? `<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>` : '';
+
+                h += `<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;
+
+                if (!isLastLevel) {
+                    h += buildAccordionHTML(value, groupBy, level + 1, cat, currentLevelKeys);
+                } else {
+                    const cols = CATEGORY_TABLE_COLS[cwc];
+                    h += `<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col => `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
+                    items.forEach(item => {
+                        h += `<div class="product-row-wrapper"><div class="swipe-delete-bg"></div><div class="product-row" data-pid="${item.id}" ondblclick="if(!selectMode)editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="toggleSelectProduct(${item.id})" onclick="event.stopPropagation()"></div>`;
+                        cols.forEach(col => { let v = item[col] || ''; if (col === 'purchase' || col === 'selling') v = fn(v) + '₽'; h += `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`; });
+                        h += `<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;
+                    });
+                }
+                h += `</div></div>`;
             });
             return h;
         }
+
         window.toggleAcc=function(gid){const body=document.getElementById(gid);if(!body)return;const hdr=document.getElementById('hdr_'+gid);if(!hdr)return;if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}else{body.classList.add('open');hdr.classList.add('open');og.add(gid);}};
         function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
         function setupWarehouseSwipe(){
@@ -517,7 +550,8 @@
         async function renderWarehouseTable(cat,sq=''){
             cwc=cat;const ap=await db.all('products');let pr=ap.filter(p=>p.category===cat);
             if(sq){const q=sq.toLowerCase();pr=pr.filter(p=>CATEGORY_TABLE_COLS[cat].some(c=>(p[c]||'').toString().toLowerCase().includes(q))||(p.manufacturer||'').toLowerCase().includes(q)||(p.lineup||'').toLowerCase().includes(q));og=new Set();}
-            const gb=CATEGORY_GROUPS[cat];const g=groupProducts(pr,gb);
+            const gb=CATEGORY_GROUPS[cat];
+            const g=groupProductsNested(pr,gb); // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ
             document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="exitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onWarehouseSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;
             setTimeout(()=>{if(og.size>0)restoreOpenGroups();else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');og.add(gid);}}if(selectMode)updateSelectUI();setupWarehouseSwipe();},50);
         }
