@@ -284,7 +284,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 39;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 40;
         class Database {
             constructor() { this.db = null; }
             async init() {
@@ -483,10 +483,10 @@
         function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){
             if(level>=groupBy.length)return'';let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));const isLastLevel=(level+1>=groupBy.length);
             entries.forEach(([key,items])=>{
-                const fi=items[0];
-                const currentLevelKeys=[];
-                for(let i=0;i<=level;i++){currentLevelKeys.push(norm(fi[groupBy[i]]));}
+                const keyParts=key.split('|||');
+                const currentLevelKeys=keyParts.slice(0,level+1);
                 const gid=getGroupId(cat,level,currentLevelKeys);
+                const fi=items[0];
                 const rl=groupBy[level]==='manufacturer'?fi.manufacturer:fi.lineup;
                 const label=rl||currentLevelKeys[level];
                 const tab=level>0?'&emsp;&emsp;':'';
