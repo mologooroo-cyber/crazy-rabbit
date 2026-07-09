@@ -135,8 +135,8 @@
         .accordion-group { margin-bottom: 8px; }
         .accordion-header {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 15px; background: var(--bg-primary); border-radius: 10px;
-            font-weight: 600; font-size: 14px; height: 48px;
+            padding: 14px 15px; background: var(--bg-primary); border-radius: 10px;
+            font-weight: 600; font-size: 14px; min-height: 48px;
             cursor: default;
         }
         .accordion-header-left {
@@ -145,7 +145,6 @@
         }
         .accordion-header-actions {
             display: flex; align-items: center; gap: 8px; flex-shrink: 0;
-            height: 100%;
         }
         .accordion-header .accordion-arrow {
             transition: transform 0.3s ease; font-size: 13px; cursor: pointer;
@@ -285,7 +284,7 @@
     <div id="snackbarContainer"></div>
 
     <script>
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 38;
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 39;
         class Database {
             constructor() { this.db = null; }
             async init() {
