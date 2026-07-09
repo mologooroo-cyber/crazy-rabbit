@@ -92,13 +92,19 @@
         .bar-column { display: flex; flex-direction: column; align-items: center; min-width: 30px; flex-shrink: 0; position: relative; height: 100%; justify-content: flex-end; }
         .bar-value { font-size: 10px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
         .bar-fill-wrap { flex: 1; width: 24px; display: flex; align-items: flex-end; }
-        .bar-fill-inner { width: 100%; background: var(--accent); border-radius: 6px 6px 0 0; min-height: 4px; transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .bar-fill-inner { width: 100%; background: var(--accent); border-radius: 6px 6px 0 0; min-height: 4px; }
+        /* НОВОЕ: анимация столбцов */
+        .bar-fill-inner.animate { height: 0 !important; transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .bar-fill-inner.animate.started { height: var(--target-height) !important; }
         .bar-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; white-space: nowrap; }
         .category-chart { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-bottom: 30px; }
         .category-column { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
         .category-value { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
         .category-fill-wrap { flex: 1; width: 100%; max-width: 50px; display: flex; align-items: flex-end; }
-        .category-fill-inner { width: 100%; border-radius: 8px 8px 0 0; min-height: 4px; transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .category-fill-inner { width: 100%; border-radius: 8px 8px 0 0; min-height: 4px; }
+        /* НОВОЕ: анимация категорий */
+        .category-fill-inner.animate { height: 0 !important; transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .category-fill-inner.animate.started { height: var(--target-height) !important; }
         .category-label { font-size: 10px; color: var(--text-secondary); margin-top: 8px; text-align: center; }
         .cat-liquid .category-fill-inner { background: var(--cat-liquid); } .cat-supplies .category-fill-inner { background: var(--cat-supplies); }
         .cat-pods .category-fill-inner { background: var(--cat-pods); } .cat-disposable .category-fill-inner { background: var(--cat-disposable); } .cat-snus .category-fill-inner { background: var(--cat-snus); }
@@ -164,10 +170,12 @@
         .group-edit-btn:active { transform: scale(1.15); color: var(--accent-hover); }
 
         .product-row-wrapper { position: relative; overflow: hidden; }
-        .product-row { display: flex; align-items: center; padding: 10px 15px 10px 25px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease; position: relative; z-index: 1; background: var(--bg-card); }
+        .product-row { display: flex; align-items: center; padding: 10px 15px 10px 25px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease, background-color 0.15s ease; position: relative; z-index: 1; background: var(--bg-card); }
         .product-row:active { background: rgba(129,216,208,0.1); }
         .product-row.selected { background: rgba(129,216,208,0.2); }
         .swipe-delete-bg { position: absolute; top: 0; right: 0; height: 100%; background: var(--red); z-index: 0; width: 100%; }
+        /* НОВОЕ: оверлей для долгого нажатия */
+        .long-press-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--red); opacity: 0; z-index: 0; pointer-events: none; transition: opacity 0.1s ease; border-radius: 0; }
         .product-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .product-col.price { text-align: right; flex: 0.7; }
         .product-col.qty { text-align: center; flex: 0.5; }
@@ -181,6 +189,13 @@
         @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
         .product-row.pop-anim { animation: popIn 0.4s ease; }
 
+        /* НОВОЕ: скелетон-лоадер */
+        .skeleton { background: linear-gradient(90deg, var(--bg-card) 25%, var(--border) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skeleton-chart { height: 160px; margin-bottom: 15px; }
+        .skeleton-card { height: 80px; margin-bottom: 10px; }
+        .skeleton-row { height: 40px; margin-bottom: 5px; }
+
         .sales-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; }
         .sales-header-left { display: flex; gap: 8px; align-items: center; }
         .sales-header-btn { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
@@ -189,7 +204,7 @@
         .sales-header-btn.filter.active { background: var(--accent); color: white; }
         .sales-table-section { background: var(--bg-card); border-radius: 15px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .sale-row-wrapper { position: relative; overflow: hidden; margin-bottom: 2px; }
-        .sale-row { display: flex; align-items: center; padding: 12px 15px; cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease; position: relative; z-index: 1; background: var(--bg-card); border-radius: 8px; border: 2px solid transparent; }
+        .sale-row { display: flex; align-items: center; padding: 12px 15px; cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease, background-color 0.15s ease; position: relative; z-index: 1; background: var(--bg-card); border-radius: 8px; border: 2px solid transparent; }
         .sale-row:active { background: rgba(129,216,208,0.1); }
         .sale-row.selected { background: rgba(129,216,208,0.2); }
         .sale-row.booking { border-color: var(--green); }
@@ -260,6 +275,10 @@
         .content-body { animation: fadeInUp 0.4s ease; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spinner { animation: spin 1s linear infinite; display: inline-block; }
+
+        /* НОВОЕ: вибрация при долгом нажатии — визуальный индикатор */
+        .long-press-active { animation: pulse-red 0.3s ease; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(231,76,60,0.6); } 100% { box-shadow: 0 0 0 12px rgba(231,76,60,0); } }
 
         .warehouse-table-section, .warehouse-table-section *, .product-row, .product-row *, .accordion-header, .accordion-header *, .table-header-row, .table-header-row *, .product-row-wrapper, .product-row-wrapper *, .sales-table-section, .sales-table-section *, .sale-row, .sale-row *, .sale-row-wrapper, .sale-row-wrapper *, .sale-table-header, .sale-table-header *, .clients-table-section, .clients-table-section *, .client-row, .client-row *, .client-table-header, .client-table-header * {
             -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none;
@@ -346,6 +365,30 @@
             setTimeout(() => { const el = document.getElementById(id); if (el) el.remove(); }, 3000);
         }
 
+        // НОВОЕ: haptic feedback
+        function vibrate(pattern) {
+            if (navigator.vibrate) {
+                try { navigator.vibrate(pattern); } catch(e) {}
+            }
+        }
+
+        // НОВОЕ: скелетон-лоадер
+        function showSkeleton(type) {
+            if (type === 'statistics') {
+                return `<h2 class="tab-title">Статистика</h2>
+                <div class="stats-cards"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>
+                <div class="summary-row"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>
+                <div class="skeleton skeleton-chart"></div><div class="skeleton skeleton-chart"></div>`;
+            }
+            if (type === 'warehouse') {
+                return `<h2 class="tab-title">Склад</h2><div class="warehouse-cards">${[...Array(5)].map(()=>'<div class="skeleton skeleton-card"></div>').join('')}</div>`;
+            }
+            if (type === 'sales' || type === 'clients') {
+                return `<h2 class="tab-title">${type==='sales'?'Продажи':'Клиенты'}</h2><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div>`;
+            }
+            return '';
+        }
+
         document.addEventListener('selectstart', function(e) { if (e.target.closest('.warehouse-table-section')||e.target.closest('.sales-table-section')||e.target.closest('.clients-table-section')) { e.preventDefault(); } });
 
         async function findProductByName(productName) {
@@ -415,8 +458,8 @@
                 <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value" id="sum_new">${prevNew} чел.</div></div>
                 <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value" id="sum_leaving">${prevLeaving} чел.</div></div>
             </div>
-            <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>`<div class="category-column cat-${d.category}"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill-wrap"><div class="category-fill-inner" style="height:${mc>0?(d.value/mc*100):0}%;"></div></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>
-            ${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill-wrap"><div class="bar-fill-inner" style="height:${md>0?(d.value/md*100):0}%;"></div></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}
+            <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>`<div class="category-column cat-${d.category}"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill-wrap"><div class="category-fill-inner animate" style="--target-height:${mc>0?(d.value/mc*100):0}%;" data-target="${mc>0?(d.value/mc*100):0}"></div></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>
+            ${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill-wrap"><div class="bar-fill-inner animate" style="--target-height:${md>0?(d.value/md*100):0}%;" data-target="${md>0?(d.value/md*100):0}"></div></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}
             ${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`:''}`;
 
             setTimeout(()=>{
@@ -435,6 +478,13 @@
                     if(pp&&pProf)pp.textContent=fp((prof-pProf)/pProf*100);
                     if(cp2&&pCnt)cp2.textContent=fp((cnt-pCnt)/pCnt*100);
                 },700);
+                
+                // НОВОЕ: анимация столбцов
+                setTimeout(() => {
+                    document.querySelectorAll('.bar-fill-inner.animate, .category-fill-inner.animate').forEach(el => {
+                        el.classList.add('started');
+                    });
+                }, 100);
             },100);
         }
         async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
@@ -447,7 +497,16 @@
 
         // ============ СКЛАД ============
         let cwc=null,og=new Set(),selectMode=false,selectedIds=new Set(),deletedProducts=[];
-        function enterSelectMode() { selectMode=true; selectedIds=new Set(); updateSelectUI(); }
+        let longPressTimer = null, longPressActive = false, longPressRow = null;
+        const LONG_PRESS_DURATION = 500; // 500ms до входа в режим выделения
+
+        function enterSelectMode() {
+            if (selectMode) return;
+            selectMode = true;
+            selectedIds = new Set();
+            vibrate(30); // НОВОЕ: haptic feedback при входе в режим
+            updateSelectUI();
+        }
         function exitSelectMode() { selectMode=false; selectedIds=new Set(); updateSelectUI(); }
         function toggleSelectProduct(id) { if(selectedIds.has(id))selectedIds.delete(id);else selectedIds.add(id); updateSelectUI(); }
         function updateSelectUI() {
@@ -457,6 +516,10 @@
                 r.classList.toggle('selected',selectMode&&selectedIds.has(pid));
                 const cb=r.querySelector('.select-checkbox');
                 if(cb)cb.checked=selectMode&&selectedIds.has(pid);
+                // НОВОЕ: сброс оверлея долгого нажатия
+                const overlay = r.parentElement?.querySelector('.long-press-overlay');
+                if (overlay && !selectMode) overlay.style.opacity = '0';
+                if (overlay && selectMode && selectedIds.has(pid)) overlay.style.opacity = '0.3';
             });
             const delBtn=document.querySelector('.wh-delete-selected-btn'), cancelBtn=document.querySelector('.wh-cancel-select-btn');
             if(delBtn)delBtn.classList.toggle('visible',selectMode);
@@ -467,6 +530,7 @@
         async function deleteSelectedProducts() {
             if(selectedIds.size===0)return;
             if(!confirm(`Удалить ${selectedIds.size} товаров?`))return;
+            vibrate([20,50,20]); // НОВОЕ: haptic при удалении
             deletedProducts=[];
             for(const id of selectedIds){const p=await db.g('products',id);if(p){deletedProducts.push(p);await db.del('products',id);}}
             exitSelectMode();await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
@@ -479,7 +543,6 @@
         }
         async function openWarehouseCategory(c){cwc=c;og=new Set();selectMode=false;selectedIds=new Set();await renderWarehouseTable(c);}
 
-        // НОВАЯ ФУНКЦИЯ ГРУППИРОВКИ — ВЛОЖЕННЫЕ ОБЪЕКТЫ
         function groupProductsNested(products, groupBy) {
             if (groupBy.length === 0) return { _root: products };
             const root = {};
@@ -527,7 +590,7 @@
                     const cols = CATEGORY_TABLE_COLS[cwc];
                     h += `<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col => `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
                     items.forEach(item => {
-                        h += `<div class="product-row-wrapper"><div class="swipe-delete-bg"></div><div class="product-row" data-pid="${item.id}" ondblclick="if(!selectMode)editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="toggleSelectProduct(${item.id})" onclick="event.stopPropagation()"></div>`;
+                        h += `<div class="product-row-wrapper"><div class="swipe-delete-bg"></div><div class="long-press-overlay"></div><div class="product-row" data-pid="${item.id}" ondblclick="if(!selectMode)editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="toggleSelectProduct(${item.id})" onclick="event.stopPropagation()"></div>`;
                         cols.forEach(col => { let v = item[col] || ''; if (col === 'purchase' || col === 'selling') v = fn(v) + '₽'; h += `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`; });
                         h += `<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;
                     });
@@ -539,19 +602,136 @@
 
         window.toggleAcc=function(gid){const body=document.getElementById(gid);if(!body)return;const hdr=document.getElementById('hdr_'+gid);if(!hdr)return;if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}else{body.classList.add('open');hdr.classList.add('open');og.add(gid);}};
         function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
+
+        // НОВОЕ: обработка долгого нажатия с плавным нарастанием красного
+        function setupWarehouseLongPress(row) {
+            const wrapper = row.parentElement;
+            const overlay = wrapper.querySelector('.long-press-overlay');
+            if (!overlay) return;
+            
+            let pressStartTime = 0;
+            let animationFrame = null;
+            let isPressed = false;
+
+            function updateOverlay() {
+                if (!isPressed) return;
+                const elapsed = Date.now() - pressStartTime;
+                const progress = Math.min(elapsed / LONG_PRESS_DURATION, 1);
+                // Плавное нарастание от 0 до 1
+                overlay.style.opacity = progress;
+                
+                if (progress < 1) {
+                    animationFrame = requestAnimationFrame(updateOverlay);
+                } else {
+                    // Достигли порога — вход в режим выделения
+                    overlay.style.opacity = '0.3';
+                    row.classList.add('long-press-active');
+                    vibrate(20); // haptic feedback
+                    if (!selectMode) {
+                        enterSelectMode();
+                        const pid = parseInt(row.dataset.pid);
+                        toggleSelectProduct(pid);
+                    }
+                    isPressed = false;
+                }
+            }
+
+            function startPress(e) {
+                if (selectMode) return; // В режиме выделения долгое нажатие не нужно
+                // Не запускаем долгое нажатие на кнопках
+                if (e.target.closest('.copy-btn') || e.target.closest('.group-edit-btn') || e.target.closest('.select-checkbox')) return;
+                
+                pressStartTime = Date.now();
+                isPressed = true;
+                overlay.style.transition = 'none';
+                overlay.style.opacity = '0';
+                animationFrame = requestAnimationFrame(updateOverlay);
+            }
+
+            function endPress(e) {
+                if (!isPressed) return;
+                isPressed = false;
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+                
+                const elapsed = Date.now() - pressStartTime;
+                const progress = Math.min(elapsed / LONG_PRESS_DURATION, 1);
+                
+                if (progress < 1) {
+                    // Не достигли порога — плавное угасание
+                    overlay.style.transition = 'opacity 0.25s ease';
+                    overlay.style.opacity = '0';
+                }
+                // Если достигли порога — уже в режиме выделения, оставляем
+            }
+
+            // Мышиные события
+            row.addEventListener('mousedown', startPress);
+            row.addEventListener('mouseup', endPress);
+            row.addEventListener('mouseleave', endPress);
+            
+            // Тач-события
+            row.addEventListener('touchstart', startPress, {passive: true});
+            row.addEventListener('touchend', endPress);
+            row.addEventListener('touchcancel', endPress);
+            
+            // Предотвращаем конфликт со свайпом
+            row.addEventListener('touchmove', (e) => {
+                if (isPressed) {
+                    const dx = Math.abs(e.touches[0].clientX - (e.touches[0].clientX || 0));
+                    if (dx > 10) { // Если движение больше 10px — отменяем долгое нажатие
+                        endPress(e);
+                    }
+                }
+            }, {passive: true});
+        }
+
         function setupWarehouseSwipe(){
-            document.querySelectorAll('.product-row').forEach(row=>{let sx=0,sy=0,sw=false,lt=null;const w=row.parentElement,bg=w.querySelector('.swipe-delete-bg');
-                row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!selectMode){enterSelectMode();const pid=parseInt(row.dataset.pid);toggleSelectProduct(pid);sw=true;row.style.transform='translateX(0)';}},1000);},{passive:false});
-                row.addEventListener('touchmove',e=>{clearTimeout(lt);const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;if(Math.abs(dx)>Math.abs(dy)&&dx<0&&!selectMode){e.preventDefault();sw=true;const ms=w.offsetWidth*0.5;row.style.transition='none';row.style.transform=`translateX(${Math.max(-ms,dx)}px)`;if(bg)bg.style.opacity=Math.min(1,Math.abs(dx)/ms);}},{passive:false});
-                row.addEventListener('touchend',async e=>{clearTimeout(lt);if(sw&&!selectMode){const dx=(e.changedTouches[0]?.clientX||sx)-sx;if(Math.abs(dx)>w.offsetWidth*0.5){const pid=parseInt(row.dataset.pid);const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});}else{row.style.transition='transform 0.2s ease';row.style.transform='translateX(0)';if(bg)bg.style.opacity='0';}}sw=false;});
-                row.addEventListener('click',e=>{if(selectMode&&!e.target.classList.contains('select-checkbox')&&!e.target.closest('.copy-btn')){const pid=parseInt(row.dataset.pid);toggleSelectProduct(pid);}});
+            document.querySelectorAll('.product-row').forEach(row=>{
+                setupWarehouseLongPress(row); // НОВОЕ: долгое нажатие
+                
+                let sx=0,sy=0,sw=false,lt=null;
+                const w=row.parentElement,bg=w.querySelector('.swipe-delete-bg');
+                row.addEventListener('touchstart',e=>{
+                    sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;
+                },{passive:false});
+                row.addEventListener('touchmove',e=>{
+                    const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;
+                    if(Math.abs(dx)>Math.abs(dy)&&dx<0&&!selectMode){
+                        e.preventDefault();sw=true;
+                        const ms=w.offsetWidth*0.5;
+                        row.style.transition='none';
+                        row.style.transform=`translateX(${Math.max(-ms,dx)}px)`;
+                        if(bg)bg.style.opacity=Math.min(1,Math.abs(dx)/ms);
+                    }
+                },{passive:false});
+                row.addEventListener('touchend',async e=>{
+                    if(sw&&!selectMode){
+                        const dx=(e.changedTouches[0]?.clientX||sx)-sx;
+                        if(Math.abs(dx)>w.offsetWidth*0.5){
+                            vibrate([15,30,15]); // haptic при удалении свайпом
+                            const pid=parseInt(row.dataset.pid);const p=await db.g('products',pid);
+                            if(p){deletedProducts=[p];await db.del('products',pid);}
+                            await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
+                            showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});
+                        }else{
+                            row.style.transition='transform 0.2s ease';row.style.transform='translateX(0)';
+                            if(bg)bg.style.opacity='0';
+                        }
+                    }sw=false;
+                });
+                row.addEventListener('click',e=>{
+                    if(selectMode&&!e.target.classList.contains('select-checkbox')&&!e.target.closest('.copy-btn')){
+                        const pid=parseInt(row.dataset.pid);toggleSelectProduct(pid);
+                    }
+                });
             });
         }
+
         async function renderWarehouseTable(cat,sq=''){
             cwc=cat;const ap=await db.all('products');let pr=ap.filter(p=>p.category===cat);
             if(sq){const q=sq.toLowerCase();pr=pr.filter(p=>CATEGORY_TABLE_COLS[cat].some(c=>(p[c]||'').toString().toLowerCase().includes(q))||(p.manufacturer||'').toLowerCase().includes(q)||(p.lineup||'').toLowerCase().includes(q));og=new Set();}
             const gb=CATEGORY_GROUPS[cat];
-            const g=groupProductsNested(pr,gb); // ИСПОЛЬЗУЕМ НОВУЮ ФУНКЦИЮ
+            const g=groupProductsNested(pr,gb);
             document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="exitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onWarehouseSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;
             setTimeout(()=>{if(og.size>0)restoreOpenGroups();else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');og.add(gid);}}if(selectMode)updateSelectUI();setupWarehouseSwipe();},50);
         }
@@ -569,23 +749,87 @@
         // ============ ПРОДАЖИ ============
         let salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''},salesSelectMode=false,salesSelectedIds=new Set(),deletedSales=[],salesPage=1;
         const PAGE_SIZE=10;
-        function enterSalesSelectMode(){salesSelectMode=true;salesSelectedIds=new Set();updateSalesSelectUI();}
+        let salesLongPressTimer=null,salesLongPressActive=false;
+
+        function enterSalesSelectMode(){
+            if(salesSelectMode)return;
+            salesSelectMode=true;salesSelectedIds=new Set();
+            vibrate(30); // haptic
+            updateSalesSelectUI();
+        }
         function exitSalesSelectMode(){salesSelectMode=false;salesSelectedIds=new Set();updateSalesSelectUI();}
         function toggleSalesSelect(id){if(salesSelectedIds.has(id))salesSelectedIds.delete(id);else salesSelectedIds.add(id);updateSalesSelectUI();}
         function updateSalesSelectUI(){
             document.querySelectorAll('.sale-checkbox-col').forEach(c=>c.classList.toggle('visible',salesSelectMode));
-            document.querySelectorAll('.sale-row').forEach(r=>r.classList.toggle('selected',salesSelectMode&&salesSelectedIds.has(parseInt(r.dataset.sid))));
-            const delBtn=document.querySelector('.sales-delete-selected-btn'), cancelBtn=document.querySelector('.sales-cancel-select-btn');
+            document.querySelectorAll('.sale-row').forEach(r=>{
+                r.classList.toggle('selected',salesSelectMode&&salesSelectedIds.has(parseInt(r.dataset.sid)));
+                const overlay=r.parentElement?.querySelector('.long-press-overlay');
+                if(overlay&&!salesSelectMode)overlay.style.opacity='0';
+                if(overlay&&salesSelectMode&&salesSelectedIds.has(parseInt(r.dataset.sid)))overlay.style.opacity='0.3';
+            });
+            const delBtn=document.querySelector('.sales-delete-selected-btn'),cancelBtn=document.querySelector('.sales-cancel-select-btn');
             if(delBtn)delBtn.classList.toggle('visible',salesSelectMode);
             if(cancelBtn)cancelBtn.classList.toggle('visible',salesSelectMode);
             if(delBtn)delBtn.textContent=`Удалить (${salesSelectedIds.size})`;
         }
-        async function deleteSelectedSales(){if(salesSelectedIds.size===0)return;if(!confirm(`Удалить ${salesSelectedIds.size} продаж?`))return;deletedSales=[];for(const id of salesSelectedIds){const s=await db.g('sales',id);if(s){deletedSales.push(s);await db.del('sales',id);}}exitSalesSelectMode();await renderSalesTable();showSnackbar(`Удалено ${deletedSales.length} продаж`,async()=>{for(const s of deletedSales){const cp={...s};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});}
+        async function deleteSelectedSales(){if(salesSelectedIds.size===0)return;if(!confirm(`Удалить ${salesSelectedIds.size} продаж?`))return;vibrate([20,50,20]);deletedSales=[];for(const id of salesSelectedIds){const s=await db.g('sales',id);if(s){deletedSales.push(s);await db.del('sales',id);}}exitSalesSelectMode();await renderSalesTable();showSnackbar(`Удалено ${deletedSales.length} продаж`,async()=>{for(const s of deletedSales){const cp={...s};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});}
         async function getFilteredSales(){let sales=await db.all('sales');if(salesFilter.client){const q=salesFilter.client.toLowerCase();sales=sales.filter(s=>(s.client||'').toLowerCase().includes(q));}if(salesFilter.product){const q=salesFilter.product.toLowerCase();sales=sales.filter(s=>(s.product||'').toLowerCase().includes(q));}if(salesFilter.dateFrom){sales=sales.filter(s=>s.date>=salesFilter.dateFrom);}if(salesFilter.dateTo){sales=sales.filter(s=>s.date<=salesFilter.dateTo);}if(salesFilter.note){sales=sales.filter(s=>(s.note||'')===salesFilter.note);}sales.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);return sales;}
         function hasActiveFilters(){return !!(salesFilter.client||salesFilter.product||salesFilter.dateFrom||salesFilter.dateTo||salesFilter.note);}
+
+        // НОВОЕ: долгое нажатие для продаж
+        function setupSalesLongPress(row){
+            const wrapper=row.parentElement;
+            let overlay=wrapper.querySelector('.long-press-overlay');
+            if(!overlay){
+                overlay=document.createElement('div');
+                overlay.className='long-press-overlay';
+                overlay.style.borderRadius='8px';
+                wrapper.appendChild(overlay);
+            }
+            let pressStartTime=0,animationFrame=null,isPressed=false;
+
+            function updateOverlay(){
+                if(!isPressed)return;
+                const elapsed=Date.now()-pressStartTime;
+                const progress=Math.min(elapsed/LONG_PRESS_DURATION,1);
+                overlay.style.opacity=progress;
+                if(progress<1){animationFrame=requestAnimationFrame(updateOverlay);}
+                else{
+                    overlay.style.opacity='0.3';
+                    row.classList.add('long-press-active');
+                    vibrate(20);
+                    if(!salesSelectMode){enterSalesSelectMode();toggleSalesSelect(parseInt(row.dataset.sid));}
+                    isPressed=false;
+                }
+            }
+            function startPress(e){
+                if(salesSelectMode)return;
+                pressStartTime=Date.now();isPressed=true;
+                overlay.style.transition='none';overlay.style.opacity='0';
+                animationFrame=requestAnimationFrame(updateOverlay);
+            }
+            function endPress(e){
+                if(!isPressed)return;isPressed=false;
+                if(animationFrame)cancelAnimationFrame(animationFrame);
+                const progress=Math.min((Date.now()-pressStartTime)/LONG_PRESS_DURATION,1);
+                if(progress<1){overlay.style.transition='opacity 0.25s ease';overlay.style.opacity='0';}
+            }
+            row.addEventListener('mousedown',startPress);row.addEventListener('mouseup',endPress);row.addEventListener('mouseleave',endPress);
+            row.addEventListener('touchstart',startPress,{passive:true});row.addEventListener('touchend',endPress);row.addEventListener('touchcancel',endPress);
+            row.addEventListener('touchmove',(e)=>{if(isPressed&&Math.abs(e.touches[0].clientX-(e.touches[0].clientX||0))>10)endPress(e);},{passive:true});
+        }
+
         async function renderSalesTable(){const allSales=await getFilteredSales();const totalPages=Math.ceil(allSales.length/PAGE_SIZE)||1;if(salesPage>totalPages)salesPage=totalPages;const start=(salesPage-1)*PAGE_SIZE;const pageSales=allSales.slice(start,start+PAGE_SIZE);const filterActive=hasActiveFilters();const filterBtnClass=filterActive?'active':'filter';let paginationHTML='';if(totalPages>1){paginationHTML=`<div class="pagination"><button onclick="goToSalesPage(${salesPage-1})" ${salesPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;for(let i=1;i<=totalPages;i++){if(i===1||i===totalPages||(i>=salesPage-1&&i<=salesPage+1)){paginationHTML+=`<button class="${i===salesPage?'active':''}" onclick="goToSalesPage(${i})">${i}</button>`;}else if(i===salesPage-2||i===salesPage+2){paginationHTML+=`<span class="page-info">...</span>`;}}paginationHTML+=`<button onclick="goToSalesPage(${salesPage+1})" ${salesPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;}document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Продажи</h2><div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterBtnClass}" onclick="showFilterModal()"><i class="bi bi-funnel"></i> Фильтры</button>${filterActive?`<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i> Сбросить</button>`:''}</div><button class="sales-header-btn" onclick="showAddSaleModal()"><i class="bi bi-plus-lg"></i> Продажа</button></div><div class="sales-table-section"><div class="wh-header"><span style="font-weight:600;">${allSales.length} продаж</span><div class="wh-header-actions"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="exitSalesSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash"></i> Удалить</button></div></div><div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p class="text-center text-muted py-4">Нет продаж</p>':pageSales.map(s=>{let noteClass='';if(s.note==='бронь')noteClass='booking';else if(s.note==='долг')noteClass='debt';else if(s.note==='приз')noteClass='prize';return`<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesSelectMode)editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="toggleSalesSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${s.product||'-'}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note||'-'}</div></div></div>`;}).join('')}${paginationHTML}</div>`;setTimeout(()=>{if(salesSelectMode)updateSalesSelectUI();setupSalesSwipe();},50);}
         function goToSalesPage(p){salesPage=p;renderSalesTable();}
-        function setupSalesSwipe(){document.querySelectorAll('.sale-row').forEach(row=>{let sx=0,sy=0,sw=false,lt=null;const w=row.parentElement,bg=w.querySelector('.sales-delete-bg');row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;lt=setTimeout(()=>{if(!salesSelectMode){enterSalesSelectMode();toggleSalesSelect(parseInt(row.dataset.sid));sw=true;row.style.transform='translateX(0)';}},1000);},{passive:false});row.addEventListener('touchmove',e=>{clearTimeout(lt);const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;if(Math.abs(dx)>Math.abs(dy)&&dx<0&&!salesSelectMode){e.preventDefault();sw=true;const ms=w.offsetWidth*0.5;row.style.transition='none';row.style.transform=`translateX(${Math.max(-ms,dx)}px)`;if(bg)bg.style.opacity=Math.min(1,Math.abs(dx)/ms);}},{passive:false});row.addEventListener('touchend',async e=>{clearTimeout(lt);if(sw&&!salesSelectMode){const dx=(e.changedTouches[0]?.clientX||sx)-sx;if(Math.abs(dx)>w.offsetWidth*0.5){const sid=parseInt(row.dataset.sid);const s=await db.g('sales',sid);if(s){deletedSales=[s];await db.del('sales',sid);}await renderSalesTable();showSnackbar('Продажа удалена',async()=>{for(const ds of deletedSales){const cp={...ds};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});}else{row.style.transition='transform 0.2s ease';row.style.transform='translateX(0)';if(bg)bg.style.opacity='0';}}sw=false;});});}
+        function setupSalesSwipe(){
+            document.querySelectorAll('.sale-row').forEach(row=>{
+                setupSalesLongPress(row); // НОВОЕ
+                let sx=0,sy=0,sw=false,lt=null;const w=row.parentElement,bg=w.querySelector('.sales-delete-bg');
+                row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=false;},{passive:false});
+                row.addEventListener('touchmove',e=>{const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;if(Math.abs(dx)>Math.abs(dy)&&dx<0&&!salesSelectMode){e.preventDefault();sw=true;const ms=w.offsetWidth*0.5;row.style.transition='none';row.style.transform=`translateX(${Math.max(-ms,dx)}px)`;if(bg)bg.style.opacity=Math.min(1,Math.abs(dx)/ms);}},{passive:false});
+                row.addEventListener('touchend',async e=>{if(sw&&!salesSelectMode){const dx=(e.changedTouches[0]?.clientX||sx)-sx;if(Math.abs(dx)>w.offsetWidth*0.5){vibrate([15,30,15]);const sid=parseInt(row.dataset.sid);const s=await db.g('sales',sid);if(s){deletedSales=[s];await db.del('sales',sid);}await renderSalesTable();showSnackbar('Продажа удалена',async()=>{for(const ds of deletedSales){const cp={...ds};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});}else{row.style.transition='transform 0.2s ease';row.style.transform='translateX(0)';if(bg)bg.style.opacity='0';}}sw=false;});
+            });
+        }
         function showFilterModal(){showModal('Фильтры','bi bi-funnel','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="flt_client" value="${salesFilter.client}" placeholder="Любое"></div><div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="flt_product" value="${salesFilter.product}" placeholder="Любой"></div><div class="form-group"><label class="form-label">Дата с</label><input type="date" class="form-input" id="flt_dateFrom" value="${salesFilter.dateFrom}"></div><div class="form-group"><label class="form-label">Дата по</label><input type="date" class="form-input" id="flt_dateTo" value="${salesFilter.dateTo}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="flt_note"><option value="">Все</option><option value="бронь" ${salesFilter.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${salesFilter.note==='долг'?'selected':''}>Долг</option><option value="приз" ${salesFilter.note==='приз'?'selected':''}>Приз</option><option value="без заметки" ${salesFilter.note==='без заметки'?'selected':''}>Без заметки</option></select></div>`,`<button class="btn btn-reset" onclick="resetFilters()">Сброс</button><button class="btn btn-save" onclick="applyFilters()">Применить</button>`);}
         function resetFilters(){salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''};salesPage=1;closeModal();renderSalesTable();}
         function applyFilters(){salesFilter.client=document.getElementById('flt_client').value.trim();salesFilter.product=document.getElementById('flt_product').value.trim();salesFilter.dateFrom=document.getElementById('flt_dateFrom').value;salesFilter.dateTo=document.getElementById('flt_dateTo').value;salesFilter.note=document.getElementById('flt_note').value;salesPage=1;closeModal();renderSalesTable();}
@@ -620,7 +864,33 @@
         async function deleteClient(clientId,clientName){if(!confirm(`Удалить клиента "${clientName}"? Продажи останутся.`))return;await db.del('clients',clientId);closeModal();clientsPage=1;await renderClientsTable();}
 
         // ============ ВКЛАДКИ ============
-        async function switchTab(tab){document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));const body=document.getElementById('contentBody');body.style.opacity='0';body.style.transform='translateY(20px)';setTimeout(async()=>{if(tab==='statistics')await renderStatistics(cp);else if(tab==='warehouse')await renderWarehouseCards();else if(tab==='sales')await renderSalesTable();else if(tab==='clients')await renderClientsTable();else body.innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Вкладка</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;body.style.opacity='1';body.style.transform='';},200);closeSidebar();}
+        async function switchTab(tab){
+            document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));
+            const body=document.getElementById('contentBody');
+            
+            // НОВОЕ: показываем скелетон перед загрузкой
+            const tabNames = {'statistics':'statistics','warehouse':'warehouse','sales':'sales','clients':'clients'};
+            const skeletonType = tabNames[tab] || 'sales';
+            body.innerHTML = showSkeleton(skeletonType);
+            body.style.opacity = '1';
+            body.style.transform = '';
+            
+            // Небольшая задержка для отрисовки скелетона
+            setTimeout(async()=>{
+                body.style.opacity='0';
+                body.style.transform='translateY(20px)';
+                setTimeout(async()=>{
+                    if(tab==='statistics')await renderStatistics(cp);
+                    else if(tab==='warehouse')await renderWarehouseCards();
+                    else if(tab==='sales')await renderSalesTable();
+                    else if(tab==='clients')await renderClientsTable();
+                    else body.innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Вкладка</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
+                    body.style.opacity='1';
+                    body.style.transform='';
+                },150);
+            },200);
+            closeSidebar();
+        }
 
         async function init(){try{await db.init();await loadTheme();await renderSalesTable();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');}catch(e){console.error(e);}}
         document.addEventListener('DOMContentLoaded',init);
