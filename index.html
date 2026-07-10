@@ -151,6 +151,7 @@
         .product-row-wrapper { position: relative; overflow: hidden; transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease; max-height: 60px; opacity: 1; margin-bottom: 0; }
         .product-row-wrapper.removing { max-height: 0; opacity: 0; margin-bottom: -2px; padding: 0; }
         .product-row { display: flex; align-items: center; padding: 10px 15px 10px 25px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease, filter 0.1s ease; position: relative; z-index: 1; background: var(--bg-card); }
+        .product-row:hover .qty-controls { opacity: 1; }
         .product-row.pressing { filter: brightness(1.1); }
         .product-row:active { filter: brightness(1.1); }
         .product-row.selected { filter: brightness(1.15); }
@@ -158,7 +159,7 @@
         .swipe-delete-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: white; font-size: 22px; z-index: 0; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
         .product-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .product-col.price { text-align: right; flex: 0.7; }
-        .product-col.qty { text-align: center; flex: 0.5; }
+        .product-col.qty { text-align: center; flex: 0.5; display: flex; align-items: center; justify-content: center; gap: 2px; }
         .product-col.copy-btn { flex: 0 0 30px; text-align: center; cursor: pointer; color: var(--accent); font-size: 16px; }
         .table-header-row { display: flex; padding: 8px 15px 8px 25px; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 6px; }
         .table-header-row .product-col { font-weight: 600; }
@@ -166,8 +167,18 @@
         .checkbox-col.visible { display: flex; }
         .select-checkbox { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
 
+        /* Кнопки ± для количества */
+        .qty-controls { display: inline-flex; align-items: center; gap: 1px; opacity: 0; transition: opacity 0.2s ease; }
+        .product-row-wrapper:hover .qty-controls, .product-row.pressing .qty-controls { opacity: 1; }
+        .qty-btn { width: 20px; height: 20px; border: none; border-radius: 50%; background: var(--border); color: var(--text-primary); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; padding: 0; line-height: 1; flex-shrink: 0; }
+        .qty-btn:active { transform: scale(1.3); background: var(--accent); color: white; }
+        .qty-btn:disabled { opacity: 0.3; pointer-events: none; }
+        .qty-value { min-width: 20px; text-align: center; font-weight: 600; font-size: 13px; }
+
         @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
         .product-row.pop-anim { animation: popIn 0.4s ease; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .qty-pulse { animation: pulse 0.3s ease; }
 
         .skeleton { background: linear-gradient(90deg, var(--bg-card) 25%, var(--border) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -240,12 +251,19 @@
         .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--text-secondary); }
         .form-input, .form-select { width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-primary); color: var(--text-primary); font-size: 15px; outline: none; appearance: none; }
         .form-input:focus, .form-select:focus { border-color: var(--accent); }
+        textarea.form-input { resize: vertical; min-height: 80px; }
         .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
         .btn-save { background: var(--accent); color: white; }
         .btn-cancel { background: var(--border); color: var(--text-primary); }
         .btn-delete { background: var(--red); color: white; flex: 0.5; }
         .btn-reset { background: transparent; color: var(--text-secondary); border: 2px solid var(--border); }
         .btn:active { transform: scale(0.96); }
+
+        /* Кнопка переключения режима в заголовке */
+        .mode-toggle-btn { background: none; border: 2px solid var(--accent); color: var(--accent); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s ease; }
+        .mode-toggle-btn:hover { background: var(--accent); color: white; }
+        .mode-toggle-btn:active { transform: scale(0.9); }
+        .preview-text { font-size: 13px; color: var(--accent); margin-top: 8px; font-weight: 600; }
 
         .snackbar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--bg-sidebar); color: white; padding: 14px 24px; border-radius: 25px; z-index: 9999; font-size: 14px; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px; animation: slideUp 0.3s ease; }
         .snackbar .snackbar-undo { background: var(--accent); border: none; color: white; padding: 6px 14px; border-radius: 15px; cursor: pointer; font-weight: 700; font-size: 13px; }
@@ -263,11 +281,9 @@
         .modal-body-custom .sale-row:last-child { margin-bottom: 0; }
         .modal-body-custom .sale-table-header { margin-bottom: 4px; padding: 8px 15px; gap: 8px; }
 
-        /* Круглая кнопка добавления для продаж и клиентов */
         .round-add-btn { background: var(--accent); color: white; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .round-add-btn:active { transform: scale(0.93); }
 
-        /* Стили для кастомных диалогов */
         .dialog-text { font-size: 15px; color: var(--text-primary); text-align: center; padding: 0 10px; line-height: 1.4; }
         .dialog-icon-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
         .dialog-icon-circle { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; }
@@ -353,7 +369,6 @@
         }
         function closeModal(event) { if(!event||event.target.classList.contains('modal-overlay'))document.getElementById('modalContainer').innerHTML=''; }
 
-        // ============ КАСТОМНЫЕ ДИАЛОГИ ============
         function showAlert(message, type = 'info') {
             const icons = { error: 'bi-exclamation-triangle', warning: 'bi-trash', info: 'bi-info-circle' };
             const colors = { error: 'var(--yellow)', warning: 'var(--red)', info: 'var(--accent)' };
@@ -503,276 +518,61 @@
                     if(pp&&pProf)pp.textContent=fp((prof-pProf)/pProf*100);
                     if(cp2&&pCnt)cp2.textContent=fp((cnt-pCnt)/pCnt*100);
                 },700);
-                setTimeout(() => {
-                    document.querySelectorAll('.bar-fill-inner.animate, .category-fill-inner.animate').forEach(el => {
-                        el.classList.add('started');
-                    });
-                }, 100);
+                setTimeout(() => { document.querySelectorAll('.bar-fill-inner.animate, .category-fill-inner.animate').forEach(el => el.classList.add('started')); }, 100);
             },100);
         }
         async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
         function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
 
         async function showBookingModal(){
-            const allSales=await db.all('sales');
-            const bs=allSales.filter(s=>s.note==='бронь');
-            showModal('Бронь','bi bi-calendar-check','var(--green)',
-                bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':
-                `<div class="sale-table-header"><div class="sale-col" style="flex:0.3">Клиент</div><div class="sale-col" style="flex:0.7">Товар</div></div>
-                ${bs.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.3">${s.client||'-'}</div><div class="sale-col" style="flex:0.7">${s.product||'-'}</div></div>`).join('')}`,'');
+            const allSales=await db.all('sales');const bs=allSales.filter(s=>s.note==='бронь');
+            showModal('Бронь','bi bi-calendar-check','var(--green)',bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.3">Клиент</div><div class="sale-col" style="flex:0.7">Товар</div></div>${bs.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.3">${s.client||'-'}</div><div class="sale-col" style="flex:0.7">${s.product||'-'}</div></div>`).join('')}`,'');
         }
         async function showDebtModal(){
-            const allSales=await db.all('sales');
-            const ds=allSales.filter(s=>s.note==='долг');
-            showModal('Долги','bi bi-cash-coin','var(--red)',
-                ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':
-                `<div class="sale-table-header"><div class="sale-col" style="flex:0.5">Клиент</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">Сумма</div><div class="sale-col" style="flex:0.3">Дата</div></div>
-                ${ds.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.5">${s.client||'-'}</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">${fn(s.total||0)}₽</div><div class="sale-col" style="flex:0.3">${fmtDate(s.date)}</div></div>`).join('')}`,'');
+            const allSales=await db.all('sales');const ds=allSales.filter(s=>s.note==='долг');
+            showModal('Долги','bi bi-cash-coin','var(--red)',ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.5">Клиент</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">Сумма</div><div class="sale-col" style="flex:0.3">Дата</div></div>${ds.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.5">${s.client||'-'}</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">${fn(s.total||0)}₽</div><div class="sale-col" style="flex:0.3">${fmtDate(s.date)}</div></div>`).join('')}`,'');
         }
         async function showNewClientsModal(){
-            const{s,e}=getDateRange(cp);
-            const clients=await db.all('clients');
-            const nc=clients.filter(c=>c.created>=s&&c.created<=e);
-            showModal('Новые клиенты','bi bi-person-plus','var(--accent)',
-                nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':
-                `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>
-                ${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');
+            const{s,e}=getDateRange(cp);const clients=await db.all('clients');const nc=clients.filter(c=>c.created>=s&&c.created<=e);
+            showModal('Новые клиенты','bi bi-person-plus','var(--accent)',nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');
         }
         async function showLeavingClientsModal(){
-            const clients=await db.all('clients');
-            const sales=await db.all('sales');
-            const lc=clients.filter(c=>{
-                const cs=sales.filter(x=>norm(x.client)===norm(c.name));
-                if(cs.length===0)return false;
-                const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];
-                return last&&(new Date()-new Date(last.date))/86400000>30;
-            });
-            showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',
-                lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':
-                `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>
-                ${lc.map(c=>{
-                    const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));
-                    const last=cs[0];
-                    return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;
-                }).join('')}`,'');
+            const clients=await db.all('clients');const sales=await db.all('sales');const lc=clients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;});
+            showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;}).join('')}`,'');
         }
 
         // ============ ОБЩИЙ МОДУЛЬ ВЫДЕЛЕНИЯ ============
-        const SELECT_MODE_CONFIG = {
-            warehouse: { selectMode: false, selectedIds: new Set(), prefix: 'wh' },
-            sales: { selectMode: false, selectedIds: new Set(), prefix: 'sale' }
-        };
-        
+        const SELECT_MODE_CONFIG = { warehouse: { selectMode: false, selectedIds: new Set(), prefix: 'wh' }, sales: { selectMode: false, selectedIds: new Set(), prefix: 'sale' } };
         function getSelectConfig(type) { return SELECT_MODE_CONFIG[type]; }
-        
-        function enterSelectMode(type) {
-            const cfg = getSelectConfig(type);
-            if (cfg.selectMode) return;
-            cfg.selectMode = true;
-            cfg.selectedIds = new Set();
-            vibrate(30);
-            updateSelectUI(type);
-        }
-        
-        function exitSelectMode(type) {
-            const cfg = getSelectConfig(type);
-            cfg.selectMode = false;
-            cfg.selectedIds = new Set();
-            const rowSelector = cfg.prefix === 'wh' ? '.product-row' : '.sale-row';
-            document.querySelectorAll(rowSelector).forEach(r => {
-                r.classList.remove('selected');
-                r.style.filter = '';
-            });
-            updateSelectUI(type);
-        }
-        
-        function toggleSelectItem(type, id) {
-            const cfg = getSelectConfig(type);
-            if (cfg.selectedIds.has(id)) { cfg.selectedIds.delete(id); }
-            else { cfg.selectedIds.add(id); }
-            updateSelectUI(type);
-        }
-        
-        function updateSelectUI(type) {
-            const cfg = getSelectConfig(type);
-            const isWh = cfg.prefix === 'wh';
-            const checkboxSelector = isWh ? '.checkbox-col' : '.sale-checkbox-col';
-            document.querySelectorAll(checkboxSelector).forEach(c => c.classList.toggle('visible', cfg.selectMode));
-            const rowSelector = isWh ? '.product-row' : '.sale-row';
-            const idAttr = isWh ? 'data-pid' : 'data-sid';
-            document.querySelectorAll(rowSelector).forEach(r => {
-                const itemId = parseInt(r.getAttribute(idAttr));
-                const isSelected = cfg.selectMode && cfg.selectedIds.has(itemId);
-                r.classList.toggle('selected', isSelected);
-                if (!cfg.selectMode) r.style.filter = '';
-                const cb = r.querySelector('.select-checkbox');
-                if (cb) cb.checked = isSelected;
-            });
-            const delBtn = document.querySelector(isWh ? '.wh-delete-selected-btn' : '.sales-delete-selected-btn');
-            const cancelBtn = document.querySelector(isWh ? '.wh-cancel-select-btn' : '.sales-cancel-select-btn');
-            if (delBtn) { delBtn.classList.toggle('visible', cfg.selectMode); delBtn.textContent = `Удалить (${cfg.selectedIds.size})`; }
-            if (cancelBtn) cancelBtn.classList.toggle('visible', cfg.selectMode);
-            if (isWh) { const addBtn = document.querySelector('.wh-add-btn'); if (addBtn) addBtn.style.display = cfg.selectMode ? 'none' : 'flex'; }
-        }
+        function enterSelectMode(type) { const cfg = getSelectConfig(type); if (cfg.selectMode) return; cfg.selectMode = true; cfg.selectedIds = new Set(); vibrate(30); updateSelectUI(type); }
+        function exitSelectMode(type) { const cfg = getSelectConfig(type); cfg.selectMode = false; cfg.selectedIds = new Set(); const rowSelector = cfg.prefix === 'wh' ? '.product-row' : '.sale-row'; document.querySelectorAll(rowSelector).forEach(r => { r.classList.remove('selected'); r.style.filter = ''; }); updateSelectUI(type); }
+        function toggleSelectItem(type, id) { const cfg = getSelectConfig(type); if (cfg.selectedIds.has(id)) cfg.selectedIds.delete(id); else cfg.selectedIds.add(id); updateSelectUI(type); }
+        function updateSelectUI(type) { const cfg = getSelectConfig(type); const isWh = cfg.prefix === 'wh'; const checkboxSelector = isWh ? '.checkbox-col' : '.sale-checkbox-col'; document.querySelectorAll(checkboxSelector).forEach(c => c.classList.toggle('visible', cfg.selectMode)); const rowSelector = isWh ? '.product-row' : '.sale-row'; const idAttr = isWh ? 'data-pid' : 'data-sid'; document.querySelectorAll(rowSelector).forEach(r => { const itemId = parseInt(r.getAttribute(idAttr)); const isSelected = cfg.selectMode && cfg.selectedIds.has(itemId); r.classList.toggle('selected', isSelected); if (!cfg.selectMode) r.style.filter = ''; const cb = r.querySelector('.select-checkbox'); if (cb) cb.checked = isSelected; }); const delBtn = document.querySelector(isWh ? '.wh-delete-selected-btn' : '.sales-delete-selected-btn'); const cancelBtn = document.querySelector(isWh ? '.wh-cancel-select-btn' : '.sales-cancel-select-btn'); if (delBtn) { delBtn.classList.toggle('visible', cfg.selectMode); delBtn.textContent = `Удалить (${cfg.selectedIds.size})`; } if (cancelBtn) cancelBtn.classList.toggle('visible', cfg.selectMode); if (isWh) { const addBtn = document.querySelector('.wh-add-btn'); if (addBtn) addBtn.style.display = cfg.selectMode ? 'none' : 'flex'; } }
 
         // ============ УНИВЕРСАЛЬНЫЙ СВАЙП ============
         function setupSwipe(row, type, idGetter, onDelete) {
-            const wrapper = row.parentElement;
-            const isWh = type === 'warehouse';
-            const bg = wrapper.querySelector(isWh ? '.swipe-delete-bg' : '.sales-delete-bg');
-            const deleteIcon = wrapper.querySelector('.swipe-delete-icon');
-            let startX = 0, startY = 0, swipeActive = false;
-            let wrapperWidth = 0;
-            let docMoveHandler = null, docEndHandler = null;
-
-            function onStart(e) {
-                const cfg = getSelectConfig(type);
-                if (cfg.selectMode) return;
-                const touch = e.touches ? e.touches[0] : e;
-                startX = touch.clientX;
-                startY = touch.clientY;
-                swipeActive = false;
-                wrapperWidth = wrapper.getBoundingClientRect().width;
-
-                docMoveHandler = onMove;
-                docEndHandler = onEnd;
-                document.addEventListener('touchmove', docMoveHandler, {passive: false});
-                document.addEventListener('touchend', docEndHandler);
-                document.addEventListener('touchcancel', docEndHandler);
-            }
-
-            function onMove(e) {
-                const cfg = getSelectConfig(type);
-                const touch = e.touches[0];
-                const dx = touch.clientX - startX;
-                const dy = touch.clientY - startY;
-                if (!swipeActive && Math.abs(dx) > Math.abs(dy) && dx < -5) {
-                    swipeActive = true;
-                }
-                if (swipeActive && !cfg.selectMode) {
-                    e.preventDefault();
-                    const maxSwipe = wrapperWidth * 0.5;
-                    const swipeDistance = Math.max(-maxSwipe, dx);
-                    row.style.transition = 'none';
-                    row.style.transform = `translateX(${swipeDistance}px)`;
-                    if (bg) bg.style.opacity = Math.min(1, Math.abs(dx) / maxSwipe);
-                    if (deleteIcon) deleteIcon.style.opacity = Math.min(1, Math.abs(dx) / (maxSwipe * 0.6));
-                }
-            }
-
-            async function onEnd(e) {
-                document.removeEventListener('touchmove', docMoveHandler);
-                document.removeEventListener('touchend', docEndHandler);
-                document.removeEventListener('touchcancel', docEndHandler);
-                const cfg = getSelectConfig(type);
-                if (swipeActive && !cfg.selectMode) {
-                    const touch = e.changedTouches[0];
-                    const dx = touch.clientX - startX;
-                    if (Math.abs(dx) > wrapperWidth * 0.5) {
-                        vibrate([15, 30, 15]);
-                        const itemId = idGetter(row);
-                        wrapper.classList.add('removing');
-                        setTimeout(async () => {
-                            await onDelete(itemId);
-                        }, 400);
-                    } else {
-                        row.style.transition = 'transform 0.2s ease';
-                        row.style.transform = 'translateX(0)';
-                        if (bg) bg.style.opacity = '0';
-                        if (deleteIcon) deleteIcon.style.opacity = '0';
-                    }
-                }
-                swipeActive = false;
-            }
-
+            const wrapper = row.parentElement; const isWh = type === 'warehouse'; const bg = wrapper.querySelector(isWh ? '.swipe-delete-bg' : '.sales-delete-bg'); const deleteIcon = wrapper.querySelector('.swipe-delete-icon'); let startX = 0, startY = 0, swipeActive = false; let wrapperWidth = 0; let docMoveHandler = null, docEndHandler = null;
+            function onStart(e) { const cfg = getSelectConfig(type); if (cfg.selectMode) return; const touch = e.touches ? e.touches[0] : e; startX = touch.clientX; startY = touch.clientY; swipeActive = false; wrapperWidth = wrapper.getBoundingClientRect().width; docMoveHandler = onMove; docEndHandler = onEnd; document.addEventListener('touchmove', docMoveHandler, {passive: false}); document.addEventListener('touchend', docEndHandler); document.addEventListener('touchcancel', docEndHandler); }
+            function onMove(e) { const cfg = getSelectConfig(type); const touch = e.touches[0]; const dx = touch.clientX - startX; const dy = touch.clientY - startY; if (!swipeActive && Math.abs(dx) > Math.abs(dy) && dx < -5) swipeActive = true; if (swipeActive && !cfg.selectMode) { e.preventDefault(); const maxSwipe = wrapperWidth * 0.5; const swipeDistance = Math.max(-maxSwipe, dx); row.style.transition = 'none'; row.style.transform = `translateX(${swipeDistance}px)`; if (bg) bg.style.opacity = Math.min(1, Math.abs(dx) / maxSwipe); if (deleteIcon) deleteIcon.style.opacity = Math.min(1, Math.abs(dx) / (maxSwipe * 0.6)); } }
+            async function onEnd(e) { document.removeEventListener('touchmove', docMoveHandler); document.removeEventListener('touchend', docEndHandler); document.removeEventListener('touchcancel', docEndHandler); const cfg = getSelectConfig(type); if (swipeActive && !cfg.selectMode) { const touch = e.changedTouches[0]; const dx = touch.clientX - startX; if (Math.abs(dx) > wrapperWidth * 0.5) { vibrate([15, 30, 15]); const itemId = idGetter(row); wrapper.classList.add('removing'); setTimeout(async () => { await onDelete(itemId); }, 400); } else { row.style.transition = 'transform 0.2s ease'; row.style.transform = 'translateX(0)'; if (bg) bg.style.opacity = '0'; if (deleteIcon) deleteIcon.style.opacity = '0'; } } swipeActive = false; }
             row.addEventListener('touchstart', onStart, {passive: false});
-
-            row.addEventListener('click', e => {
-                const cfg = getSelectConfig(type);
-                if (cfg.selectMode && !e.target.classList.contains('select-checkbox') && !e.target.closest('.copy-btn') && !e.target.closest('.group-edit-btn')) {
-                    const itemId = idGetter(row);
-                    toggleSelectItem(type, itemId);
-                }
-            });
+            row.addEventListener('click', e => { const cfg = getSelectConfig(type); if (cfg.selectMode && !e.target.classList.contains('select-checkbox') && !e.target.closest('.copy-btn') && !e.target.closest('.group-edit-btn') && !e.target.closest('.qty-btn')) { const itemId = idGetter(row); toggleSelectItem(type, itemId); } });
         }
 
         // ============ УНИВЕРСАЛЬНОЕ ДОЛГОЕ НАЖАТИЕ ============
         function setupLongPress(row, type, idGetter) {
-            let pressStartTime = 0, animationFrame = null, isPressing = false;
-            let touchStartX = 0, touchStartY = 0;
-
-            function updateBrightness() {
-                if (!isPressing) return;
-                const elapsed = Date.now() - pressStartTime;
-                const progress = Math.min(elapsed / 1300, 1);
-                const brightness = 1.0 + (progress * 0.1);
-                row.style.filter = `brightness(${brightness})`;
-                if (progress < 1) {
-                    animationFrame = requestAnimationFrame(updateBrightness);
-                } else {
-                    row.style.filter = 'brightness(1.0)';
-                    row.classList.remove('pressing');
-                    vibrate(20);
-                    const cfg = getSelectConfig(type);
-                    if (!cfg.selectMode) {
-                        enterSelectMode(type);
-                        const itemId = idGetter(row);
-                        toggleSelectItem(type, itemId);
-                        row.classList.add('selected');
-                        row.style.filter = 'brightness(1.15)';
-                        const cb = row.querySelector('.select-checkbox');
-                        if (cb) cb.checked = true;
-                    }
-                    isPressing = false;
-                }
-            }
-
-            function startPress(e) {
-                const cfg = getSelectConfig(type);
-                if (cfg.selectMode) return;
-                if (e.target.closest('.copy-btn') || e.target.closest('.group-edit-btn') || e.target.closest('.select-checkbox')) return;
-                
-                const touch = e.touches ? e.touches[0] : e;
-                touchStartX = touch.clientX;
-                touchStartY = touch.clientY;
-                pressStartTime = Date.now();
-                isPressing = true;
-                row.classList.add('pressing');
-                row.style.filter = 'brightness(1.0)';
-                animationFrame = requestAnimationFrame(updateBrightness);
-            }
-
-            function endPress(e) {
-                if (!isPressing) return;
-                isPressing = false;
-                if (animationFrame) cancelAnimationFrame(animationFrame);
-                row.style.transition = 'filter 0.1s ease';
-                row.style.filter = 'brightness(1.0)';
-                row.classList.remove('pressing');
-                setTimeout(() => { row.style.transition = ''; }, 150);
-            }
-
-            function checkMove(e) {
-                if (!isPressing) return;
-                const touch = e.touches ? e.touches[0] : e;
-                const cx = touch.clientX, cy = touch.clientY;
-                if (Math.abs(cx - touchStartX) > 8 || Math.abs(cy - touchStartY) > 8) {
-                    endPress(e);
-                }
-            }
-
-            row.addEventListener('mousedown', startPress);
-            row.addEventListener('mouseup', endPress);
-            row.addEventListener('mouseleave', endPress);
-            row.addEventListener('mousemove', checkMove);
-            row.addEventListener('touchstart', startPress, {passive: true});
-            row.addEventListener('touchend', endPress);
-            row.addEventListener('touchcancel', endPress);
-            row.addEventListener('touchmove', checkMove, {passive: true});
+            let pressStartTime = 0, animationFrame = null, isPressing = false; let touchStartX = 0, touchStartY = 0;
+            function updateBrightness() { if (!isPressing) return; const elapsed = Date.now() - pressStartTime; const progress = Math.min(elapsed / 1300, 1); const brightness = 1.0 + (progress * 0.1); row.style.filter = `brightness(${brightness})`; if (progress < 1) { animationFrame = requestAnimationFrame(updateBrightness); } else { row.style.filter = 'brightness(1.0)'; row.classList.remove('pressing'); vibrate(20); const cfg = getSelectConfig(type); if (!cfg.selectMode) { enterSelectMode(type); const itemId = idGetter(row); toggleSelectItem(type, itemId); row.classList.add('selected'); row.style.filter = 'brightness(1.15)'; const cb = row.querySelector('.select-checkbox'); if (cb) cb.checked = true; } isPressing = false; } }
+            function startPress(e) { const cfg = getSelectConfig(type); if (cfg.selectMode) return; if (e.target.closest('.copy-btn') || e.target.closest('.group-edit-btn') || e.target.closest('.select-checkbox') || e.target.closest('.qty-btn')) return; const touch = e.touches ? e.touches[0] : e; touchStartX = touch.clientX; touchStartY = touch.clientY; pressStartTime = Date.now(); isPressing = true; row.classList.add('pressing'); row.style.filter = 'brightness(1.0)'; animationFrame = requestAnimationFrame(updateBrightness); }
+            function endPress(e) { if (!isPressing) return; isPressing = false; if (animationFrame) cancelAnimationFrame(animationFrame); row.style.transition = 'filter 0.1s ease'; row.style.filter = 'brightness(1.0)'; row.classList.remove('pressing'); setTimeout(() => { row.style.transition = ''; }, 150); }
+            function checkMove(e) { if (!isPressing) return; const touch = e.touches ? e.touches[0] : e; const cx = touch.clientX, cy = touch.clientY; if (Math.abs(cx - touchStartX) > 8 || Math.abs(cy - touchStartY) > 8) endPress(e); }
+            row.addEventListener('mousedown', startPress); row.addEventListener('mouseup', endPress); row.addEventListener('mouseleave', endPress); row.addEventListener('mousemove', checkMove);
+            row.addEventListener('touchstart', startPress, {passive: true}); row.addEventListener('touchend', endPress); row.addEventListener('touchcancel', endPress); row.addEventListener('touchmove', checkMove, {passive: true});
         }
 
         // ============ СКЛАД ============
         let cwc=null,og=new Set(),deletedProducts=[];
+        let qtyTimers = {};
 
         function whEnterSelectMode() { enterSelectMode('warehouse'); }
         function whExitSelectMode() { exitSelectMode('warehouse'); }
@@ -781,82 +581,66 @@
         function whIsSelectMode() { return SELECT_MODE_CONFIG.warehouse.selectMode; }
         function whGetSelectedIds() { return SELECT_MODE_CONFIG.warehouse.selectedIds; }
 
-        async function deleteSelectedProducts() {
-            const selectedIds = whGetSelectedIds();
-            if(selectedIds.size===0)return;
-            const confirmed = await showConfirm(`Удалить ${selectedIds.size} товаров?`, 'warning');
-            if(!confirmed)return;
-            vibrate([20,50,20]);
-            deletedProducts=[];
-            const wrappers = [];
-            for(const id of selectedIds){
-                const p=await db.g('products',id);
-                if(p){deletedProducts.push(p);}
-                const row = document.querySelector(`.product-row[data-pid="${id}"]`);
-                if (row && row.parentElement) { wrappers.push(row.parentElement); }
+        async function changeQuantity(pid, delta) {
+            const p = await db.g('products', pid);
+            if (!p) return;
+            const newQty = Math.max(0, (p.quantity || 0) + delta);
+            if (p.quantity === newQty) return;
+            p.quantity = newQty;
+            await db.pu('products', p);
+            // Обновляем только отображение количества в строке
+            const row = document.querySelector(`.product-row[data-pid="${pid}"]`);
+            if (row) {
+                const qtyVal = row.querySelector('.qty-value');
+                if (qtyVal) { qtyVal.textContent = newQty; qtyVal.classList.add('qty-pulse'); setTimeout(() => qtyVal.classList.remove('qty-pulse'), 300); }
+                const minusBtn = row.querySelector('.qty-btn.minus');
+                if (minusBtn) minusBtn.disabled = newQty <= 0;
             }
+        }
+
+        async function deleteSelectedProducts() {
+            const selectedIds = whGetSelectedIds(); if(selectedIds.size===0)return;
+            const confirmed = await showConfirm(`Удалить ${selectedIds.size} товаров?`, 'warning'); if(!confirmed)return;
+            vibrate([20,50,20]); deletedProducts=[]; const wrappers = [];
+            for(const id of selectedIds){ const p=await db.g('products',id); if(p){deletedProducts.push(p);} const row = document.querySelector(`.product-row[data-pid="${id}"]`); if (row && row.parentElement) wrappers.push(row.parentElement); }
             wrappers.forEach(w => w.classList.add('removing'));
-            setTimeout(async () => {
-                for(const p of deletedProducts){await db.del('products',p.id);}
-                whExitSelectMode();
-                await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
-                showSnackbar(`Удалено ${deletedProducts.length} товаров`, async()=>{
-                    for(const p of deletedProducts){const cp={...p};delete cp.id;await db.add('products',cp);}
-                    await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
-                    deletedProducts=[];
-                });
-            }, 450);
+            setTimeout(async () => { for(const p of deletedProducts){await db.del('products',p.id);} whExitSelectMode(); await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||''); showSnackbar(`Удалено ${deletedProducts.length} товаров`, async()=>{for(const p of deletedProducts){const cp={...p};delete cp.id;await db.add('products',cp);} await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||''); deletedProducts=[]; }); }, 450);
         }
 
         async function renderWarehouseCards(){
-            cwc=null;og=new Set();whExitSelectMode();
-            const ap=await db.all('products'); const counts={}; CATEGORIES.forEach(c=>counts[c]=ap.filter(p=>p.category===c).reduce((s,p)=>s+(p.quantity||0),0));
+            cwc=null;og=new Set();whExitSelectMode(); const ap=await db.all('products'); const counts={}; CATEGORIES.forEach(c=>counts[c]=ap.filter(p=>p.category===c).reduce((s,p)=>s+(p.quantity||0),0));
             document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Склад</h2><div class="warehouse-cards">${CATEGORIES.map(c=>`<div class="wh-card ${CATEGORY_CLASS[c]}" onclick="openWarehouseCategory('${c}')"><div class="wh-icon"><i class="bi ${CATEGORY_ICONS[c]}"></i></div><div class="wh-label">${CATEGORY_NAMES[c]}</div><div class="wh-count">${counts[c]} шт.</div></div>`).join('')}</div>`;
         }
         async function openWarehouseCategory(c){cwc=c;og=new Set();whExitSelectMode();await renderWarehouseTable(c);}
 
         function groupProductsNested(products, groupBy) {
-            if (groupBy.length === 0) return { _root: products };
-            const root = {};
-            products.forEach(p => {
-                let current = root;
-                for (let i = 0; i < groupBy.length; i++) {
-                    const field = groupBy[i];
-                    const key = norm(p[field]);
-                    if (!current[key]) current[key] = i === groupBy.length - 1 ? [] : {};
-                    if (i === groupBy.length - 1) { current[key].push(p); }
-                    else { current = current[key]; }
-                }
-            });
+            if (groupBy.length === 0) return { _root: products }; const root = {};
+            products.forEach(p => { let current = root; for (let i = 0; i < groupBy.length; i++) { const field = groupBy[i]; const key = norm(p[field]); if (!current[key]) current[key] = i === groupBy.length - 1 ? [] : {}; if (i === groupBy.length - 1) current[key].push(p); else current = current[key]; } });
             return root;
         }
 
         function getGroupId(cat,level,keys){return['grp',cat,...keys.slice(0,level+1)].join('_');}
 
         function buildAccordionHTML(groups, groupBy, level, cat, parentKeys) {
-            if (level >= groupBy.length) return '';
-            let h = '';
-            const entries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
-            const isLastLevel = (level + 1 >= groupBy.length);
+            if (level >= groupBy.length) return ''; let h = ''; const entries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0])); const isLastLevel = (level + 1 >= groupBy.length);
             entries.forEach(([key, value]) => {
-                const currentLevelKeys = [...parentKeys, key];
-                const gid = getGroupId(cat, level, currentLevelKeys);
-                const items = isLastLevel ? value : [];
-                const firstItem = isLastLevel ? value[0] : Object.values(value)[0]?.[0];
-                const fieldName = groupBy[level];
-                const label = firstItem ? firstItem[fieldName] : key;
-                const tab = level > 0 ? '&emsp;&emsp;' : '';
-                const ks = currentLevelKeys.join('|||');
-                const eb = isLastLevel ? `<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>` : '';
+                const currentLevelKeys = [...parentKeys, key]; const gid = getGroupId(cat, level, currentLevelKeys); const items = isLastLevel ? value : []; const firstItem = isLastLevel ? value[0] : Object.values(value)[0]?.[0]; const fieldName = groupBy[level]; const label = firstItem ? firstItem[fieldName] : key; const tab = level > 0 ? '&emsp;&emsp;' : ''; const ks = currentLevelKeys.join('|||'); const eb = isLastLevel ? `<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>` : '';
                 h += `<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;
-                if (!isLastLevel) {
-                    h += buildAccordionHTML(value, groupBy, level + 1, cat, currentLevelKeys);
-                } else {
+                if (!isLastLevel) { h += buildAccordionHTML(value, groupBy, level + 1, cat, currentLevelKeys); }
+                else {
                     const cols = CATEGORY_TABLE_COLS[cwc];
                     h += `<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col => `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
                     items.forEach(item => {
                         h += `<div class="product-row-wrapper"><div class="swipe-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="product-row" data-pid="${item.id}" ondblclick="if(!whIsSelectMode())editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="whToggleSelect(${item.id})" onclick="event.stopPropagation()"></div>`;
-                        cols.forEach(col => { let v = item[col] || ''; if (col === 'purchase' || col === 'selling') v = fn(v) + '₽'; h += `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`; });
+                        cols.forEach(col => {
+                            let v = item[col] || '';
+                            if (col === 'quantity') {
+                                h += `<div class="product-col qty"><div class="qty-controls"><button class="qty-btn minus" onclick="event.stopPropagation();changeQuantity(${item.id},-1)" ${(item.quantity||0)<=0?'disabled':''}>−</button><span class="qty-value">${item.quantity||0}</span><button class="qty-btn plus" onclick="event.stopPropagation();changeQuantity(${item.id},1)">+</button></div></div>`;
+                            } else {
+                                if (col === 'purchase' || col === 'selling') v = fn(v) + '₽';
+                                h += `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;
+                            }
+                        });
                         h += `<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;
                     });
                 }
@@ -871,49 +655,133 @@
         function setupWarehouseSwipe() {
             document.querySelectorAll('.product-row').forEach(row => {
                 setupLongPress(row, 'warehouse', (r) => parseInt(r.dataset.pid));
-                setupSwipe(row, 'warehouse', (r) => parseInt(r.dataset.pid), async (pid) => {
-                    const p = await db.g('products', pid);
-                    if (p) { deletedProducts = [p]; await db.del('products', pid); }
-                    await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || '');
-                    showSnackbar('Товар удалён', async () => {
-                        for (const pp of deletedProducts) { const cp = {...pp}; delete cp.id; await db.add('products', cp); }
-                        await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || '');
-                        deletedProducts = [];
-                    });
-                });
+                setupSwipe(row, 'warehouse', (r) => parseInt(r.dataset.pid), async (pid) => { const p = await db.g('products', pid); if (p) { deletedProducts = [p]; await db.del('products', pid); } await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || ''); showSnackbar('Товар удалён', async () => { for (const pp of deletedProducts) { const cp = {...pp}; delete cp.id; await db.add('products', cp); } await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || ''); deletedProducts = []; }); });
             });
         }
 
         async function renderWarehouseTable(cat, sq = '') {
-            cwc = cat;
-            const ap = await db.all('products');
-            let pr = ap.filter(p => p.category === cat);
+            cwc = cat; const ap = await db.all('products'); let pr = ap.filter(p => p.category === cat);
             if (sq) { const q = sq.toLowerCase(); pr = pr.filter(p => CATEGORY_TABLE_COLS[cat].some(c => (p[c] || '').toString().toLowerCase().includes(q)) || (p.manufacturer || '').toLowerCase().includes(q) || (p.lineup || '').toLowerCase().includes(q)); og = new Set(); }
-            const gb = CATEGORY_GROUPS[cat];
-            const g = groupProductsNested(pr, gb);
+            const gb = CATEGORY_GROUPS[cat]; const g = groupProductsNested(pr, gb);
             document.getElementById('contentBody').innerHTML = `<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onWarehouseSearch(this.value)">${pr.length === 0 ? '<p class="text-center text-muted py-4">Нет товаров</p>' : buildAccordionHTML(g, gb, 0, cat, [])}</div>`;
-            setTimeout(() => {
-                if (og.size > 0) restoreOpenGroups();
-                else { const bodies = document.querySelectorAll('.accordion-body'); if (bodies.length === 1) { const gid = bodies[0].id; bodies[0].classList.add('open'); const hdr = document.getElementById('hdr_' + gid); if (hdr) hdr.classList.add('open'); og.add(gid); } }
-                if (whIsSelectMode()) whUpdateSelectUI();
-                setupWarehouseSwipe();
-            }, 50);
+            setTimeout(() => { if (og.size > 0) restoreOpenGroups(); else { const bodies = document.querySelectorAll('.accordion-body'); if (bodies.length === 1) { const gid = bodies[0].id; bodies[0].classList.add('open'); const hdr = document.getElementById('hdr_' + gid); if (hdr) hdr.classList.add('open'); og.add(gid); } } if (whIsSelectMode()) whUpdateSelectUI(); setupWarehouseSwipe(); }, 50);
         }
         function onWarehouseSearch(v) { renderWarehouseTable(cwc, v); }
         async function copyProduct(pid) { const p = await db.g('products', pid); if (!p) return; const cp = {...p}; delete cp.id; const nid = await db.add('products', cp); await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || ''); setTimeout(() => { const r = document.querySelector(`.product-row[data-pid="${nid}"]`); if (r) r.classList.add('pop-anim'); }, 100); }
         document.addEventListener('click', function(e) { const btn = e.target.closest('.group-edit-btn'); if (!btn) return; e.stopPropagation(); e.preventDefault(); const cat = btn.getAttribute('data-cat'); const ks = btn.getAttribute('data-keys'); if (!cat || !ks) return; showGroupEditModal(cat, ks.split('|||')); });
         async function showGroupEditModal(cat, cks) { const gb = CATEGORY_GROUPS[cat]; const ap = await db.all('products'); const cp = ap.filter(p => p.category === cat); const flt = cp.filter(p => cks.every((k, i) => norm(p[gb[i]]) === k)); if (flt.length === 0) { await showAlert('Нет товаров в группе', 'error'); return; } const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)'; showModal('Изменить цены', 'bi bi-tags', color, `<p class="text-muted mb-3">Группа: <strong>${cks.join(' → ')}</strong> (${flt.length} шт.)</p><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="grp_purchase" placeholder="Не менять"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="grp_selling" placeholder="Не менять"></div><input type="hidden" id="grp_cat" value="${cat}"><input type="hidden" id="grp_keys" value="${cks.join('|||')}">`, `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveGroupEdit()">Применить</button>`); }
         async function saveGroupEdit() { const cat = document.getElementById('grp_cat').value; const ks = document.getElementById('grp_keys').value.split('|||'); const pv = document.getElementById('grp_purchase').value; const sv = document.getElementById('grp_selling').value; const gb = CATEGORY_GROUPS[cat]; const ap = await db.all('products'); const cp = ap.filter(p => p.category === cat); const flt = cp.filter(p => ks.every((k, i) => norm(p[gb[i]]) === k)); for (const p of flt) { if (pv !== '') p.purchase = parseInt(pv) || 0; if (sv !== '') p.selling = parseInt(sv) || 0; await db.pu('products', p); } closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || ''); }
-        function getProductFormHTML(p = null) { const cat = cwc; const ex = CATEGORY_EXTRA_FIELDS[cat]; return `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${p?.manufacturer || ''}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${p?.lineup || ''}"></div>${ex.map(e => `<div class="form-group"><label class="form-label">${e.label}</label><input type="text" class="form-input" id="prod_${e.key}" value="${p?.[e.key] || ''}"></div>`).join('')}<div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="prod_quantity" value="${p?.quantity || 0}" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value="${p?.purchase || ''}"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value="${p?.selling || ''}"></div><input type="hidden" id="prod_id" value="${p?.id || ''}">`; }
-        async function saveProduct() { const cat = cwc; const ex = CATEGORY_EXTRA_FIELDS[cat]; const id = document.getElementById('prod_id').value; const p = {category: cat, manufacturer: document.getElementById('prod_manufacturer').value.trim(), lineup: document.getElementById('prod_lineup').value.trim(), quantity: parseInt(document.getElementById('prod_quantity').value) || 0, purchase: parseInt(document.getElementById('prod_purchase').value) || 0, selling: parseInt(document.getElementById('prod_selling').value) || 0}; ex.forEach(e => p[e.key] = document.getElementById('prod_' + e.key).value.trim()); if (!p.manufacturer) { await showAlert('Введите производителя', 'error'); return; } const isNew = !id; if (id) { p.id = parseInt(id); await db.pu('products', p); } else { const nid = await db.add('products', p); p.id = nid; } closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || ''); if (isNew) setTimeout(() => { const r = document.querySelector(`.product-row[data-pid="${p.id}"]`); if (r) r.classList.add('pop-anim'); }, 100); }
-        function showAddProductModal() { const cat = cwc; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)'; showModal('Добавить товар', 'bi ' + CATEGORY_ICONS[cat], color, getProductFormHTML(), `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`); }
-        async function editProduct(pid) { const p = await db.g('products', pid); if (!p) return; cwc = p.category; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[p.category]).trim() || 'var(--accent)'; showModal('Редактировать товар', 'bi ' + CATEGORY_ICONS[p.category], color, getProductFormHTML(p), `<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`); }
+
+        // ============ ФОРМА ДОБАВЛЕНИЯ ТОВАРА (ОБЫЧНАЯ + МАССОВАЯ) ============
+        let addProductMode = 'single'; // 'single' | 'mass'
+
+        function getProductFormHTML(p = null) {
+            const cat = cwc; const ex = CATEGORY_EXTRA_FIELDS[cat];
+            if (addProductMode === 'mass') {
+                // Массовый режим
+                const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
+                return `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${p?.manufacturer||''}"></div>
+                <div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${p?.lineup||''}"></div>
+                <div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="prod_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div>
+                <p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p>
+                <div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="prod_quantity" value="0" min="0"></div>
+                <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value=""></div>
+                <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value=""></div>
+                <input type="hidden" id="prod_id" value="">`;
+            }
+            // Обычный режим
+            return `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${p?.manufacturer||''}"></div>
+            <div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${p?.lineup||''}"></div>
+            ${ex.map(e=>`<div class="form-group"><label class="form-label">${e.label}</label><input type="text" class="form-input" id="prod_${e.key}" value="${p?.[e.key]||''}"></div>`).join('')}
+            <div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="prod_quantity" value="${p?.quantity||0}" min="0"></div>
+            <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value="${p?.purchase||''}"></div>
+            <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value="${p?.selling||''}"></div>
+            <input type="hidden" id="prod_id" value="${p?.id||''}">`;
+        }
+
+        function updateMassPreview() {
+            const flavorsEl = document.getElementById('prod_flavors');
+            const previewEl = document.getElementById('mass_preview');
+            if (!flavorsEl || !previewEl) return;
+            const lines = flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);
+            previewEl.textContent = `Будет создано: ${lines.length} товаров`;
+        }
+
+        function renderAddProductForm() {
+            const cat = cwc; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)';
+            const isMass = addProductMode === 'mass';
+            const titleIcon = isMass ? 'bi bi-stack' : 'bi ' + CATEGORY_ICONS[cat];
+            const title = isMass ? 'Массовое добавление' : 'Добавить товар';
+            showModal(title, titleIcon, color, getProductFormHTML(),
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`
+            );
+            // Добавляем кнопку переключения режима в заголовок
+            setTimeout(() => {
+                const header = document.querySelector('.modal-header-custom');
+                if (header) {
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.className = 'mode-toggle-btn';
+                    toggleBtn.innerHTML = isMass ? '<i class="bi bi-pencil"></i>' : '<i class="bi bi-stack"></i>';
+                    toggleBtn.title = isMass ? 'Одиночный режим' : 'Массовый режим';
+                    toggleBtn.onclick = () => { addProductMode = isMass ? 'single' : 'mass'; renderAddProductForm(); };
+                    header.appendChild(toggleBtn);
+                }
+                if (isMass) {
+                    const flavorsEl = document.getElementById('prod_flavors');
+                    if (flavorsEl) { flavorsEl.addEventListener('input', updateMassPreview); updateMassPreview(); }
+                }
+            }, 50);
+        }
+
+        async function saveProduct() {
+            const cat = cwc; const ex = CATEGORY_EXTRA_FIELDS[cat]; const id = document.getElementById('prod_id').value;
+            const manufacturer = document.getElementById('prod_manufacturer').value.trim();
+            const lineup = document.getElementById('prod_lineup').value.trim();
+            const quantity = parseInt(document.getElementById('prod_quantity').value) || 0;
+            const purchase = parseInt(document.getElementById('prod_purchase').value) || 0;
+            const selling = parseInt(document.getElementById('prod_selling').value) || 0;
+            if (!manufacturer) { await showAlert('Введите производителя', 'error'); return; }
+
+            if (addProductMode === 'mass') {
+                const flavorsEl = document.getElementById('prod_flavors');
+                const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0) : [];
+                if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; }
+                const extraKey = ex[0]?.key || 'lineup';
+                let created = 0, skipped = 0;
+                for (const flavor of flavors) {
+                    // Проверяем существование
+                    const allP = await db.all('products');
+                    const exists = allP.some(p => p.category === cat && norm(p.manufacturer) === norm(manufacturer) && norm(p.lineup) === norm(lineup) && norm(p[extraKey]) === norm(flavor));
+                    if (exists) { skipped++; continue; }
+                    const p = { category: cat, manufacturer, lineup, quantity, purchase, selling };
+                    ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : '');
+                    const nid = await db.add('products', p);
+                    created++;
+                }
+                closeModal();
+                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+                let msg = `Создано ${created} товаров`;
+                if (skipped > 0) msg += `, пропущено ${skipped} (уже есть)`;
+                showSnackbar(msg);
+            } else {
+                // Обычный режим
+                const p = { category: cat, manufacturer, lineup, quantity, purchase, selling };
+                ex.forEach(e => p[e.key] = document.getElementById('prod_' + e.key).value.trim());
+                const isNew = !id;
+                if (id) { p.id = parseInt(id); await db.pu('products', p); }
+                else { const nid = await db.add('products', p); p.id = nid; }
+                closeModal();
+                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+                if (isNew) setTimeout(() => { const r = document.querySelector(`.product-row[data-pid="${p.id}"]`); if (r) r.classList.add('pop-anim'); }, 100);
+            }
+        }
+
+        function showAddProductModal() { addProductMode = 'single'; renderAddProductForm(); }
+        async function editProduct(pid) { const p = await db.g('products', pid); if (!p) return; addProductMode = 'single'; cwc = p.category; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[p.category]).trim() || 'var(--accent)'; showModal('Редактировать товар', 'bi ' + CATEGORY_ICONS[p.category], color, getProductFormHTML(p), `<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`); }
         async function deleteProduct(pid) { const confirmed = await showConfirm('Удалить товар?', 'warning'); if (!confirmed) return; await db.del('products', pid); closeModal(); await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || ''); }
 
         // ============ ПРОДАЖИ ============
-        let salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''},deletedSales=[],salesPage=1;
-        const PAGE_SIZE=10;
-
+        let salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''},deletedSales=[],salesPage=1; const PAGE_SIZE=10;
         function salesEnterSelectMode() { enterSelectMode('sales'); }
         function salesExitSelectMode() { exitSelectMode('sales'); }
         function salesToggleSelect(id) { toggleSelectItem('sales', id); }
@@ -921,80 +789,13 @@
         function salesIsSelectMode() { return SELECT_MODE_CONFIG.sales.selectMode; }
         function salesGetSelectedIds() { return SELECT_MODE_CONFIG.sales.selectedIds; }
 
-        async function deleteSelectedSales() {
-            const selectedIds = salesGetSelectedIds();
-            if (selectedIds.size === 0) return;
-            const confirmed = await showConfirm(`Удалить ${selectedIds.size} продаж?`, 'warning');
-            if (!confirmed) return;
-            vibrate([20, 50, 20]);
-            deletedSales = [];
-            const wrappers = [];
-            for (const id of selectedIds) {
-                const s = await db.g('sales', id);
-                if (s) { deletedSales.push(s); }
-                const row = document.querySelector(`.sale-row[data-sid="${id}"]`);
-                if (row && row.parentElement) wrappers.push(row.parentElement);
-            }
-            wrappers.forEach(w => w.classList.add('removing'));
-            setTimeout(async () => {
-                for (const s of deletedSales) { await db.del('sales', s.id); }
-                salesExitSelectMode();
-                await renderSalesTable();
-                showSnackbar(`Удалено ${deletedSales.length} продаж`, async () => { for (const s of deletedSales) { const cp = {...s}; delete cp.id; await db.add('sales', cp); } await renderSalesTable(); deletedSales = []; });
-            }, 450);
-        }
-
-        async function getFilteredSales() {
-            let sales = await db.all('sales');
-            if (salesFilter.client) { const q = salesFilter.client.toLowerCase(); sales = sales.filter(s => (s.client || '').toLowerCase().includes(q)); }
-            if (salesFilter.product) { const q = salesFilter.product.toLowerCase(); sales = sales.filter(s => (s.product || '').toLowerCase().includes(q)); }
-            if (salesFilter.dateFrom) { sales = sales.filter(s => s.date >= salesFilter.dateFrom); }
-            if (salesFilter.dateTo) { sales = sales.filter(s => s.date <= salesFilter.dateTo); }
-            if (salesFilter.note) { sales = sales.filter(s => (s.note || '') === salesFilter.note); }
-            sales.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
-            return sales;
-        }
+        async function deleteSelectedSales() { const selectedIds = salesGetSelectedIds(); if (selectedIds.size === 0) return; const confirmed = await showConfirm(`Удалить ${selectedIds.size} продаж?`, 'warning'); if (!confirmed) return; vibrate([20, 50, 20]); deletedSales = []; const wrappers = []; for (const id of selectedIds) { const s = await db.g('sales', id); if (s) { deletedSales.push(s); } const row = document.querySelector(`.sale-row[data-sid="${id}"]`); if (row && row.parentElement) wrappers.push(row.parentElement); } wrappers.forEach(w => w.classList.add('removing')); setTimeout(async () => { for (const s of deletedSales) { await db.del('sales', s.id); } salesExitSelectMode(); await renderSalesTable(); showSnackbar(`Удалено ${deletedSales.length} продаж`, async () => { for (const s of deletedSales) { const cp = {...s}; delete cp.id; await db.add('sales', cp); } await renderSalesTable(); deletedSales = []; }); }, 450); }
+        async function getFilteredSales() { let sales = await db.all('sales'); if (salesFilter.client) { const q = salesFilter.client.toLowerCase(); sales = sales.filter(s => (s.client || '').toLowerCase().includes(q)); } if (salesFilter.product) { const q = salesFilter.product.toLowerCase(); sales = sales.filter(s => (s.product || '').toLowerCase().includes(q)); } if (salesFilter.dateFrom) { sales = sales.filter(s => s.date >= salesFilter.dateFrom); } if (salesFilter.dateTo) { sales = sales.filter(s => s.date <= salesFilter.dateTo); } if (salesFilter.note) { sales = sales.filter(s => (s.note || '') === salesFilter.note); } sales.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id); return sales; }
         function hasActiveFilters() { return !!(salesFilter.client || salesFilter.product || salesFilter.dateFrom || salesFilter.dateTo || salesFilter.note); }
 
-        function setupSalesSwipe() {
-            document.querySelectorAll('.sale-row').forEach(row => {
-                setupLongPress(row, 'sales', (r) => parseInt(r.dataset.sid));
-                setupSwipe(row, 'sales', (r) => parseInt(r.dataset.sid), async (sid) => {
-                    const s = await db.g('sales', sid);
-                    if (s) { deletedSales = [s]; await db.del('sales', sid); }
-                    await renderSalesTable();
-                    showSnackbar('Продажа удалена', async () => { for (const ds of deletedSales) { const cp = {...ds}; delete cp.id; await db.add('sales', cp); } await renderSalesTable(); deletedSales = []; });
-                });
-            });
-        }
+        function setupSalesSwipe() { document.querySelectorAll('.sale-row').forEach(row => { setupLongPress(row, 'sales', (r) => parseInt(r.dataset.sid)); setupSwipe(row, 'sales', (r) => parseInt(r.dataset.sid), async (sid) => { const s = await db.g('sales', sid); if (s) { deletedSales = [s]; await db.del('sales', sid); } await renderSalesTable(); showSnackbar('Продажа удалена', async () => { for (const ds of deletedSales) { const cp = {...ds}; delete cp.id; await db.add('sales', cp); } await renderSalesTable(); deletedSales = []; }); }); }); }
 
-        async function renderSalesTable() {
-            const allSales = await getFilteredSales();
-            const totalPages = Math.ceil(allSales.length / PAGE_SIZE) || 1;
-            if (salesPage > totalPages) salesPage = totalPages;
-            const start = (salesPage - 1) * PAGE_SIZE;
-            const pageSales = allSales.slice(start, start + PAGE_SIZE);
-            const filterActive = hasActiveFilters();
-            const filterBtnClass = filterActive ? 'active' : 'filter';
-            let paginationHTML = '';
-            if (totalPages > 1) {
-                paginationHTML = `<div class="pagination"><button onclick="goToSalesPage(${salesPage - 1})" ${salesPage <= 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
-                for (let i = 1; i <= totalPages; i++) {
-                    if (i === 1 || i === totalPages || (i >= salesPage - 1 && i <= salesPage + 1)) {
-                        paginationHTML += `<button class="${i === salesPage ? 'active' : ''}" onclick="goToSalesPage(${i})">${i}</button>`;
-                    } else if (i === salesPage - 2 || i === salesPage + 2) { paginationHTML += `<span class="page-info">...</span>`; }
-                }
-                paginationHTML += `<button onclick="goToSalesPage(${salesPage + 1})" ${salesPage >= totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;
-            }
-            document.getElementById('contentBody').innerHTML = `<h2 class="tab-title" onclick="openSidebar()">Продажи</h2><div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterBtnClass}" onclick="showFilterModal()"><i class="bi bi-funnel"></i> Фильтры</button>${filterActive ? `<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i> Сбросить</button>` : ''}</div><button class="round-add-btn" onclick="showAddSaleModal()">+</button></div><div class="sales-table-section"><div class="wh-header"><span style="font-weight:600;">${allSales.length} продаж</span><div class="wh-header-actions"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="salesExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash"></i> Удалить</button></div></div><div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length === 0 ? '<p class="text-center text-muted py-4">Нет продаж</p>' : pageSales.map(s => {
-                let noteClass = ''; if (s.note === 'бронь') noteClass = 'booking'; else if (s.note === 'долг') noteClass = 'debt'; else if (s.note === 'приз') noteClass = 'prize';
-                return `<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesIsSelectMode())editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="salesToggleSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client || '-'}</div><div class="sale-col">${s.product || '-'}</div><div class="sale-col qty">${s.quantity || 0}</div><div class="sale-col price">${fn(s.total || 0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note || '-'}</div></div></div>`;
-            }).join('')}${paginationHTML}</div>`;
-            setTimeout(() => {
-                if (salesIsSelectMode()) salesUpdateSelectUI();
-                setupSalesSwipe();
-            }, 50);
-        }
+        async function renderSalesTable() { const allSales = await getFilteredSales(); const totalPages = Math.ceil(allSales.length / PAGE_SIZE) || 1; if (salesPage > totalPages) salesPage = totalPages; const start = (salesPage - 1) * PAGE_SIZE; const pageSales = allSales.slice(start, start + PAGE_SIZE); const filterActive = hasActiveFilters(); const filterBtnClass = filterActive ? 'active' : 'filter'; let paginationHTML = ''; if (totalPages > 1) { paginationHTML = `<div class="pagination"><button onclick="goToSalesPage(${salesPage - 1})" ${salesPage <= 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`; for (let i = 1; i <= totalPages; i++) { if (i === 1 || i === totalPages || (i >= salesPage - 1 && i <= salesPage + 1)) { paginationHTML += `<button class="${i === salesPage ? 'active' : ''}" onclick="goToSalesPage(${i})">${i}</button>`; } else if (i === salesPage - 2 || i === salesPage + 2) { paginationHTML += `<span class="page-info">...</span>`; } } paginationHTML += `<button onclick="goToSalesPage(${salesPage + 1})" ${salesPage >= totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`; } document.getElementById('contentBody').innerHTML = `<h2 class="tab-title" onclick="openSidebar()">Продажи</h2><div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterBtnClass}" onclick="showFilterModal()"><i class="bi bi-funnel"></i> Фильтры</button>${filterActive ? `<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i> Сбросить</button>` : ''}</div><button class="round-add-btn" onclick="showAddSaleModal()">+</button></div><div class="sales-table-section"><div class="wh-header"><span style="font-weight:600;">${allSales.length} продаж</span><div class="wh-header-actions"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="salesExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash"></i> Удалить</button></div></div><div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length === 0 ? '<p class="text-center text-muted py-4">Нет продаж</p>' : pageSales.map(s => { let noteClass = ''; if (s.note === 'бронь') noteClass = 'booking'; else if (s.note === 'долг') noteClass = 'debt'; else if (s.note === 'приз') noteClass = 'prize'; return `<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesIsSelectMode())editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="salesToggleSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client || '-'}</div><div class="sale-col">${s.product || '-'}</div><div class="sale-col qty">${s.quantity || 0}</div><div class="sale-col price">${fn(s.total || 0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note || '-'}</div></div></div>`; }).join('')}${paginationHTML}</div>`; setTimeout(() => { if (salesIsSelectMode()) salesUpdateSelectUI(); setupSalesSwipe(); }, 50); }
         function goToSalesPage(p) { salesPage = p; renderSalesTable(); }
         function showFilterModal() { showModal('Фильтры', 'bi bi-funnel', 'var(--accent)', `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="flt_client" value="${salesFilter.client}" placeholder="Любое"></div><div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="flt_product" value="${salesFilter.product}" placeholder="Любой"></div><div class="form-group"><label class="form-label">Дата с</label><input type="date" class="form-input" id="flt_dateFrom" value="${salesFilter.dateFrom}"></div><div class="form-group"><label class="form-label">Дата по</label><input type="date" class="form-input" id="flt_dateTo" value="${salesFilter.dateTo}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="flt_note"><option value="">Все</option><option value="бронь" ${salesFilter.note === 'бронь' ? 'selected' : ''}>Бронь</option><option value="долг" ${salesFilter.note === 'долг' ? 'selected' : ''}>Долг</option><option value="приз" ${salesFilter.note === 'приз' ? 'selected' : ''}>Приз</option><option value="без заметки" ${salesFilter.note === 'без заметки' ? 'selected' : ''}>Без заметки</option></select></div>`, `<button class="btn btn-reset" onclick="resetFilters()">Сброс</button><button class="btn btn-save" onclick="applyFilters()">Применить</button>`); }
         function resetFilters() { salesFilter = {client: '', product: '', dateFrom: '', dateTo: '', note: ''}; salesPage = 1; closeModal(); renderSalesTable(); }
@@ -1003,7 +804,7 @@
         function setupComboBox(inputId, dropdownId, options) { const input = document.getElementById(inputId); const dropdown = document.getElementById(dropdownId); if (!input || !dropdown) return; input.addEventListener('input', () => { const val = input.value.toLowerCase(); let visible = 0; dropdown.querySelectorAll('.combo-option').forEach(opt => { if (val === '' || opt.textContent.toLowerCase().includes(val)) { opt.style.display = 'block'; visible++; } else { opt.style.display = 'none'; } }); dropdown.classList.toggle('open', visible > 0 && document.activeElement === input); }); input.addEventListener('focus', () => { const val = input.value.toLowerCase(); let visible = 0; dropdown.querySelectorAll('.combo-option').forEach(opt => { if (val === '' || opt.textContent.toLowerCase().includes(val)) { opt.style.display = 'block'; visible++; } else { opt.style.display = 'none'; } }); dropdown.classList.toggle('open', visible > 0); }); input.addEventListener('blur', () => { setTimeout(() => dropdown.classList.remove('open'), 200); }); dropdown.querySelectorAll('.combo-option').forEach(opt => { opt.addEventListener('click', () => { input.value = opt.textContent; dropdown.classList.remove('open'); onProductChange(input.value); }); }); }
         let saleAutoCalc = true; let saleUnitPrice = 0; let saleUnitCost = 0;
         function recalcTotal() { if (!saleAutoCalc) return; const qty = parseInt(document.getElementById('sale_quantity').value) || 1; const totalInput = document.getElementById('sale_total'); const note = document.getElementById('sale_note').value; if (note === 'приз') { totalInput.value = '0'; return; } totalInput.value = saleUnitPrice * qty; }
-        async function onProductChange(val) { const totalInput = document.getElementById('sale_total'); if (val) { const found = await findProductByName(val); if (found && found.selling) { saleUnitPrice = found.selling; saleUnitCost = found.purchase || 0; saleAutoCalc = true; recalcTotal(); } } }
+        async function onProductChange(val) { if (val) { const found = await findProductByName(val); if (found && found.selling) { saleUnitPrice = found.selling; saleUnitCost = found.purchase || 0; saleAutoCalc = true; recalcTotal(); } } }
         function onSaleNoteChange() { const note = document.getElementById('sale_note').value; const totalInput = document.getElementById('sale_total'); if (note === 'приз') { totalInput.value = '0'; totalInput.disabled = true; saleAutoCalc = false; } else { totalInput.disabled = false; saleAutoCalc = true; recalcTotal(); } }
         async function showAddSaleModal(sale = null) { const isEdit = !!sale; saleAutoCalc = !isEdit; if (isEdit) { const found = await findProductByName(sale.product); saleUnitPrice = found ? found.selling : (sale.quantity > 0 ? Math.round(sale.total / sale.quantity) : 0); saleUnitCost = found ? found.purchase || 0 : 0; } else { saleUnitPrice = 0; saleUnitCost = 0; } const productList = await getProductListForSelect(); const productOptions = productList.map(p => `<div class="combo-option">${p}</div>`).join(''); showModal(isEdit ? 'Редактировать продажу' : 'Добавить продажу', 'bi bi-cart3', 'var(--accent)', `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="sale_client" value="${sale?.client || ''}"></div><div class="form-group"><label class="form-label">Товар</label><div class="combo-box"><input type="text" class="form-input" id="sale_product" value="${sale?.product || ''}" placeholder="Начните вводить..." autocomplete="off"><i class="bi bi-chevron-down combo-arrow"></i><div class="combo-dropdown" id="combo_dropdown">${productOptions}</div></div></div><div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="sale_quantity" value="${sale?.quantity || 1}" min="1" onchange="recalcTotal()" oninput="saleAutoCalc=true;recalcTotal()"></div><div class="form-group"><label class="form-label">Сумма (₽)</label><input type="number" class="form-input" id="sale_total" value="${sale?.total || ''}" ${sale?.note === 'приз' ? 'disabled' : ''} oninput="saleAutoCalc=false"></div><div class="form-group"><label class="form-label">Дата</label><input type="date" class="form-input" id="sale_date" value="${sale?.date || new Date().toISOString().split('T')[0]}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="sale_note" onchange="onSaleNoteChange()"><option value="без заметки" ${(sale?.note || 'без заметки') === 'без заметки' ? 'selected' : ''}>Без заметки</option><option value="бронь" ${sale?.note === 'бронь' ? 'selected' : ''}>Бронь</option><option value="долг" ${sale?.note === 'долг' ? 'selected' : ''}>Долг</option><option value="приз" ${sale?.note === 'приз' ? 'selected' : ''}>Приз</option></select></div><input type="hidden" id="sale_id" value="${sale?.id || ''}">`, `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>${isEdit ? `<button class="btn btn-delete" onclick="deleteSaleFromModal()">Удалить</button>` : ''}<button class="btn btn-save" onclick="saveSale()">Применить</button>`); setTimeout(() => { setupComboBox('sale_product', 'combo_dropdown', productList); }, 50); if (sale?.note === 'приз') { setTimeout(() => { const ti = document.getElementById('sale_total'); if (ti) { ti.value = '0'; ti.disabled = true; } }, 50); } }
         async function saveSale() { const id = document.getElementById('sale_id').value; const note = document.getElementById('sale_note').value; const product = document.getElementById('sale_product').value.trim(); const total = note === 'приз' ? 0 : (parseInt(document.getElementById('sale_total').value) || 0); const quantity = parseInt(document.getElementById('sale_quantity').value) || 1; const client = document.getElementById('sale_client').value.trim(); if (!client || !product) { await showAlert('Заполните имя и товар', 'error'); return; } const foundProduct = await findProductByName(product); if (!foundProduct) { await showAlert('Товар не найден в складе', 'error'); return; } const cost = (foundProduct.purchase || 0) * quantity; const profit = total - cost; const category = foundProduct.category || 'liquid'; const sale = {client: client, product: product, quantity: quantity, total: total, date: document.getElementById('sale_date').value, note: note === 'без заметки' ? '' : note, cost: cost, profit: profit, category: category, items: []}; if (!id && quantity > 0) { foundProduct.quantity = Math.max(0, (foundProduct.quantity || 0) - quantity); await db.pu('products', foundProduct); } if (id) { sale.id = parseInt(id); await db.pu('sales', sale); } else { await db.add('sales', sale); } await autoAddClient(client); closeModal(); salesPage = 1; await renderSalesTable(); }
@@ -1030,24 +831,7 @@
         async function deleteClient(clientId,clientName){const confirmed = await showConfirm(`Удалить клиента "${clientName}"? Продажи останутся.`, 'warning');if(!confirmed)return;await db.del('clients',clientId);closeModal();clientsPage=1;await renderClientsTable();}
 
         // ============ ВКЛАДКИ ============
-        async function switchTab(tab){
-            document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));
-            const body=document.getElementById('contentBody');
-            const tabNames = {'statistics':'statistics','warehouse':'warehouse','sales':'sales','clients':'clients'};
-            const skeletonType = tabNames[tab] || 'sales';
-            body.innerHTML = showSkeleton(skeletonType);
-            body.classList.remove('fade-in');
-            setTimeout(async()=>{
-                if(tab==='statistics')await renderStatistics(cp);
-                else if(tab==='warehouse')await renderWarehouseCards();
-                else if(tab==='sales')await renderSalesTable();
-                else if(tab==='clients')await renderClientsTable();
-                else body.innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Вкладка</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
-                body.classList.add('fade-in');
-            },250);
-            closeSidebar();
-        }
-
+        async function switchTab(tab){ document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab)); const body=document.getElementById('contentBody'); const tabNames = {'statistics':'statistics','warehouse':'warehouse','sales':'sales','clients':'clients'}; const skeletonType = tabNames[tab] || 'sales'; body.innerHTML = showSkeleton(skeletonType); body.classList.remove('fade-in'); setTimeout(async()=>{ if(tab==='statistics')await renderStatistics(cp); else if(tab==='warehouse')await renderWarehouseCards(); else if(tab==='sales')await renderSalesTable(); else if(tab==='clients')await renderClientsTable(); else body.innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Вкладка</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`; body.classList.add('fade-in'); },250); closeSidebar(); }
         async function init(){try{await db.init();await loadTheme();await renderStatistics('today');if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');}catch(e){console.error(e);}}
         document.addEventListener('DOMContentLoaded',init);
     </script>
