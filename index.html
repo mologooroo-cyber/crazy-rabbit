@@ -36,11 +36,11 @@
         .nav-item { display: flex; align-items: center; padding: 15px 20px; color: var(--text-primary); text-decoration: none; transition: all 0.3s ease; border-left: 4px solid transparent; margin: 5px 0; font-size: 16px; cursor: pointer; }
         .nav-item i { font-size: 20px; margin-right: 15px; width: 24px; text-align: center; }
         .nav-item.active { background: rgba(129,216,208,0.15); border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
-        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); }
-        .sidebar-footer-btn { width: 100%; padding: 12px; background: transparent; border: 2px solid var(--border); color: var(--text-secondary); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 600; margin-bottom: 8px; transition: all 0.2s ease; }
-        .sidebar-footer-btn:active { transform: scale(0.96); background: var(--border); }
-        .sidebar-footer-btn.export { border-color: var(--accent); color: var(--accent); }
-        .sidebar-footer-btn.export:active { background: var(--accent); color: white; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+        .sidebar-footer-icon-btn { flex: 1; padding: 10px; background: transparent; border: 2px solid var(--border); color: var(--text-secondary); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.2s ease; position: relative; }
+        .sidebar-footer-icon-btn:active { transform: scale(0.93); background: var(--border); }
+        .sidebar-footer-icon-btn.export-btn { border-color: var(--accent); color: var(--accent); }
+        .sidebar-footer-icon-btn.export-btn:active { background: var(--accent); color: white; }
         .main-content { padding: 20px 12px 20px; min-height: 100vh; }
         .tab-title { display: inline-block; font-weight: 700; padding-bottom: 10px; border-bottom: 3px solid var(--accent); margin-bottom: 20px; font-size: 22px; cursor: pointer; }
 
@@ -127,7 +127,8 @@
         .search-input:focus { border-color: var(--accent); }
 
         .accordion-group { margin-bottom: 8px; }
-        .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 15px; background: var(--bg-primary); border-radius: 10px; font-weight: 600; font-size: 14px; min-height: 48px; cursor: default; }
+        .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 15px; background: var(--bg-primary); border-radius: 10px; font-weight: 600; font-size: 14px; min-height: 48px; cursor: default; user-select: none; }
+        .accordion-header.pressing { filter: brightness(1.1); }
         .accordion-header-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; line-height: 1.2; }
         .accordion-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .accordion-header .accordion-arrow { transition: transform 0.3s ease; font-size: 13px; cursor: pointer; display: flex; align-items: center; }
@@ -294,8 +295,8 @@
                 <a class="nav-item" onclick="switchTab('clients')" data-tab="clients"><i class="bi bi-people"></i>Клиенты</a>
             </nav>
             <div class="sidebar-footer">
-                <button class="sidebar-footer-btn export" onclick="exportData()"><i class="bi bi-download"></i> Экспорт данных</button>
-                <button class="sidebar-footer-btn" onclick="importData()"><i class="bi bi-upload"></i> Импорт данных</button>
+                <button class="sidebar-footer-icon-btn export-btn" onclick="exportData()" title="Экспорт"><i class="bi bi-download"></i></button>
+                <button class="sidebar-footer-icon-btn" onclick="importData()" title="Импорт"><i class="bi bi-upload"></i></button>
             </div>
         </div>
     </div>
@@ -365,61 +366,9 @@
         function animateValue(element, start, end, duration, suffix) { if (start===end){element.textContent=fn(end)+suffix;return;} const startTime=performance.now(); function update(currentTime){const elapsed=currentTime-startTime;const progress=Math.min(elapsed/duration,1);const eased=1-Math.pow(1-progress,3);const current=Math.round(start+(end-start)*eased);element.textContent=fn(current)+suffix;if(progress<1)requestAnimationFrame(update);} requestAnimationFrame(update); }
 
         // ============ ЭКСПОРТ / ИМПОРТ ============
-        async function exportData() {
-            const products = await db.all('products');
-            const sales = await db.all('sales');
-            const clients = await db.all('clients');
-            const settings = await db.all('settings');
-            const data = { products, sales, clients, settings, exportedAt: new Date().toISOString() };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `crazy-rabbit-backup-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showSnackbar('Данные экспортированы');
-        }
-
-        function importData() {
-            document.getElementById('importFileInput').click();
-        }
-
-        async function handleFileImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            try {
-                const text = await file.text();
-                const data = JSON.parse(text);
-                if (!data.products && !data.sales && !data.clients) {
-                    await showAlert('Файл не содержит данных', 'error');
-                    event.target.value = '';
-                    return;
-                }
-                const confirmed = await showConfirm('Все текущие данные будут удалены и заменены данными из файла. Продолжить?', 'warning');
-                if (!confirmed) { event.target.value = ''; return; }
-                
-                // Очищаем все хранилища
-                await db.clear('products');
-                await db.clear('sales');
-                await db.clear('clients');
-                await db.clear('settings');
-                
-                // Загружаем данные
-                if (data.products) for (const p of data.products) { const cp = {...p}; delete cp.id; await db.add('products', cp); }
-                if (data.sales) for (const s of data.sales) { const cs = {...s}; delete cs.id; await db.add('sales', cs); }
-                if (data.clients) for (const c of data.clients) { const cc = {...c}; delete cc.id; await db.add('clients', cc); }
-                if (data.settings) for (const s of data.settings) { await db.pu('settings', s); }
-                
-                showSnackbar('Данные импортированы');
-                // Обновляем текущую вкладку
-                const activeTab = document.querySelector('.nav-item.active')?.dataset.tab || 'statistics';
-                await switchTab(activeTab);
-            } catch (e) {
-                await showAlert('Ошибка чтения файла. Проверьте формат JSON.', 'error');
-            }
-            event.target.value = '';
-        }
+        async function exportData() { const products = await db.all('products'); const sales = await db.all('sales'); const clients = await db.all('clients'); const settings = await db.all('settings'); const data = { products, sales, clients, settings, exportedAt: new Date().toISOString() }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `crazy-rabbit-backup-${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); showSnackbar('Данные экспортированы'); }
+        function importData() { document.getElementById('importFileInput').click(); }
+        async function handleFileImport(event) { const file = event.target.files[0]; if (!file) return; try { const text = await file.text(); const data = JSON.parse(text); if (!data.products && !data.sales && !data.clients) { await showAlert('Файл не содержит данных', 'error'); event.target.value = ''; return; } const confirmed = await showConfirm('Все текущие данные будут удалены и заменены данными из файла. Продолжить?', 'warning'); if (!confirmed) { event.target.value = ''; return; } await db.clear('products'); await db.clear('sales'); await db.clear('clients'); await db.clear('settings'); if (data.products) for (const p of data.products) { const cp = {...p}; delete cp.id; await db.add('products', cp); } if (data.sales) for (const s of data.sales) { const cs = {...s}; delete cs.id; await db.add('sales', cs); } if (data.clients) for (const c of data.clients) { const cc = {...c}; delete cc.id; await db.add('clients', cc); } if (data.settings) for (const s of data.settings) { await db.pu('settings', s); } showSnackbar('Данные импортированы'); const activeTab = document.querySelector('.nav-item.active')?.dataset.tab || 'statistics'; await switchTab(activeTab); } catch (e) { await showAlert('Ошибка чтения файла. Проверьте формат JSON.', 'error'); } event.target.value = ''; }
 
         // ============ СТАТИСТИКА ============
         let cp='today',ccm='sum',csd=null,ced=null;
@@ -485,16 +434,105 @@
         // ============ УНИВЕРСАЛЬНОЕ ДОЛГОЕ НАЖАТИЕ ============
         function setupLongPress(row,type,idGetter){let pressStartTime=0,animationFrame=null,isPressing=false;let touchStartX=0,touchStartY=0;function updateBrightness(){if(!isPressing)return;const elapsed=Date.now()-pressStartTime;const progress=Math.min(elapsed/1300,1);const brightness=1.0+(progress*0.1);row.style.filter=`brightness(${brightness})`;if(progress<1){animationFrame=requestAnimationFrame(updateBrightness);}else{row.style.filter='brightness(1.0)';row.classList.remove('pressing');vibrate(20);const cfg=getSelectConfig(type);if(!cfg.selectMode){enterSelectMode(type);const itemId=idGetter(row);toggleSelectItem(type,itemId);row.classList.add('selected');row.style.filter='brightness(1.15)';const cb=row.querySelector('.select-checkbox');if(cb)cb.checked=true;}isPressing=false;}}function startPress(e){const cfg=getSelectConfig(type);if(cfg.selectMode)return;if(e.target.closest('.copy-btn')||e.target.closest('.group-edit-btn')||e.target.closest('.select-checkbox')||e.target.closest('.qty-btn'))return;const touch=e.touches?e.touches[0]:e;touchStartX=touch.clientX;touchStartY=touch.clientY;pressStartTime=Date.now();isPressing=true;row.classList.add('pressing');row.style.filter='brightness(1.0)';animationFrame=requestAnimationFrame(updateBrightness);}function endPress(e){if(!isPressing)return;isPressing=false;if(animationFrame)cancelAnimationFrame(animationFrame);row.style.transition='filter 0.1s ease';row.style.filter='brightness(1.0)';row.classList.remove('pressing');setTimeout(()=>{row.style.transition='';},150);}function checkMove(e){if(!isPressing)return;const touch=e.touches?e.touches[0]:e;const cx=touch.clientX,cy=touch.clientY;if(Math.abs(cx-touchStartX)>8||Math.abs(cy-touchStartY)>8)endPress(e);}row.addEventListener('mousedown',startPress);row.addEventListener('mouseup',endPress);row.addEventListener('mouseleave',endPress);row.addEventListener('mousemove',checkMove);row.addEventListener('touchstart',startPress,{passive:true});row.addEventListener('touchend',endPress);row.addEventListener('touchcancel',endPress);row.addEventListener('touchmove',checkMove,{passive:true});}
 
-        // ============ ФУНКЦИЯ ПРОВЕРКИ ДУБЛИКАТОВ ============
-        async function isDuplicateProduct(cat, manufacturer, lineup, extraValue, excludeId = null) {
-            const allP = await db.all('products');
-            const ex = CATEGORY_EXTRA_FIELDS[cat];
-            const extraKey = ex[0]?.key || 'lineup';
-            return allP.some(p => {
-                if (excludeId && p.id === excludeId) return false;
-                return p.category === cat && norm(p.manufacturer) === norm(manufacturer) && norm(p.lineup) === norm(lineup) && norm(p[extraKey]) === norm(extraValue);
-            });
+        // ============ ДОЛГОЕ НАЖАТИЕ ДЛЯ ГРУППИРОВОК ============
+        function setupGroupLongPress(headerElement, cat, level, keys) {
+            let pressStartTime = 0, animationFrame = null, isPressing = false;
+            let touchStartX = 0, touchStartY = 0;
+
+            function updateBrightness() {
+                if (!isPressing) return;
+                const elapsed = Date.now() - pressStartTime;
+                const progress = Math.min(elapsed / 1300, 1);
+                const brightness = 1.0 + (progress * 0.1);
+                headerElement.style.filter = `brightness(${brightness})`;
+                if (progress < 1) {
+                    animationFrame = requestAnimationFrame(updateBrightness);
+                } else {
+                    headerElement.style.filter = 'brightness(1.0)';
+                    headerElement.classList.remove('pressing');
+                    vibrate(20);
+                    // Показываем модалку переименования
+                    showRenameGroupModal(cat, level, keys);
+                    isPressing = false;
+                }
+            }
+
+            function startPress(e) {
+                if (e.target.closest('.group-edit-btn') || e.target.closest('.accordion-arrow')) return;
+                const touch = e.touches ? e.touches[0] : e;
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                pressStartTime = Date.now();
+                isPressing = true;
+                headerElement.classList.add('pressing');
+                headerElement.style.filter = 'brightness(1.0)';
+                animationFrame = requestAnimationFrame(updateBrightness);
+            }
+
+            function endPress(e) {
+                if (!isPressing) return;
+                isPressing = false;
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+                headerElement.style.transition = 'filter 0.1s ease';
+                headerElement.style.filter = 'brightness(1.0)';
+                headerElement.classList.remove('pressing');
+                setTimeout(() => { headerElement.style.transition = ''; }, 150);
+            }
+
+            function checkMove(e) {
+                if (!isPressing) return;
+                const touch = e.touches ? e.touches[0] : e;
+                const cx = touch.clientX, cy = touch.clientY;
+                if (Math.abs(cx - touchStartX) > 8 || Math.abs(cy - touchStartY) > 8) endPress(e);
+            }
+
+            headerElement.addEventListener('mousedown', startPress);
+            headerElement.addEventListener('mouseup', endPress);
+            headerElement.addEventListener('mouseleave', endPress);
+            headerElement.addEventListener('mousemove', checkMove);
+            headerElement.addEventListener('touchstart', startPress, {passive: true});
+            headerElement.addEventListener('touchend', endPress);
+            headerElement.addEventListener('touchcancel', endPress);
+            headerElement.addEventListener('touchmove', checkMove, {passive: true});
         }
+
+        async function showRenameGroupModal(cat, level, keys) {
+            const gb = CATEGORY_GROUPS[cat];
+            const fieldName = gb[level];
+            const fieldLabel = COL_LABELS[fieldName] || fieldName;
+            const oldValue = keys[keys.length - 1];
+            showModal('Переименовать группу', 'bi bi-pencil', 'var(--accent)',
+                `<div class="form-group"><label class="form-label">${fieldLabel}</label><input type="text" class="form-input" id="rename_group_value" value="${oldValue}"></div><p class="text-muted" style="font-size:13px;">Изменения будут применены ко всем товарам в группе</p>`,
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveRenameGroup('${cat}',${level},'${keys.join('|||')}')">Сохранить</button>`
+            );
+        }
+
+        async function saveRenameGroup(cat, level, keysStr) {
+            const keys = keysStr.split('|||');
+            const newValue = document.getElementById('rename_group_value').value.trim();
+            if (!newValue) { await showAlert('Введите название', 'error'); return; }
+            const gb = CATEGORY_GROUPS[cat];
+            const fieldName = gb[level];
+            const allP = await db.all('products');
+            const toUpdate = allP.filter(p => {
+                if (p.category !== cat) return false;
+                return keys.every((k, i) => norm(p[gb[i]]) === k);
+            });
+            for (const p of toUpdate) {
+                p[fieldName] = newValue;
+                await db.pu('products', p);
+            }
+            closeModal();
+            // Обновляем аккордеон, сохраняя открытые группы
+            const openGroups = new Set(og);
+            await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+            // Восстанавливаем открытые группы (структура изменилась, но пробуем)
+            setTimeout(() => restoreOpenGroups(), 100);
+            showSnackbar(`Обновлено ${toUpdate.length} товаров`);
+        }
+
+        // ============ ФУНКЦИЯ ПРОВЕРКИ ДУБЛИКАТОВ ============
+        async function isDuplicateProduct(cat, manufacturer, lineup, extraValue, excludeId = null) { const allP = await db.all('products'); const ex = CATEGORY_EXTRA_FIELDS[cat]; const extraKey = ex[0]?.key || 'lineup'; return allP.some(p => { if (excludeId && p.id === excludeId) return false; return p.category === cat && norm(p.manufacturer) === norm(manufacturer) && norm(p.lineup) === norm(lineup) && norm(p[extraKey]) === norm(extraValue); }); }
 
         // ============ СКЛАД ============
         let cwc=null,og=new Set(),deletedProducts=[];
@@ -510,12 +548,23 @@
         function groupProductsNested(products,groupBy){if(groupBy.length===0)return{_root:products};const root={};products.forEach(p=>{let current=root;for(let i=0;i<groupBy.length;i++){const field=groupBy[i];const key=norm(p[field]);if(!current[key])current[key]=i===groupBy.length-1?[]:{};if(i===groupBy.length-1)current[key].push(p);else current=current[key];}});return root;}
         function getGroupId(cat,level,keys){return['grp',cat,...keys.slice(0,level+1)].join('_');}
 
-        function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){if(level>=groupBy.length)return'';let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));const isLastLevel=(level+1>=groupBy.length);entries.forEach(([key,value])=>{const currentLevelKeys=[...parentKeys,key];const gid=getGroupId(cat,level,currentLevelKeys);const items=isLastLevel?value:[];const firstItem=isLastLevel?value[0]:Object.values(value)[0]?.[0];const fieldName=groupBy[level];const label=firstItem?firstItem[fieldName]:key;const tab=level>0?'&emsp;&emsp;':'';const ks=currentLevelKeys.join('|||');const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';h+=`<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;if(!isLastLevel){h+=buildAccordionHTML(value,groupBy,level+1,cat,currentLevelKeys);}else{const cols=CATEGORY_TABLE_COLS[cwc];h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;items.forEach(item=>{h+=`<div class="product-row-wrapper${(item.quantity||0)<=0?' out-of-stock':''}"><div class="swipe-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="product-row" data-pid="${item.id}" ondblclick="if(!whIsSelectMode())editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="whToggleSelect(${item.id})" onclick="event.stopPropagation()"></div>`;cols.forEach(col=>{let v=item[col]||'';if(col==='quantity'){h+=`<div class="product-col qty"><div class="qty-controls"><button class="qty-btn minus" onclick="event.stopPropagation();changeQuantity(${item.id},-1)" style="opacity:${(item.quantity||0)<=0?'0':'1'}">−</button><span class="qty-value">${item.quantity||0}</span><button class="qty-btn plus" onclick="event.stopPropagation();changeQuantity(${item.id},1)">+</button></div></div>`;}else{if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;}});h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;});}h+=`</div></div>`;});return h;}
+        function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){if(level>=groupBy.length)return'';let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));const isLastLevel=(level+1>=groupBy.length);entries.forEach(([key,value])=>{const currentLevelKeys=[...parentKeys,key];const gid=getGroupId(cat,level,currentLevelKeys);const items=isLastLevel?value:[];const firstItem=isLastLevel?value[0]:Object.values(value)[0]?.[0];const fieldName=groupBy[level];const label=firstItem?firstItem[fieldName]:key;const tab=level>0?'&emsp;&emsp;':'';const ks=currentLevelKeys.join('|||');const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';h+=`<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}" data-cat="${cat}" data-level="${level}" data-keys="${ks}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;if(!isLastLevel){h+=buildAccordionHTML(value,groupBy,level+1,cat,currentLevelKeys);}else{const cols=CATEGORY_TABLE_COLS[cwc];h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;items.forEach(item=>{h+=`<div class="product-row-wrapper${(item.quantity||0)<=0?' out-of-stock':''}"><div class="swipe-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="product-row" data-pid="${item.id}" ondblclick="if(!whIsSelectMode())editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="whToggleSelect(${item.id})" onclick="event.stopPropagation()"></div>`;cols.forEach(col=>{let v=item[col]||'';if(col==='quantity'){h+=`<div class="product-col qty"><div class="qty-controls"><button class="qty-btn minus" onclick="event.stopPropagation();changeQuantity(${item.id},-1)" style="opacity:${(item.quantity||0)<=0?'0':'1'}">−</button><span class="qty-value">${item.quantity||0}</span><button class="qty-btn plus" onclick="event.stopPropagation();changeQuantity(${item.id},1)">+</button></div></div>`;}else{if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;}});h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;});}h+=`</div></div>`;});return h;}
 
         window.toggleAcc=function(gid){const body=document.getElementById(gid);if(!body)return;const hdr=document.getElementById('hdr_'+gid);if(!hdr)return;if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}else{body.classList.add('open');hdr.classList.add('open');og.add(gid);}};
         function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
 
-        function setupWarehouseSwipe(){document.querySelectorAll('.product-row').forEach(row=>{setupLongPress(row,'warehouse',(r)=>parseInt(r.dataset.pid));setupSwipe(row,'warehouse',(r)=>parseInt(r.dataset.pid),async(pid)=>{const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});});});}
+        function setupWarehouseSwipe(){
+            document.querySelectorAll('.product-row').forEach(row=>{setupLongPress(row,'warehouse',(r)=>parseInt(r.dataset.pid));setupSwipe(row,'warehouse',(r)=>parseInt(r.dataset.pid),async(pid)=>{const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});});});
+            // Долгое нажатие для группировок
+            document.querySelectorAll('.accordion-header').forEach(hdr => {
+                const cat = hdr.dataset.cat;
+                const level = parseInt(hdr.dataset.level);
+                const keys = hdr.dataset.keys;
+                if (cat && level !== undefined && keys) {
+                    setupGroupLongPress(hdr, cat, level, keys.split('|||'));
+                }
+            });
+        }
 
         async function renderWarehouseTable(cat,sq=''){cwc=cat;const ap=await db.all('products');let pr=ap.filter(p=>p.category===cat);if(sq){const q=sq.toLowerCase();pr=pr.filter(p=>CATEGORY_TABLE_COLS[cat].some(c=>(p[c]||'').toString().toLowerCase().includes(q))||(p.manufacturer||'').toLowerCase().includes(q)||(p.lineup||'').toLowerCase().includes(q));og=new Set();}const gb=CATEGORY_GROUPS[cat];const g=groupProductsNested(pr,gb);document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onWarehouseSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;setTimeout(()=>{if(og.size>0)restoreOpenGroups();else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');og.add(gid);}}if(whIsSelectMode())whUpdateSelectUI();setupWarehouseSwipe();},50);}
         function onWarehouseSearch(v){renderWarehouseTable(cwc,v);}
