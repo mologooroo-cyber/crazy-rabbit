@@ -148,7 +148,8 @@
         .group-edit-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 16px; padding: 2px 6px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; position: relative; z-index: 10; line-height: 1; }
         .group-edit-btn:active { transform: scale(1.15); color: var(--accent-hover); }
 
-        .product-row-wrapper { position: relative; overflow: hidden; }
+        .product-row-wrapper { position: relative; overflow: hidden; transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease; max-height: 60px; opacity: 1; margin-bottom: 0; }
+        .product-row-wrapper.removing { max-height: 0; opacity: 0; margin-bottom: -2px; padding: 0; }
         .product-row { display: flex; align-items: center; padding: 10px 15px 10px 25px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease, filter 0.1s ease; position: relative; z-index: 1; background: var(--bg-card); }
         .product-row.pressing { filter: brightness(1.1); }
         .product-row:active { filter: brightness(1.1); }
@@ -164,6 +165,10 @@
         .checkbox-col { flex: 0 0 24px; display: none; align-items: center; }
         .checkbox-col.visible { display: flex; }
         .select-checkbox { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+        /* Круговой прогресс-бар долгого нажатия */
+        .long-press-ring { position: fixed; pointer-events: none; z-index: 9999; border-radius: 50%; border: 3px solid var(--accent); opacity: 0; transform: translate(-50%, -50%) scale(0.5); transition: opacity 0.1s ease; }
+        .long-press-ring.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 
         @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
         .product-row.pop-anim { animation: popIn 0.4s ease; }
@@ -181,7 +186,8 @@
         .sales-header-btn.filter { background: var(--border); color: var(--text-primary); }
         .sales-header-btn.filter.active { background: var(--accent); color: white; }
         .sales-table-section { background: var(--bg-card); border-radius: 15px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .sale-row-wrapper { position: relative; overflow: hidden; margin-bottom: 2px; }
+        .sale-row-wrapper { position: relative; overflow: hidden; margin-bottom: 2px; transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease; max-height: 60px; opacity: 1; }
+        .sale-row-wrapper.removing { max-height: 0; opacity: 0; margin-bottom: 0; }
         .sale-row { display: flex; align-items: center; padding: 12px 15px; cursor: pointer; font-size: 13px; gap: 6px; transition: transform 0.2s ease, filter 0.1s ease; position: relative; z-index: 1; background: var(--bg-card); border-radius: 8px; border: 2px solid transparent; }
         .sale-row.pressing { filter: brightness(1.1); }
         .sale-row:active { filter: brightness(1.1); }
@@ -266,10 +272,10 @@
         <div class="sidebar-content" onclick="event.stopPropagation()">
             <div class="sidebar-header"><h3>Crazy Rabbit</h3><button class="btn-close-custom" onclick="closeSidebar()"><i class="bi bi-x-lg"></i></button></div>
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item" onclick="switchTab('statistics')" data-tab="statistics"><i class="bi bi-graph-up-arrow"></i>Статистика</a>
+                <a href="#" class="nav-item active" onclick="switchTab('statistics')" data-tab="statistics"><i class="bi bi-graph-up-arrow"></i>Статистика</a>
                 <a href="#" class="nav-item" onclick="switchTab('warehouse')" data-tab="warehouse"><i class="bi bi-box-seam"></i>Склад</a>
                 <a href="#" class="nav-item" onclick="switchTab('sales')" data-tab="sales"><i class="bi bi-cart3"></i>Продажи</a>
-                <a href="#" class="nav-item active" onclick="switchTab('clients')" data-tab="clients"><i class="bi bi-people"></i>Клиенты</a>
+                <a href="#" class="nav-item" onclick="switchTab('clients')" data-tab="clients"><i class="bi bi-people"></i>Клиенты</a>
             </nav>
             <div class="sidebar-footer"><div class="theme-indicator"><span class="theme-dot"></span><span id="themeName">Тёмная тема</span></div><button class="theme-toggle-btn" onclick="toggleTheme()"><i class="bi bi-palette"></i> Сменить тему</button></div>
         </div>
@@ -277,6 +283,8 @@
     <main class="main-content" id="mainContent"><div class="content-body" id="contentBody"></div></main>
     <div id="modalContainer"></div>
     <div id="snackbarContainer"></div>
+    <!-- Круговой прогресс-бар для долгого нажатия -->
+    <div class="long-press-ring" id="longPressRing"></div>
 
     <script>
         const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 41;
@@ -391,6 +399,42 @@
             requestAnimationFrame(update);
         }
 
+        // ============ КРУГОВОЙ ПРОГРЕСС-БАР ============
+        let ringAnimFrame = null;
+        let ringStartTime = 0;
+        let ringActive = false;
+        const ring = document.getElementById('longPressRing');
+        const RING_SIZE = 64;
+        ring.style.width = RING_SIZE + 'px';
+        ring.style.height = RING_SIZE + 'px';
+        
+        function showRing(x, y) {
+            ring.style.left = x + 'px';
+            ring.style.top = y + 'px';
+            ring.classList.add('active');
+            ring.style.background = `conic-gradient(var(--accent) 0deg, transparent 0deg)`;
+            ringActive = true;
+            ringStartTime = Date.now();
+        }
+        
+        function updateRing() {
+            if (!ringActive) return;
+            const elapsed = Date.now() - ringStartTime;
+            const progress = Math.min(elapsed / 1300, 1);
+            const angle = progress * 360;
+            ring.style.background = `conic-gradient(var(--accent) ${angle}deg, transparent ${angle}deg)`;
+            if (progress < 1) {
+                ringAnimFrame = requestAnimationFrame(updateRing);
+            }
+        }
+        
+        function hideRing() {
+            ringActive = false;
+            if (ringAnimFrame) cancelAnimationFrame(ringAnimFrame);
+            ring.classList.remove('active');
+            ring.style.background = `conic-gradient(var(--accent) 0deg, transparent 0deg)`;
+        }
+
         // ============ СТАТИСТИКА ============
         let cp='today',ccm='sum',csd=null,ced=null;
         let prevStats={revenue:0,profit:0,count:0,bookingSum:0,debtSum:0,newClients:0,leavingClients:0};
@@ -463,8 +507,7 @@
         async function showNewClientsModal(){const{s,e}=getDateRange(cp);const clients=await db.all('clients');const nc=clients.filter(c=>c.created>=s&&c.created<=e);showModal('Новые клиенты','bi bi-person-plus','var(--accent)',nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');}
         async function showLeavingClientsModal(){const clients=await db.all('clients');const sales=await db.all('sales');const lc=clients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;});showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;}).join('')}`,'');}
 
-        // ============ ОБЩИЙ МОДУЛЬ ВЫДЕЛЕНИЯ (СКЛАД + ПРОДАЖИ) ============
-        // Универсальные переменные и функции для режима выделения
+        // ============ ОБЩИЙ МОДУЛЬ ВЫДЕЛЕНИЯ ============
         const SELECT_MODE_CONFIG = {
             warehouse: { selectMode: false, selectedIds: new Set(), prefix: 'wh' },
             sales: { selectMode: false, selectedIds: new Set(), prefix: 'sale' }
@@ -485,8 +528,8 @@
             const cfg = getSelectConfig(type);
             cfg.selectMode = false;
             cfg.selectedIds = new Set();
-            // Сбрасываем все чекбоксы
-            document.querySelectorAll(`.${cfg.prefix === 'wh' ? 'product-row' : 'sale-row'}`).forEach(r => {
+            const rowSelector = cfg.prefix === 'wh' ? '.product-row' : '.sale-row';
+            document.querySelectorAll(rowSelector).forEach(r => {
                 r.classList.remove('selected');
                 r.style.filter = '';
             });
@@ -495,23 +538,16 @@
         
         function toggleSelectItem(type, id) {
             const cfg = getSelectConfig(type);
-            if (cfg.selectedIds.has(id)) {
-                cfg.selectedIds.delete(id);
-            } else {
-                cfg.selectedIds.add(id);
-            }
+            if (cfg.selectedIds.has(id)) { cfg.selectedIds.delete(id); }
+            else { cfg.selectedIds.add(id); }
             updateSelectUI(type);
         }
         
         function updateSelectUI(type) {
             const cfg = getSelectConfig(type);
             const isWh = cfg.prefix === 'wh';
-            
-            // Показываем/скрываем чекбоксы
             const checkboxSelector = isWh ? '.checkbox-col' : '.sale-checkbox-col';
             document.querySelectorAll(checkboxSelector).forEach(c => c.classList.toggle('visible', cfg.selectMode));
-            
-            // Обновляем выделение строк
             const rowSelector = isWh ? '.product-row' : '.sale-row';
             const idAttr = isWh ? 'data-pid' : 'data-sid';
             document.querySelectorAll(rowSelector).forEach(r => {
@@ -519,31 +555,188 @@
                 const isSelected = cfg.selectMode && cfg.selectedIds.has(itemId);
                 r.classList.toggle('selected', isSelected);
                 if (!cfg.selectMode) r.style.filter = '';
-                // Обновляем чекбокс
                 const cb = r.querySelector('.select-checkbox');
                 if (cb) cb.checked = isSelected;
             });
-            
-            // Кнопки удаления/отмены
             const delBtn = document.querySelector(isWh ? '.wh-delete-selected-btn' : '.sales-delete-selected-btn');
             const cancelBtn = document.querySelector(isWh ? '.wh-cancel-select-btn' : '.sales-cancel-select-btn');
-            if (delBtn) {
-                delBtn.classList.toggle('visible', cfg.selectMode);
-                if (delBtn) delBtn.textContent = `Удалить (${cfg.selectedIds.size})`;
-            }
+            if (delBtn) { delBtn.classList.toggle('visible', cfg.selectMode); delBtn.textContent = `Удалить (${cfg.selectedIds.size})`; }
             if (cancelBtn) cancelBtn.classList.toggle('visible', cfg.selectMode);
-            
-            // Кнопка добавления (только для склада)
-            if (isWh) {
-                const addBtn = document.querySelector('.wh-add-btn');
-                if (addBtn) addBtn.style.display = cfg.selectMode ? 'none' : 'flex';
+            if (isWh) { const addBtn = document.querySelector('.wh-add-btn'); if (addBtn) addBtn.style.display = cfg.selectMode ? 'none' : 'flex'; }
+        }
+
+        // ============ УНИВЕРСАЛЬНЫЙ СВАЙП (С ДОКУМЕНТОМ) ============
+        function setupSwipe(row, type, idGetter, onDelete) {
+            const wrapper = row.parentElement;
+            const isWh = type === 'warehouse';
+            const bg = wrapper.querySelector(isWh ? '.swipe-delete-bg' : '.sales-delete-bg');
+            const deleteIcon = wrapper.querySelector('.swipe-delete-icon');
+            let startX = 0, startY = 0, swipeActive = false;
+            let wrapperWidth = 0;
+            let docMoveHandler = null, docEndHandler = null;
+
+            function getRowRect() { return wrapper.getBoundingClientRect(); }
+
+            function onStart(e) {
+                const cfg = getSelectConfig(type);
+                if (cfg.selectMode) return;
+                const touch = e.touches ? e.touches[0] : e;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                swipeActive = false;
+                wrapperWidth = getRowRect().width;
+
+                docMoveHandler = onMove.bind(null, wrapperWidth);
+                docEndHandler = onEnd.bind(null, wrapperWidth);
+                document.addEventListener('touchmove', docMoveHandler, {passive: false});
+                document.addEventListener('touchend', docEndHandler);
+                document.addEventListener('touchcancel', docEndHandler);
             }
+
+            function onMove(wWidth, e) {
+                const cfg = getSelectConfig(type);
+                const touch = e.touches[0];
+                const dx = touch.clientX - startX;
+                const dy = touch.clientY - startY;
+                if (!swipeActive && Math.abs(dx) > Math.abs(dy) && dx < -5) {
+                    swipeActive = true;
+                }
+                if (swipeActive && !cfg.selectMode) {
+                    e.preventDefault();
+                    const maxSwipe = wWidth * 0.5;
+                    const swipeDistance = Math.max(-maxSwipe, dx);
+                    row.style.transition = 'none';
+                    row.style.transform = `translateX(${swipeDistance}px)`;
+                    if (bg) bg.style.opacity = Math.min(1, Math.abs(dx) / maxSwipe);
+                    if (deleteIcon) deleteIcon.style.opacity = Math.min(1, Math.abs(dx) / (maxSwipe * 0.6));
+                }
+            }
+
+            async function onEnd(wWidth, e) {
+                document.removeEventListener('touchmove', docMoveHandler);
+                document.removeEventListener('touchend', docEndHandler);
+                document.removeEventListener('touchcancel', docEndHandler);
+                const cfg = getSelectConfig(type);
+                if (swipeActive && !cfg.selectMode) {
+                    const touch = e.changedTouches[0];
+                    const dx = touch.clientX - startX;
+                    if (Math.abs(dx) > wWidth * 0.5) {
+                        vibrate([15, 30, 15]);
+                        const itemId = idGetter(row);
+                        // Плавное удаление
+                        wrapper.classList.add('removing');
+                        setTimeout(async () => {
+                            await onDelete(itemId);
+                        }, 400);
+                    } else {
+                        row.style.transition = 'transform 0.2s ease';
+                        row.style.transform = 'translateX(0)';
+                        if (bg) bg.style.opacity = '0';
+                        if (deleteIcon) deleteIcon.style.opacity = '0';
+                    }
+                }
+                swipeActive = false;
+            }
+
+            row.addEventListener('touchstart', onStart, {passive: false});
+
+            // Клик для переключения чекбокса в режиме выделения
+            row.addEventListener('click', e => {
+                const cfg = getSelectConfig(type);
+                if (cfg.selectMode && !e.target.classList.contains('select-checkbox') && !e.target.closest('.copy-btn') && !e.target.closest('.group-edit-btn')) {
+                    const itemId = idGetter(row);
+                    toggleSelectItem(type, itemId);
+                }
+            });
+        }
+
+        // ============ УНИВЕРСАЛЬНОЕ ДОЛГОЕ НАЖАТИЕ ============
+        function setupLongPress(row, type, idGetter) {
+            let pressStartTime = 0, animationFrame = null, isPressing = false;
+            let touchStartX = 0, touchStartY = 0;
+
+            function updateBrightness() {
+                if (!isPressing) return;
+                const elapsed = Date.now() - pressStartTime;
+                const progress = Math.min(elapsed / 1300, 1);
+                const brightness = 1.0 + (progress * 0.1);
+                row.style.filter = `brightness(${brightness})`;
+                if (progress < 1) {
+                    animationFrame = requestAnimationFrame(updateBrightness);
+                } else {
+                    // Достигли порога
+                    row.style.filter = 'brightness(1.0)';
+                    row.classList.remove('pressing');
+                    hideRing();
+                    vibrate(20);
+                    const cfg = getSelectConfig(type);
+                    if (!cfg.selectMode) {
+                        enterSelectMode(type);
+                        const itemId = idGetter(row);
+                        toggleSelectItem(type, itemId);
+                        // Сразу выделяем инициирующую строку
+                        row.classList.add('selected');
+                        row.style.filter = 'brightness(1.15)';
+                        const cb = row.querySelector('.select-checkbox');
+                        if (cb) cb.checked = true;
+                    }
+                    isPressing = false;
+                }
+            }
+
+            function startPress(e) {
+                const cfg = getSelectConfig(type);
+                if (cfg.selectMode) return;
+                if (e.target.closest('.copy-btn') || e.target.closest('.group-edit-btn') || e.target.closest('.select-checkbox')) return;
+                
+                const touch = e.touches ? e.touches[0] : e;
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                pressStartTime = Date.now();
+                isPressing = true;
+                row.classList.add('pressing');
+                row.style.filter = 'brightness(1.0)';
+                
+                // Показываем кольцо
+                showRing(touch.clientX, touch.clientY);
+                ringAnimFrame = requestAnimationFrame(updateRing);
+                
+                animationFrame = requestAnimationFrame(updateBrightness);
+            }
+
+            function endPress(e) {
+                if (!isPressing) return;
+                isPressing = false;
+                hideRing();
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+                // Мгновенный сброс (0.1s)
+                row.style.transition = 'filter 0.1s ease';
+                row.style.filter = 'brightness(1.0)';
+                row.classList.remove('pressing');
+                setTimeout(() => { row.style.transition = ''; }, 150);
+            }
+
+            function checkMove(e) {
+                if (!isPressing) return;
+                const touch = e.touches ? e.touches[0] : e;
+                const cx = touch.clientX, cy = touch.clientY;
+                if (Math.abs(cx - touchStartX) > 8 || Math.abs(cy - touchStartY) > 8) {
+                    endPress(e);
+                }
+            }
+
+            row.addEventListener('mousedown', startPress);
+            row.addEventListener('mouseup', endPress);
+            row.addEventListener('mouseleave', endPress);
+            row.addEventListener('mousemove', checkMove);
+            row.addEventListener('touchstart', startPress, {passive: true});
+            row.addEventListener('touchend', endPress);
+            row.addEventListener('touchcancel', endPress);
+            row.addEventListener('touchmove', checkMove, {passive: true});
         }
 
         // ============ СКЛАД ============
         let cwc=null,og=new Set(),deletedProducts=[];
-        const LONG_PRESS_DURATION = 1300;
-        const SWIPE_MOVE_THRESHOLD = 8;
 
         function whEnterSelectMode() { enterSelectMode('warehouse'); }
         function whExitSelectMode() { exitSelectMode('warehouse'); }
@@ -558,10 +751,30 @@
             if(!confirm(`Удалить ${selectedIds.size} товаров?`))return;
             vibrate([20,50,20]);
             deletedProducts=[];
-            for(const id of selectedIds){const p=await db.g('products',id);if(p){deletedProducts.push(p);await db.del('products',id);}}
-            whExitSelectMode();await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
-            showSnackbar(`Удалено ${deletedProducts.length} товаров`, async()=>{for(const p of deletedProducts){const cp={...p};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});
+            // Анимируем удаление
+            const wrappers = [];
+            for(const id of selectedIds){
+                const p=await db.g('products',id);
+                if(p){deletedProducts.push(p);}
+                const row = document.querySelector(`.product-row[data-pid="${id}"]`);
+                if (row && row.parentElement) {
+                    wrappers.push(row.parentElement);
+                }
+            }
+            // Плавно скрываем
+            wrappers.forEach(w => w.classList.add('removing'));
+            setTimeout(async () => {
+                for(const p of deletedProducts){await db.del('products',p.id);}
+                whExitSelectMode();
+                await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
+                showSnackbar(`Удалено ${deletedProducts.length} товаров`, async()=>{
+                    for(const p of deletedProducts){const cp={...p};delete cp.id;await db.add('products',cp);}
+                    await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');
+                    deletedProducts=[];
+                });
+            }, 450);
         }
+
         async function renderWarehouseCards(){
             cwc=null;og=new Set();whExitSelectMode();
             const ap=await db.all('products'); const counts={}; CATEGORIES.forEach(c=>counts[c]=ap.filter(p=>p.category===c).reduce((s,p)=>s+(p.quantity||0),0));
@@ -622,128 +835,6 @@
         window.toggleAcc=function(gid){const body=document.getElementById(gid);if(!body)return;const hdr=document.getElementById('hdr_'+gid);if(!hdr)return;if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}else{body.classList.add('open');hdr.classList.add('open');og.add(gid);}};
         function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
 
-        // Универсальная функция долгого нажатия (для склада и продаж)
-        function setupLongPress(row, type, idGetter) {
-            let pressStartTime = 0, animationFrame = null, isPressing = false;
-            let touchStartX = 0, touchStartY = 0;
-
-            function updateBrightness() {
-                if (!isPressing) return;
-                const elapsed = Date.now() - pressStartTime;
-                const progress = Math.min(elapsed / LONG_PRESS_DURATION, 1);
-                const brightness = 1.0 + (progress * 0.1);
-                row.style.filter = `brightness(${brightness})`;
-                if (progress < 1) {
-                    animationFrame = requestAnimationFrame(updateBrightness);
-                } else {
-                    row.style.filter = 'brightness(1.0)';
-                    row.classList.remove('pressing');
-                    vibrate(20);
-                    const cfg = getSelectConfig(type);
-                    if (!cfg.selectMode) {
-                        enterSelectMode(type);
-                        const itemId = idGetter(row);
-                        toggleSelectItem(type, itemId);
-                    }
-                    isPressing = false;
-                }
-            }
-
-            function startPress(e) {
-                const cfg = getSelectConfig(type);
-                if (cfg.selectMode) return;
-                if (e.target.closest('.copy-btn') || e.target.closest('.group-edit-btn') || e.target.closest('.select-checkbox')) return;
-                if (e.touches) { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; }
-                else { touchStartX = e.clientX; touchStartY = e.clientY; }
-                pressStartTime = Date.now();
-                isPressing = true;
-                row.classList.add('pressing');
-                row.style.filter = 'brightness(1.0)';
-                animationFrame = requestAnimationFrame(updateBrightness);
-            }
-
-            function endPress(e) {
-                if (!isPressing) return;
-                isPressing = false;
-                if (animationFrame) cancelAnimationFrame(animationFrame);
-                row.style.transition = 'filter 0.25s ease';
-                row.style.filter = 'brightness(1.0)';
-                row.classList.remove('pressing');
-                setTimeout(() => { row.style.transition = ''; }, 300);
-            }
-
-            function checkMove(e) {
-                if (!isPressing) return;
-                let cx, cy;
-                if (e.touches) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-                else { cx = e.clientX; cy = e.clientY; }
-                if (Math.abs(cx - touchStartX) > SWIPE_MOVE_THRESHOLD || Math.abs(cy - touchStartY) > SWIPE_MOVE_THRESHOLD) {
-                    endPress(e);
-                }
-            }
-
-            row.addEventListener('mousedown', startPress);
-            row.addEventListener('mouseup', endPress);
-            row.addEventListener('mouseleave', endPress);
-            row.addEventListener('mousemove', checkMove);
-            row.addEventListener('touchstart', startPress, {passive: true});
-            row.addEventListener('touchend', endPress);
-            row.addEventListener('touchcancel', endPress);
-            row.addEventListener('touchmove', checkMove, {passive: true});
-        }
-
-        // Универсальная функция свайпа
-        function setupSwipe(row, type, idGetter, onDelete) {
-            let sx = 0, sy = 0, sw = false;
-            const w = row.parentElement, bg = w.querySelector(type === 'warehouse' ? '.swipe-delete-bg' : '.sales-delete-bg');
-            const deleteIcon = w.querySelector('.swipe-delete-icon');
-            
-            row.addEventListener('touchstart', e => {
-                sx = e.touches[0].clientX; sy = e.touches[0].clientY; sw = false;
-            }, {passive: false});
-            
-            row.addEventListener('touchmove', e => {
-                const cfg = getSelectConfig(type);
-                const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
-                if (Math.abs(dx) > Math.abs(dy) && dx < 0 && !cfg.selectMode) {
-                    e.preventDefault(); sw = true;
-                    const maxSwipe = w.offsetWidth * 0.5;
-                    const swipeDistance = Math.max(-maxSwipe, dx);
-                    row.style.transition = 'none';
-                    row.style.transform = `translateX(${swipeDistance}px)`;
-                    if (bg) bg.style.opacity = Math.min(1, Math.abs(dx) / maxSwipe);
-                    if (deleteIcon) deleteIcon.style.opacity = Math.min(1, Math.abs(dx) / (maxSwipe * 0.6));
-                }
-            }, {passive: false});
-            
-            row.addEventListener('touchend', async e => {
-                const cfg = getSelectConfig(type);
-                if (sw && !cfg.selectMode) {
-                    const dx = (e.changedTouches[0]?.clientX || sx) - sx;
-                    if (Math.abs(dx) > w.offsetWidth * 0.5) {
-                        vibrate([15, 30, 15]);
-                        const itemId = idGetter(row);
-                        await onDelete(itemId);
-                    } else {
-                        row.style.transition = 'transform 0.2s ease';
-                        row.style.transform = 'translateX(0)';
-                        if (bg) bg.style.opacity = '0';
-                        if (deleteIcon) deleteIcon.style.opacity = '0';
-                    }
-                }
-                sw = false;
-            });
-            
-            // Клик для переключения чекбокса в режиме выделения
-            row.addEventListener('click', e => {
-                const cfg = getSelectConfig(type);
-                if (cfg.selectMode && !e.target.classList.contains('select-checkbox') && !e.target.closest('.copy-btn') && !e.target.closest('.group-edit-btn')) {
-                    const itemId = idGetter(row);
-                    toggleSelectItem(type, itemId);
-                }
-            });
-        }
-
         function setupWarehouseSwipe() {
             document.querySelectorAll('.product-row').forEach(row => {
                 setupLongPress(row, 'warehouse', (r) => parseInt(r.dataset.pid));
@@ -786,7 +877,7 @@
         async function editProduct(pid) { const p = await db.g('products', pid); if (!p) return; cwc = p.category; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[p.category]).trim() || 'var(--accent)'; showModal('Редактировать товар', 'bi ' + CATEGORY_ICONS[p.category], color, getProductFormHTML(p), `<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`); }
         async function deleteProduct(pid) { if (!confirm('Удалить товар?')) return; await db.del('products', pid); closeModal(); await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || ''); }
 
-        // ============ ПРОДАЖИ (теперь идентично складу) ============
+        // ============ ПРОДАЖИ ============
         let salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''},deletedSales=[],salesPage=1;
         const PAGE_SIZE=10;
 
@@ -803,10 +894,20 @@
             if (!confirm(`Удалить ${selectedIds.size} продаж?`)) return;
             vibrate([20, 50, 20]);
             deletedSales = [];
-            for (const id of selectedIds) { const s = await db.g('sales', id); if (s) { deletedSales.push(s); await db.del('sales', id); } }
-            salesExitSelectMode();
-            await renderSalesTable();
-            showSnackbar(`Удалено ${deletedSales.length} продаж`, async () => { for (const s of deletedSales) { const cp = {...s}; delete cp.id; await db.add('sales', cp); } await renderSalesTable(); deletedSales = []; });
+            const wrappers = [];
+            for (const id of selectedIds) {
+                const s = await db.g('sales', id);
+                if (s) { deletedSales.push(s); }
+                const row = document.querySelector(`.sale-row[data-sid="${id}"]`);
+                if (row && row.parentElement) wrappers.push(row.parentElement);
+            }
+            wrappers.forEach(w => w.classList.add('removing'));
+            setTimeout(async () => {
+                for (const s of deletedSales) { await db.del('sales', s.id); }
+                salesExitSelectMode();
+                await renderSalesTable();
+                showSnackbar(`Удалено ${deletedSales.length} продаж`, async () => { for (const s of deletedSales) { const cp = {...s}; delete cp.id; await db.add('sales', cp); } await renderSalesTable(); deletedSales = []; });
+            }, 450);
         }
 
         async function getFilteredSales() {
@@ -913,7 +1014,7 @@
             closeSidebar();
         }
 
-        async function init(){try{await db.init();await loadTheme();await renderSalesTable();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');}catch(e){console.error(e);}}
+        async function init(){try{await db.init();await loadTheme();await renderStatistics('today');if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');}catch(e){console.error(e);}}
         document.addEventListener('DOMContentLoaded',init);
     </script>
 </body>
