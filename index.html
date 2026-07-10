@@ -166,10 +166,6 @@
         .checkbox-col.visible { display: flex; }
         .select-checkbox { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
 
-        /* Круговой прогресс-бар долгого нажатия */
-        .long-press-ring { position: fixed; pointer-events: none; z-index: 9999; border-radius: 50%; border: 3px solid var(--accent); opacity: 0; transform: translate(-50%, -50%) scale(0.5); transition: opacity 0.1s ease; }
-        .long-press-ring.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-
         @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
         .product-row.pop-anim { animation: popIn 0.4s ease; }
 
@@ -262,6 +258,11 @@
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spinner { animation: spin 1s linear infinite; display: inline-block; }
 
+        /* Стили для строк в модальных окнах статистики */
+        .modal-body-custom .sale-row { margin-bottom: 6px; border-radius: 8px; background: var(--bg-primary); }
+        .modal-body-custom .sale-row:last-child { margin-bottom: 0; }
+        .modal-body-custom .sale-table-header { margin-bottom: 4px; padding: 8px 15px; }
+
         .warehouse-table-section, .warehouse-table-section *, .product-row, .product-row *, .accordion-header, .accordion-header *, .table-header-row, .table-header-row *, .product-row-wrapper, .product-row-wrapper *, .sales-table-section, .sales-table-section *, .sale-row, .sale-row *, .sale-row-wrapper, .sale-row-wrapper *, .sale-table-header, .sale-table-header *, .clients-table-section, .clients-table-section *, .client-row, .client-row *, .client-table-header, .client-table-header * {
             -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none;
         }
@@ -283,8 +284,6 @@
     <main class="main-content" id="mainContent"><div class="content-body" id="contentBody"></div></main>
     <div id="modalContainer"></div>
     <div id="snackbarContainer"></div>
-    <!-- Круговой прогресс-бар для долгого нажатия -->
-    <div class="long-press-ring" id="longPressRing"></div>
 
     <script>
         const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 41;
@@ -399,42 +398,6 @@
             requestAnimationFrame(update);
         }
 
-        // ============ КРУГОВОЙ ПРОГРЕСС-БАР ============
-        let ringAnimFrame = null;
-        let ringStartTime = 0;
-        let ringActive = false;
-        const ring = document.getElementById('longPressRing');
-        const RING_SIZE = 64;
-        ring.style.width = RING_SIZE + 'px';
-        ring.style.height = RING_SIZE + 'px';
-        
-        function showRing(x, y) {
-            ring.style.left = x + 'px';
-            ring.style.top = y + 'px';
-            ring.classList.add('active');
-            ring.style.background = `conic-gradient(var(--accent) 0deg, transparent 0deg)`;
-            ringActive = true;
-            ringStartTime = Date.now();
-        }
-        
-        function updateRing() {
-            if (!ringActive) return;
-            const elapsed = Date.now() - ringStartTime;
-            const progress = Math.min(elapsed / 1300, 1);
-            const angle = progress * 360;
-            ring.style.background = `conic-gradient(var(--accent) ${angle}deg, transparent ${angle}deg)`;
-            if (progress < 1) {
-                ringAnimFrame = requestAnimationFrame(updateRing);
-            }
-        }
-        
-        function hideRing() {
-            ringActive = false;
-            if (ringAnimFrame) cancelAnimationFrame(ringAnimFrame);
-            ring.classList.remove('active');
-            ring.style.background = `conic-gradient(var(--accent) 0deg, transparent 0deg)`;
-        }
-
         // ============ СТАТИСТИКА ============
         let cp='today',ccm='sum',csd=null,ced=null;
         let prevStats={revenue:0,profit:0,count:0,bookingSum:0,debtSum:0,newClients:0,leavingClients:0};
@@ -502,10 +465,49 @@
         async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
         function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
 
-        async function showBookingModal(){const allSales=await db.all('sales');const bs=allSales.filter(s=>s.note==='бронь');showModal('Бронь','bi bi-calendar-check','var(--green)',bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':`<div class="sale-table-header"><div class="sale-col">Клиент</div><div class="sale-col">Товар</div></div>${bs.map(s=>`<div class="sale-row"><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${s.product||'-'}</div></div>`).join('')}`,'');}
-        async function showDebtModal(){const allSales=await db.all('sales');const ds=allSales.filter(s=>s.note==='долг');showModal('Долги','bi bi-cash-coin','var(--red)',ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':`<div class="sale-table-header"><div class="sale-col">Клиент</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div></div>${ds.map(s=>`<div class="sale-row"><div class="sale-col">${s.client||'-'}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div></div>`).join('')}`,'');}
-        async function showNewClientsModal(){const{s,e}=getDateRange(cp);const clients=await db.all('clients');const nc=clients.filter(c=>c.created>=s&&c.created<=e);showModal('Новые клиенты','bi bi-person-plus','var(--accent)',nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');}
-        async function showLeavingClientsModal(){const clients=await db.all('clients');const sales=await db.all('sales');const lc=clients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;});showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;}).join('')}`,'');}
+        async function showBookingModal(){
+            const allSales=await db.all('sales');
+            const bs=allSales.filter(s=>s.note==='бронь');
+            showModal('Бронь','bi bi-calendar-check','var(--green)',
+                bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':
+                `<div class="sale-table-header"><div class="sale-col" style="flex:0.3">Клиент</div><div class="sale-col" style="flex:0.7">Товар</div></div>
+                ${bs.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.3">${s.client||'-'}</div><div class="sale-col" style="flex:0.7">${s.product||'-'}</div></div>`).join('')}`,'');
+        }
+        async function showDebtModal(){
+            const allSales=await db.all('sales');
+            const ds=allSales.filter(s=>s.note==='долг');
+            showModal('Долги','bi bi-cash-coin','var(--red)',
+                ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':
+                `<div class="sale-table-header"><div class="sale-col" style="flex:0.5">Клиент</div><div class="sale-col price" style="flex:0.2">Сумма</div><div class="sale-col" style="flex:0.3">Дата</div></div>
+                ${ds.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.5">${s.client||'-'}</div><div class="sale-col price" style="flex:0.2">${fn(s.total||0)}₽</div><div class="sale-col" style="flex:0.3">${fmtDate(s.date)}</div></div>`).join('')}`,'');
+        }
+        async function showNewClientsModal(){
+            const{s,e}=getDateRange(cp);
+            const clients=await db.all('clients');
+            const nc=clients.filter(c=>c.created>=s&&c.created<=e);
+            showModal('Новые клиенты','bi bi-person-plus','var(--accent)',
+                nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':
+                `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>
+                ${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');
+        }
+        async function showLeavingClientsModal(){
+            const clients=await db.all('clients');
+            const sales=await db.all('sales');
+            const lc=clients.filter(c=>{
+                const cs=sales.filter(x=>norm(x.client)===norm(c.name));
+                if(cs.length===0)return false;
+                const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];
+                return last&&(new Date()-new Date(last.date))/86400000>30;
+            });
+            showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',
+                lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':
+                `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>
+                ${lc.map(c=>{
+                    const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));
+                    const last=cs[0];
+                    return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;
+                }).join('')}`,'');
+        }
 
         // ============ ОБЩИЙ МОДУЛЬ ВЫДЕЛЕНИЯ ============
         const SELECT_MODE_CONFIG = {
@@ -565,7 +567,7 @@
             if (isWh) { const addBtn = document.querySelector('.wh-add-btn'); if (addBtn) addBtn.style.display = cfg.selectMode ? 'none' : 'flex'; }
         }
 
-        // ============ УНИВЕРСАЛЬНЫЙ СВАЙП (С ДОКУМЕНТОМ) ============
+        // ============ УНИВЕРСАЛЬНЫЙ СВАЙП ============
         function setupSwipe(row, type, idGetter, onDelete) {
             const wrapper = row.parentElement;
             const isWh = type === 'warehouse';
@@ -575,8 +577,6 @@
             let wrapperWidth = 0;
             let docMoveHandler = null, docEndHandler = null;
 
-            function getRowRect() { return wrapper.getBoundingClientRect(); }
-
             function onStart(e) {
                 const cfg = getSelectConfig(type);
                 if (cfg.selectMode) return;
@@ -584,16 +584,16 @@
                 startX = touch.clientX;
                 startY = touch.clientY;
                 swipeActive = false;
-                wrapperWidth = getRowRect().width;
+                wrapperWidth = wrapper.getBoundingClientRect().width;
 
-                docMoveHandler = onMove.bind(null, wrapperWidth);
-                docEndHandler = onEnd.bind(null, wrapperWidth);
+                docMoveHandler = onMove;
+                docEndHandler = onEnd;
                 document.addEventListener('touchmove', docMoveHandler, {passive: false});
                 document.addEventListener('touchend', docEndHandler);
                 document.addEventListener('touchcancel', docEndHandler);
             }
 
-            function onMove(wWidth, e) {
+            function onMove(e) {
                 const cfg = getSelectConfig(type);
                 const touch = e.touches[0];
                 const dx = touch.clientX - startX;
@@ -603,7 +603,7 @@
                 }
                 if (swipeActive && !cfg.selectMode) {
                     e.preventDefault();
-                    const maxSwipe = wWidth * 0.5;
+                    const maxSwipe = wrapperWidth * 0.5;
                     const swipeDistance = Math.max(-maxSwipe, dx);
                     row.style.transition = 'none';
                     row.style.transform = `translateX(${swipeDistance}px)`;
@@ -612,7 +612,7 @@
                 }
             }
 
-            async function onEnd(wWidth, e) {
+            async function onEnd(e) {
                 document.removeEventListener('touchmove', docMoveHandler);
                 document.removeEventListener('touchend', docEndHandler);
                 document.removeEventListener('touchcancel', docEndHandler);
@@ -620,10 +620,9 @@
                 if (swipeActive && !cfg.selectMode) {
                     const touch = e.changedTouches[0];
                     const dx = touch.clientX - startX;
-                    if (Math.abs(dx) > wWidth * 0.5) {
+                    if (Math.abs(dx) > wrapperWidth * 0.5) {
                         vibrate([15, 30, 15]);
                         const itemId = idGetter(row);
-                        // Плавное удаление
                         wrapper.classList.add('removing');
                         setTimeout(async () => {
                             await onDelete(itemId);
@@ -640,7 +639,6 @@
 
             row.addEventListener('touchstart', onStart, {passive: false});
 
-            // Клик для переключения чекбокса в режиме выделения
             row.addEventListener('click', e => {
                 const cfg = getSelectConfig(type);
                 if (cfg.selectMode && !e.target.classList.contains('select-checkbox') && !e.target.closest('.copy-btn') && !e.target.closest('.group-edit-btn')) {
@@ -664,17 +662,14 @@
                 if (progress < 1) {
                     animationFrame = requestAnimationFrame(updateBrightness);
                 } else {
-                    // Достигли порога
                     row.style.filter = 'brightness(1.0)';
                     row.classList.remove('pressing');
-                    hideRing();
                     vibrate(20);
                     const cfg = getSelectConfig(type);
                     if (!cfg.selectMode) {
                         enterSelectMode(type);
                         const itemId = idGetter(row);
                         toggleSelectItem(type, itemId);
-                        // Сразу выделяем инициирующую строку
                         row.classList.add('selected');
                         row.style.filter = 'brightness(1.15)';
                         const cb = row.querySelector('.select-checkbox');
@@ -696,20 +691,13 @@
                 isPressing = true;
                 row.classList.add('pressing');
                 row.style.filter = 'brightness(1.0)';
-                
-                // Показываем кольцо
-                showRing(touch.clientX, touch.clientY);
-                ringAnimFrame = requestAnimationFrame(updateRing);
-                
                 animationFrame = requestAnimationFrame(updateBrightness);
             }
 
             function endPress(e) {
                 if (!isPressing) return;
                 isPressing = false;
-                hideRing();
                 if (animationFrame) cancelAnimationFrame(animationFrame);
-                // Мгновенный сброс (0.1s)
                 row.style.transition = 'filter 0.1s ease';
                 row.style.filter = 'brightness(1.0)';
                 row.classList.remove('pressing');
@@ -751,17 +739,13 @@
             if(!confirm(`Удалить ${selectedIds.size} товаров?`))return;
             vibrate([20,50,20]);
             deletedProducts=[];
-            // Анимируем удаление
             const wrappers = [];
             for(const id of selectedIds){
                 const p=await db.g('products',id);
                 if(p){deletedProducts.push(p);}
                 const row = document.querySelector(`.product-row[data-pid="${id}"]`);
-                if (row && row.parentElement) {
-                    wrappers.push(row.parentElement);
-                }
+                if (row && row.parentElement) { wrappers.push(row.parentElement); }
             }
-            // Плавно скрываем
             wrappers.forEach(w => w.classList.add('removing'));
             setTimeout(async () => {
                 for(const p of deletedProducts){await db.del('products',p.id);}
