@@ -55,13 +55,15 @@
         .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); }
         .theme-indicator { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 13px; margin-bottom: 8px; }
         .theme-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
-        .theme-toggle-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 600; }
+        .theme-toggle-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 600; transition: transform 0.15s ease; }
+        .theme-toggle-btn:active { transform: scale(0.95); }
         .main-content { padding: 20px 12px 20px; min-height: 100vh; }
         .tab-title { display: inline-block; font-weight: 700; padding-bottom: 10px; border-bottom: 3px solid var(--accent); margin-bottom: 20px; font-size: 22px; cursor: pointer; }
 
         .stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
         .period-buttons { display: flex; gap: 4px; background: var(--bg-card); border-radius: 12px; padding: 4px; }
-        .period-btn { width: 36px; height: 36px; border: none; background: transparent; color: var(--text-secondary); border-radius: 10px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+        .period-btn { width: 36px; height: 36px; border: none; background: transparent; color: var(--text-secondary); border-radius: 10px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s ease; }
+        .period-btn:active { transform: scale(0.9); }
         .period-btn.active { background: var(--accent); color: white; }
         .stats-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .stat-card { background: var(--bg-card); border-radius: 15px; padding: 15px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -71,8 +73,8 @@
         .stat-card .stat-percent { font-size: 14px; font-weight: 600; }
         .stat-card .stat-percent.positive { color: var(--green); } .stat-card .stat-percent.negative { color: var(--red); }
         .summary-row { display: flex; gap: 10px; margin-bottom: 20px; }
-        .summary-item { flex: 1; background: var(--bg-card); border-radius: 15px; padding: 12px 10px; text-align: center; cursor: pointer; }
-        .summary-item:active { transform: scale(0.96); }
+        .summary-item { flex: 1; background: var(--bg-card); border-radius: 15px; padding: 12px 10px; text-align: center; cursor: pointer; transition: transform 0.15s ease; }
+        .summary-item:active { transform: scale(0.93); }
         .summary-item .summary-icon { font-size: 20px; margin-bottom: 6px; }
         .summary-item .summary-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
         .summary-item .summary-value { font-size: 16px; font-weight: 700; }
@@ -85,7 +87,8 @@
         .chart-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
         .chart-title i { color: var(--accent); }
         .chart-switch { display: flex; background: var(--bg-primary); border-radius: 8px; padding: 2px; gap: 2px; }
-        .switch-btn { padding: 6px 12px; border: none; background: transparent; color: var(--text-secondary); border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+        .switch-btn { padding: 6px 12px; border: none; background: transparent; color: var(--text-secondary); border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: transform 0.15s ease; }
+        .switch-btn:active { transform: scale(0.93); }
         .switch-btn.active { background: var(--accent); color: white; }
         .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 160px; padding-bottom: 30px; overflow-x: auto; }
         .bar-column { display: flex; flex-direction: column; align-items: center; min-width: 30px; flex-shrink: 0; position: relative; height: 100%; justify-content: flex-end; }
@@ -125,12 +128,16 @@
 
         .warehouse-table-section { background: var(--bg-card); border-radius: 15px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .wh-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .wh-back-btn { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; padding: 5px; }
+        .wh-back-btn { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; padding: 5px; transition: transform 0.15s ease; }
+        .wh-back-btn:active { transform: scale(0.9); }
         .wh-category-title { font-size: 16px; font-weight: 700; }
-        .wh-add-btn { background: var(--accent); color: white; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .wh-delete-selected-btn { background: var(--red); color: white; border: none; height: 36px; padding: 0 12px; border-radius: 10px; font-size: 14px; cursor: pointer; display: none; align-items: center; gap: 6px; font-weight: 600; }
+        .wh-add-btn { background: var(--accent); color: white; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s ease; }
+        .wh-add-btn:active { transform: scale(0.88); }
+        .wh-delete-selected-btn { background: var(--red); color: white; border: none; height: 36px; padding: 0 12px; border-radius: 10px; font-size: 14px; cursor: pointer; display: none; align-items: center; gap: 6px; font-weight: 600; transition: transform 0.15s ease; }
+        .wh-delete-selected-btn:active { transform: scale(0.95); }
         .wh-delete-selected-btn.visible { display: flex; }
-        .wh-cancel-select-btn { background: var(--border); color: var(--text-primary); border: none; height: 36px; padding: 0 12px; border-radius: 10px; font-size: 14px; cursor: pointer; display: none; align-items: center; gap: 6px; }
+        .wh-cancel-select-btn { background: var(--border); color: var(--text-primary); border: none; height: 36px; padding: 0 12px; border-radius: 10px; font-size: 14px; cursor: pointer; display: none; align-items: center; gap: 6px; transition: transform 0.15s ease; }
+        .wh-cancel-select-btn:active { transform: scale(0.95); }
         .wh-cancel-select-btn.visible { display: flex; }
         .search-input { width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 12px; background: var(--bg-primary); color: var(--text-primary); font-size: 14px; outline: none; margin-bottom: 15px; }
         .search-input:focus { border-color: var(--accent); }
@@ -159,25 +166,26 @@
         .swipe-delete-icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: white; font-size: 22px; z-index: 0; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
         .product-col { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .product-col.price { text-align: right; flex: 0.7; }
-        .product-col.qty { text-align: center; flex: 0.5; display: flex; align-items: center; justify-content: center; gap: 2px; }
-        .product-col.copy-btn { flex: 0 0 30px; text-align: center; cursor: pointer; color: var(--accent); font-size: 16px; }
+        .product-col.qty { text-align: center; flex: 0.7; display: flex; align-items: center; justify-content: center; gap: 1px; overflow: visible; }
+        .product-col.copy-btn { flex: 0 0 30px; text-align: center; cursor: pointer; color: var(--accent); font-size: 16px; transition: transform 0.15s ease; }
+        .product-col.copy-btn:active { transform: scale(1.2); }
         .table-header-row { display: flex; padding: 8px 15px 8px 25px; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; gap: 6px; }
         .table-header-row .product-col { font-weight: 600; }
         .checkbox-col { flex: 0 0 24px; display: none; align-items: center; }
         .checkbox-col.visible { display: flex; }
         .select-checkbox { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
 
-        /* Кнопки ± для количества */
-        .qty-controls { display: inline-flex; align-items: center; gap: 1px; opacity: 0; transition: opacity 0.2s ease; }
+        /* Кнопки ± */
+        .qty-controls { display: inline-flex; align-items: center; gap: 2px; opacity: 0; transition: opacity 0.2s ease; }
         .product-row-wrapper:hover .qty-controls, .product-row.pressing .qty-controls { opacity: 1; }
-        .qty-btn { width: 20px; height: 20px; border: none; border-radius: 50%; background: var(--border); color: var(--text-primary); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; padding: 0; line-height: 1; flex-shrink: 0; }
-        .qty-btn:active { transform: scale(1.3); background: var(--accent); color: white; }
+        .qty-btn { width: 18px; height: 18px; border: none; border-radius: 50%; background: var(--border); color: var(--text-primary); font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; padding: 0; line-height: 1; flex-shrink: 0; }
+        .qty-btn:active { transform: scale(1.35); background: var(--accent); color: white; }
         .qty-btn:disabled { opacity: 0.3; pointer-events: none; }
-        .qty-value { min-width: 20px; text-align: center; font-weight: 600; font-size: 13px; }
+        .qty-value { min-width: 18px; text-align: center; font-weight: 600; font-size: 13px; }
 
         @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
         .product-row.pop-anim { animation: popIn 0.4s ease; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
         .qty-pulse { animation: pulse 0.3s ease; }
 
         .skeleton { background: linear-gradient(90deg, var(--bg-card) 25%, var(--border) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
@@ -188,8 +196,8 @@
 
         .sales-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; flex-wrap: wrap; }
         .sales-header-left { display: flex; gap: 8px; align-items: center; }
-        .sales-header-btn { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        .sales-header-btn:active { transform: scale(0.96); }
+        .sales-header-btn { background: var(--accent); color: white; border: none; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: transform 0.15s ease; }
+        .sales-header-btn:active { transform: scale(0.93); }
         .sales-header-btn.filter { background: var(--border); color: var(--text-primary); }
         .sales-header-btn.filter.active { background: var(--accent); color: white; }
         .sales-table-section { background: var(--bg-card); border-radius: 15px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -228,7 +236,7 @@
 
         .pagination { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 15px; }
         .pagination button { background: var(--bg-primary); color: var(--text-primary); border: 2px solid var(--border); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
-        .pagination button:active { transform: scale(0.93); }
+        .pagination button:active { transform: scale(0.88); }
         .pagination button.active { background: var(--accent); border-color: var(--accent); color: white; }
         .pagination button:disabled { opacity: 0.3; pointer-events: none; }
         .pagination .page-info { font-size: 13px; color: var(--text-secondary); padding: 0 8px; }
@@ -252,21 +260,22 @@
         .form-input, .form-select { width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-primary); color: var(--text-primary); font-size: 15px; outline: none; appearance: none; }
         .form-input:focus, .form-select:focus { border-color: var(--accent); }
         textarea.form-input { resize: vertical; min-height: 80px; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.15s ease; }
+        .btn:active { transform: scale(0.94); }
         .btn-save { background: var(--accent); color: white; }
         .btn-cancel { background: var(--border); color: var(--text-primary); }
         .btn-delete { background: var(--red); color: white; flex: 0.5; }
         .btn-reset { background: transparent; color: var(--text-secondary); border: 2px solid var(--border); }
-        .btn:active { transform: scale(0.96); }
 
-        /* Кнопка переключения режима в заголовке */
+        /* Кнопка переключения режима */
         .mode-toggle-btn { background: none; border: 2px solid var(--accent); color: var(--accent); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s ease; }
         .mode-toggle-btn:hover { background: var(--accent); color: white; }
-        .mode-toggle-btn:active { transform: scale(0.9); }
+        .mode-toggle-btn:active { transform: scale(0.85); }
         .preview-text { font-size: 13px; color: var(--accent); margin-top: 8px; font-weight: 600; }
 
         .snackbar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--bg-sidebar); color: white; padding: 14px 24px; border-radius: 25px; z-index: 9999; font-size: 14px; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px; animation: slideUp 0.3s ease; }
-        .snackbar .snackbar-undo { background: var(--accent); border: none; color: white; padding: 6px 14px; border-radius: 15px; cursor: pointer; font-weight: 700; font-size: 13px; }
+        .snackbar .snackbar-undo { background: var(--accent); border: none; color: white; padding: 6px 14px; border-radius: 15px; cursor: pointer; font-weight: 700; font-size: 13px; transition: transform 0.15s ease; }
+        .snackbar .snackbar-undo:active { transform: scale(0.93); }
         @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -276,13 +285,12 @@
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spinner { animation: spin 1s linear infinite; display: inline-block; }
 
-        /* Стили для строк в модальных окнах статистики */
         .modal-body-custom .sale-row { margin-bottom: 6px; border-radius: 8px; background: var(--bg-primary); gap: 8px; }
         .modal-body-custom .sale-row:last-child { margin-bottom: 0; }
         .modal-body-custom .sale-table-header { margin-bottom: 4px; padding: 8px 15px; gap: 8px; }
 
-        .round-add-btn { background: var(--accent); color: white; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .round-add-btn:active { transform: scale(0.93); }
+        .round-add-btn { background: var(--accent); color: white; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.15s ease; }
+        .round-add-btn:active { transform: scale(0.85); }
 
         .dialog-text { font-size: 15px; color: var(--text-primary); text-align: center; padding: 0 10px; line-height: 1.4; }
         .dialog-icon-wrap { display: flex; justify-content: center; margin-bottom: 12px; }
@@ -378,10 +386,7 @@
                     `<div class="dialog-icon-wrap"><div class="dialog-icon-circle ${type}"><i class="bi ${icons[type]}"></i></div></div><p class="dialog-text">${message}</p>`,
                     `<button class="btn btn-save" id="alertOkBtn">OK</button>`
                 );
-                setTimeout(() => {
-                    const btn = document.getElementById('alertOkBtn');
-                    if (btn) btn.addEventListener('click', () => { closeModal(); resolve(true); });
-                }, 50);
+                setTimeout(() => { const btn = document.getElementById('alertOkBtn'); if (btn) btn.addEventListener('click', () => { closeModal(); resolve(true); }); }, 50);
             });
         }
 
@@ -414,50 +419,21 @@
         function vibrate(pattern) { if (navigator.vibrate) { try { navigator.vibrate(pattern); } catch(e) {} } }
 
         function showSkeleton(type) {
-            if (type === 'statistics') {
-                return `<h2 class="tab-title">Статистика</h2>
-                <div class="stats-cards"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>
-                <div class="summary-row"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div>
-                <div class="skeleton skeleton-chart"></div><div class="skeleton skeleton-chart"></div>`;
-            }
-            if (type === 'warehouse') {
-                return `<h2 class="tab-title">Склад</h2><div class="warehouse-cards">${[...Array(5)].map(()=>'<div class="skeleton skeleton-card"></div>').join('')}</div>`;
-            }
-            if (type === 'sales' || type === 'clients') {
-                return `<h2 class="tab-title">${type==='sales'?'Продажи':'Клиенты'}</h2><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div>`;
-            }
+            if (type === 'statistics') { return `<h2 class="tab-title">Статистика</h2><div class="stats-cards"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div><div class="summary-row"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div><div class="skeleton skeleton-chart"></div><div class="skeleton skeleton-chart"></div>`; }
+            if (type === 'warehouse') { return `<h2 class="tab-title">Склад</h2><div class="warehouse-cards">${[...Array(5)].map(()=>'<div class="skeleton skeleton-card"></div>').join('')}</div>`; }
+            if (type === 'sales' || type === 'clients') { return `<h2 class="tab-title">${type==='sales'?'Продажи':'Клиенты'}</h2><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div>`; }
             return '';
         }
 
         document.addEventListener('selectstart', function(e) { if (e.target.closest('.warehouse-table-section')||e.target.closest('.sales-table-section')||e.target.closest('.clients-table-section')) { e.preventDefault(); } });
 
-        async function findProductByName(productName) {
-            const products = await db.all('products');
-            return products.find(p => {
-                const name = (p.manufacturer + ' ' + p.lineup + (p.flavor ? ' ' + p.flavor : '') + (p.color ? ' ' + p.color : '')).trim();
-                return name === productName || norm(name) === norm(productName);
-            });
-        }
-
-        async function autoAddClient(clientName) {
-            const clients = await db.all('clients');
-            const exists = clients.some(c => norm(c.name) === norm(clientName));
-            if (!exists && clientName.trim()) {
-                await db.add('clients', { name: clientName.trim(), created: new Date().toISOString().split('T')[0] });
-            }
-        }
+        async function findProductByName(productName) { const products = await db.all('products'); return products.find(p => { const name = (p.manufacturer + ' ' + p.lineup + (p.flavor ? ' ' + p.flavor : '') + (p.color ? ' ' + p.color : '')).trim(); return name === productName || norm(name) === norm(productName); }); }
+        async function autoAddClient(clientName) { const clients = await db.all('clients'); const exists = clients.some(c => norm(c.name) === norm(clientName)); if (!exists && clientName.trim()) { await db.add('clients', { name: clientName.trim(), created: new Date().toISOString().split('T')[0] }); } }
 
         function animateValue(element, start, end, duration, suffix) {
             if (start === end) { element.textContent = fn(end) + suffix; return; }
             const startTime = performance.now();
-            function update(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const eased = 1 - Math.pow(1 - progress, 3);
-                const current = Math.round(start + (end - start) * eased);
-                element.textContent = fn(current) + suffix;
-                if (progress < 1) requestAnimationFrame(update);
-            }
+            function update(currentTime) { const elapsed = currentTime - startTime; const progress = Math.min(elapsed / duration, 1); const eased = 1 - Math.pow(1 - progress, 3); const current = Math.round(start + (end - start) * eased); element.textContent = fn(current) + suffix; if (progress < 1) requestAnimationFrame(update); }
             requestAnimationFrame(update);
         }
 
@@ -505,41 +481,20 @@
             setTimeout(()=>{
                 const revEl=document.getElementById('stat_revenue'),profEl=document.getElementById('stat_profit'),cntEl=document.getElementById('stat_count');
                 const bookEl=document.getElementById('sum_booking'),debtEl=document.getElementById('sum_debt'),newEl=document.getElementById('sum_new'),leavingEl=document.getElementById('sum_leaving');
-                if(revEl)animateValue(revEl,prevRev,rev,600,'₽');
-                if(profEl)animateValue(profEl,prevProf,prof,600,'₽');
-                if(cntEl)animateValue(cntEl,prevCnt,cnt,600,'');
-                if(bookEl)animateValue(bookEl,prevBooking,bookingSum,600,'₽');
-                if(debtEl)animateValue(debtEl,prevDebt,debtSum,600,'₽');
-                if(newEl)animateValue(newEl,prevNew,newClients,600,' чел.');
-                if(leavingEl)animateValue(leavingEl,prevLeaving,leavingClients,600,' чел.');
-                setTimeout(()=>{
-                    const rp=document.getElementById('stat_rev_pct'),pp=document.getElementById('stat_prof_pct'),cp2=document.getElementById('stat_cnt_pct');
-                    if(rp&&pRev)rp.textContent=fp((rev-pRev)/pRev*100);
-                    if(pp&&pProf)pp.textContent=fp((prof-pProf)/pProf*100);
-                    if(cp2&&pCnt)cp2.textContent=fp((cnt-pCnt)/pCnt*100);
-                },700);
+                if(revEl)animateValue(revEl,prevRev,rev,600,'₽'); if(profEl)animateValue(profEl,prevProf,prof,600,'₽'); if(cntEl)animateValue(cntEl,prevCnt,cnt,600,'');
+                if(bookEl)animateValue(bookEl,prevBooking,bookingSum,600,'₽'); if(debtEl)animateValue(debtEl,prevDebt,debtSum,600,'₽');
+                if(newEl)animateValue(newEl,prevNew,newClients,600,' чел.'); if(leavingEl)animateValue(leavingEl,prevLeaving,leavingClients,600,' чел.');
+                setTimeout(()=>{ const rp=document.getElementById('stat_rev_pct'),pp=document.getElementById('stat_prof_pct'),cp2=document.getElementById('stat_cnt_pct'); if(rp&&pRev)rp.textContent=fp((rev-pRev)/pRev*100); if(pp&&pProf)pp.textContent=fp((prof-pProf)/pProf*100); if(cp2&&pCnt)cp2.textContent=fp((cnt-pCnt)/pCnt*100); },700);
                 setTimeout(() => { document.querySelectorAll('.bar-fill-inner.animate, .category-fill-inner.animate').forEach(el => el.classList.add('started')); }, 100);
             },100);
         }
         async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
         function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
 
-        async function showBookingModal(){
-            const allSales=await db.all('sales');const bs=allSales.filter(s=>s.note==='бронь');
-            showModal('Бронь','bi bi-calendar-check','var(--green)',bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.3">Клиент</div><div class="sale-col" style="flex:0.7">Товар</div></div>${bs.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.3">${s.client||'-'}</div><div class="sale-col" style="flex:0.7">${s.product||'-'}</div></div>`).join('')}`,'');
-        }
-        async function showDebtModal(){
-            const allSales=await db.all('sales');const ds=allSales.filter(s=>s.note==='долг');
-            showModal('Долги','bi bi-cash-coin','var(--red)',ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.5">Клиент</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">Сумма</div><div class="sale-col" style="flex:0.3">Дата</div></div>${ds.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.5">${s.client||'-'}</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">${fn(s.total||0)}₽</div><div class="sale-col" style="flex:0.3">${fmtDate(s.date)}</div></div>`).join('')}`,'');
-        }
-        async function showNewClientsModal(){
-            const{s,e}=getDateRange(cp);const clients=await db.all('clients');const nc=clients.filter(c=>c.created>=s&&c.created<=e);
-            showModal('Новые клиенты','bi bi-person-plus','var(--accent)',nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');
-        }
-        async function showLeavingClientsModal(){
-            const clients=await db.all('clients');const sales=await db.all('sales');const lc=clients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;});
-            showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;}).join('')}`,'');
-        }
+        async function showBookingModal(){const allSales=await db.all('sales');const bs=allSales.filter(s=>s.note==='бронь');showModal('Бронь','bi bi-calendar-check','var(--green)',bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.3">Клиент</div><div class="sale-col" style="flex:0.7">Товар</div></div>${bs.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.3">${s.client||'-'}</div><div class="sale-col" style="flex:0.7">${s.product||'-'}</div></div>`).join('')}`,'');}
+        async function showDebtModal(){const allSales=await db.all('sales');const ds=allSales.filter(s=>s.note==='долг');showModal('Долги','bi bi-cash-coin','var(--red)',ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.5">Клиент</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">Сумма</div><div class="sale-col" style="flex:0.3">Дата</div></div>${ds.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.5">${s.client||'-'}</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">${fn(s.total||0)}₽</div><div class="sale-col" style="flex:0.3">${fmtDate(s.date)}</div></div>`).join('')}`,'');}
+        async function showNewClientsModal(){const{s,e}=getDateRange(cp);const clients=await db.all('clients');const nc=clients.filter(c=>c.created>=s&&c.created<=e);showModal('Новые клиенты','bi bi-person-plus','var(--accent)',nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');}
+        async function showLeavingClientsModal(){const clients=await db.all('clients');const sales=await db.all('sales');const lc=clients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;});showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;}).join('')}`,'');}
 
         // ============ ОБЩИЙ МОДУЛЬ ВЫДЕЛЕНИЯ ============
         const SELECT_MODE_CONFIG = { warehouse: { selectMode: false, selectedIds: new Set(), prefix: 'wh' }, sales: { selectMode: false, selectedIds: new Set(), prefix: 'sale' } };
@@ -572,7 +527,6 @@
 
         // ============ СКЛАД ============
         let cwc=null,og=new Set(),deletedProducts=[];
-        let qtyTimers = {};
 
         function whEnterSelectMode() { enterSelectMode('warehouse'); }
         function whExitSelectMode() { exitSelectMode('warehouse'); }
@@ -582,43 +536,20 @@
         function whGetSelectedIds() { return SELECT_MODE_CONFIG.warehouse.selectedIds; }
 
         async function changeQuantity(pid, delta) {
-            const p = await db.g('products', pid);
-            if (!p) return;
+            const p = await db.g('products', pid); if (!p) return;
             const newQty = Math.max(0, (p.quantity || 0) + delta);
             if (p.quantity === newQty) return;
-            p.quantity = newQty;
-            await db.pu('products', p);
-            // Обновляем только отображение количества в строке
+            p.quantity = newQty; await db.pu('products', p);
             const row = document.querySelector(`.product-row[data-pid="${pid}"]`);
-            if (row) {
-                const qtyVal = row.querySelector('.qty-value');
-                if (qtyVal) { qtyVal.textContent = newQty; qtyVal.classList.add('qty-pulse'); setTimeout(() => qtyVal.classList.remove('qty-pulse'), 300); }
-                const minusBtn = row.querySelector('.qty-btn.minus');
-                if (minusBtn) minusBtn.disabled = newQty <= 0;
-            }
+            if (row) { const qtyVal = row.querySelector('.qty-value'); if (qtyVal) { qtyVal.textContent = newQty; qtyVal.classList.add('qty-pulse'); setTimeout(() => qtyVal.classList.remove('qty-pulse'), 300); } const minusBtn = row.querySelector('.qty-btn.minus'); if (minusBtn) minusBtn.disabled = newQty <= 0; }
         }
 
-        async function deleteSelectedProducts() {
-            const selectedIds = whGetSelectedIds(); if(selectedIds.size===0)return;
-            const confirmed = await showConfirm(`Удалить ${selectedIds.size} товаров?`, 'warning'); if(!confirmed)return;
-            vibrate([20,50,20]); deletedProducts=[]; const wrappers = [];
-            for(const id of selectedIds){ const p=await db.g('products',id); if(p){deletedProducts.push(p);} const row = document.querySelector(`.product-row[data-pid="${id}"]`); if (row && row.parentElement) wrappers.push(row.parentElement); }
-            wrappers.forEach(w => w.classList.add('removing'));
-            setTimeout(async () => { for(const p of deletedProducts){await db.del('products',p.id);} whExitSelectMode(); await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||''); showSnackbar(`Удалено ${deletedProducts.length} товаров`, async()=>{for(const p of deletedProducts){const cp={...p};delete cp.id;await db.add('products',cp);} await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||''); deletedProducts=[]; }); }, 450);
-        }
+        async function deleteSelectedProducts() { const selectedIds = whGetSelectedIds(); if(selectedIds.size===0)return; const confirmed = await showConfirm(`Удалить ${selectedIds.size} товаров?`, 'warning'); if(!confirmed)return; vibrate([20,50,20]); deletedProducts=[]; const wrappers = []; for(const id of selectedIds){ const p=await db.g('products',id); if(p){deletedProducts.push(p);} const row = document.querySelector(`.product-row[data-pid="${id}"]`); if (row && row.parentElement) wrappers.push(row.parentElement); } wrappers.forEach(w => w.classList.add('removing')); setTimeout(async () => { for(const p of deletedProducts){await db.del('products',p.id);} whExitSelectMode(); await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||''); showSnackbar(`Удалено ${deletedProducts.length} товаров`, async()=>{for(const p of deletedProducts){const cp={...p};delete cp.id;await db.add('products',cp);} await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||''); deletedProducts=[]; }); }, 450); }
 
-        async function renderWarehouseCards(){
-            cwc=null;og=new Set();whExitSelectMode(); const ap=await db.all('products'); const counts={}; CATEGORIES.forEach(c=>counts[c]=ap.filter(p=>p.category===c).reduce((s,p)=>s+(p.quantity||0),0));
-            document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Склад</h2><div class="warehouse-cards">${CATEGORIES.map(c=>`<div class="wh-card ${CATEGORY_CLASS[c]}" onclick="openWarehouseCategory('${c}')"><div class="wh-icon"><i class="bi ${CATEGORY_ICONS[c]}"></i></div><div class="wh-label">${CATEGORY_NAMES[c]}</div><div class="wh-count">${counts[c]} шт.</div></div>`).join('')}</div>`;
-        }
+        async function renderWarehouseCards(){ cwc=null;og=new Set();whExitSelectMode(); const ap=await db.all('products'); const counts={}; CATEGORIES.forEach(c=>counts[c]=ap.filter(p=>p.category===c).reduce((s,p)=>s+(p.quantity||0),0)); document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Склад</h2><div class="warehouse-cards">${CATEGORIES.map(c=>`<div class="wh-card ${CATEGORY_CLASS[c]}" onclick="openWarehouseCategory('${c}')"><div class="wh-icon"><i class="bi ${CATEGORY_ICONS[c]}"></i></div><div class="wh-label">${CATEGORY_NAMES[c]}</div><div class="wh-count">${counts[c]} шт.</div></div>`).join('')}</div>`; }
         async function openWarehouseCategory(c){cwc=c;og=new Set();whExitSelectMode();await renderWarehouseTable(c);}
 
-        function groupProductsNested(products, groupBy) {
-            if (groupBy.length === 0) return { _root: products }; const root = {};
-            products.forEach(p => { let current = root; for (let i = 0; i < groupBy.length; i++) { const field = groupBy[i]; const key = norm(p[field]); if (!current[key]) current[key] = i === groupBy.length - 1 ? [] : {}; if (i === groupBy.length - 1) current[key].push(p); else current = current[key]; } });
-            return root;
-        }
-
+        function groupProductsNested(products, groupBy) { if (groupBy.length === 0) return { _root: products }; const root = {}; products.forEach(p => { let current = root; for (let i = 0; i < groupBy.length; i++) { const field = groupBy[i]; const key = norm(p[field]); if (!current[key]) current[key] = i === groupBy.length - 1 ? [] : {}; if (i === groupBy.length - 1) current[key].push(p); else current = current[key]; } }); return root; }
         function getGroupId(cat,level,keys){return['grp',cat,...keys.slice(0,level+1)].join('_');}
 
         function buildAccordionHTML(groups, groupBy, level, cat, parentKeys) {
@@ -652,16 +583,10 @@
         window.toggleAcc=function(gid){const body=document.getElementById(gid);if(!body)return;const hdr=document.getElementById('hdr_'+gid);if(!hdr)return;if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}else{body.classList.add('open');hdr.classList.add('open');og.add(gid);}};
         function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
 
-        function setupWarehouseSwipe() {
-            document.querySelectorAll('.product-row').forEach(row => {
-                setupLongPress(row, 'warehouse', (r) => parseInt(r.dataset.pid));
-                setupSwipe(row, 'warehouse', (r) => parseInt(r.dataset.pid), async (pid) => { const p = await db.g('products', pid); if (p) { deletedProducts = [p]; await db.del('products', pid); } await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || ''); showSnackbar('Товар удалён', async () => { for (const pp of deletedProducts) { const cp = {...pp}; delete cp.id; await db.add('products', cp); } await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || ''); deletedProducts = []; }); });
-            });
-        }
+        function setupWarehouseSwipe() { document.querySelectorAll('.product-row').forEach(row => { setupLongPress(row, 'warehouse', (r) => parseInt(r.dataset.pid)); setupSwipe(row, 'warehouse', (r) => parseInt(r.dataset.pid), async (pid) => { const p = await db.g('products', pid); if (p) { deletedProducts = [p]; await db.del('products', pid); } await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || ''); showSnackbar('Товар удалён', async () => { for (const pp of deletedProducts) { const cp = {...pp}; delete cp.id; await db.add('products', cp); } await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || ''); deletedProducts = []; }); }); }); }
 
         async function renderWarehouseTable(cat, sq = '') {
-            cwc = cat; const ap = await db.all('products'); let pr = ap.filter(p => p.category === cat);
-            if (sq) { const q = sq.toLowerCase(); pr = pr.filter(p => CATEGORY_TABLE_COLS[cat].some(c => (p[c] || '').toString().toLowerCase().includes(q)) || (p.manufacturer || '').toLowerCase().includes(q) || (p.lineup || '').toLowerCase().includes(q)); og = new Set(); }
+            cwc = cat; const ap = await db.all('products'); let pr = ap.filter(p => p.category === cat); if (sq) { const q = sq.toLowerCase(); pr = pr.filter(p => CATEGORY_TABLE_COLS[cat].some(c => (p[c] || '').toString().toLowerCase().includes(q)) || (p.manufacturer || '').toLowerCase().includes(q) || (p.lineup || '').toLowerCase().includes(q)); og = new Set(); }
             const gb = CATEGORY_GROUPS[cat]; const g = groupProductsNested(pr, gb);
             document.getElementById('contentBody').innerHTML = `<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onWarehouseSearch(this.value)">${pr.length === 0 ? '<p class="text-center text-muted py-4">Нет товаров</p>' : buildAccordionHTML(g, gb, 0, cat, [])}</div>`;
             setTimeout(() => { if (og.size > 0) restoreOpenGroups(); else { const bodies = document.querySelectorAll('.accordion-body'); if (bodies.length === 1) { const gid = bodies[0].id; bodies[0].classList.add('open'); const hdr = document.getElementById('hdr_' + gid); if (hdr) hdr.classList.add('open'); og.add(gid); } } if (whIsSelectMode()) whUpdateSelectUI(); setupWarehouseSwipe(); }, 50);
@@ -672,127 +597,38 @@
         async function showGroupEditModal(cat, cks) { const gb = CATEGORY_GROUPS[cat]; const ap = await db.all('products'); const cp = ap.filter(p => p.category === cat); const flt = cp.filter(p => cks.every((k, i) => norm(p[gb[i]]) === k)); if (flt.length === 0) { await showAlert('Нет товаров в группе', 'error'); return; } const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)'; showModal('Изменить цены', 'bi bi-tags', color, `<p class="text-muted mb-3">Группа: <strong>${cks.join(' → ')}</strong> (${flt.length} шт.)</p><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="grp_purchase" placeholder="Не менять"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="grp_selling" placeholder="Не менять"></div><input type="hidden" id="grp_cat" value="${cat}"><input type="hidden" id="grp_keys" value="${cks.join('|||')}">`, `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveGroupEdit()">Применить</button>`); }
         async function saveGroupEdit() { const cat = document.getElementById('grp_cat').value; const ks = document.getElementById('grp_keys').value.split('|||'); const pv = document.getElementById('grp_purchase').value; const sv = document.getElementById('grp_selling').value; const gb = CATEGORY_GROUPS[cat]; const ap = await db.all('products'); const cp = ap.filter(p => p.category === cat); const flt = cp.filter(p => ks.every((k, i) => norm(p[gb[i]]) === k)); for (const p of flt) { if (pv !== '') p.purchase = parseInt(pv) || 0; if (sv !== '') p.selling = parseInt(sv) || 0; await db.pu('products', p); } closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || ''); }
 
-        // ============ ФОРМА ДОБАВЛЕНИЯ ТОВАРА (ОБЫЧНАЯ + МАССОВАЯ) ============
-        let addProductMode = 'single'; // 'single' | 'mass'
-
+        // ============ ФОРМА ДОБАВЛЕНИЯ ТОВАРА ============
+        let addProductMode = 'single';
         function getProductFormHTML(p = null) {
             const cat = cwc; const ex = CATEGORY_EXTRA_FIELDS[cat];
             if (addProductMode === 'mass') {
-                // Массовый режим
                 const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
-                return `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${p?.manufacturer||''}"></div>
-                <div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${p?.lineup||''}"></div>
-                <div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="prod_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div>
-                <p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p>
-                <div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="prod_quantity" value="0" min="0"></div>
-                <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value=""></div>
-                <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value=""></div>
-                <input type="hidden" id="prod_id" value="">`;
+                return `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${p?.manufacturer||''}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${p?.lineup||''}"></div><div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="prod_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p><div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="prod_quantity" value="0" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value=""></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value=""></div><input type="hidden" id="prod_id" value="">`;
             }
-            // Обычный режим
-            return `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${p?.manufacturer||''}"></div>
-            <div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${p?.lineup||''}"></div>
-            ${ex.map(e=>`<div class="form-group"><label class="form-label">${e.label}</label><input type="text" class="form-input" id="prod_${e.key}" value="${p?.[e.key]||''}"></div>`).join('')}
-            <div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="prod_quantity" value="${p?.quantity||0}" min="0"></div>
-            <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value="${p?.purchase||''}"></div>
-            <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value="${p?.selling||''}"></div>
-            <input type="hidden" id="prod_id" value="${p?.id||''}">`;
+            return `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${p?.manufacturer||''}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${p?.lineup||''}"></div>${ex.map(e=>`<div class="form-group"><label class="form-label">${e.label}</label><input type="text" class="form-input" id="prod_${e.key}" value="${p?.[e.key]||''}"></div>`).join('')}<div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="prod_quantity" value="${p?.quantity||0}" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value="${p?.purchase||''}"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value="${p?.selling||''}"></div><input type="hidden" id="prod_id" value="${p?.id||''}">`;
         }
-
-        function updateMassPreview() {
-            const flavorsEl = document.getElementById('prod_flavors');
-            const previewEl = document.getElementById('mass_preview');
-            if (!flavorsEl || !previewEl) return;
-            const lines = flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);
-            previewEl.textContent = `Будет создано: ${lines.length} товаров`;
-        }
-
+        function updateMassPreview() { const flavorsEl = document.getElementById('prod_flavors'); const previewEl = document.getElementById('mass_preview'); if (!flavorsEl || !previewEl) return; const lines = flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; }
         function renderAddProductForm() {
-            const cat = cwc; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)';
-            const isMass = addProductMode === 'mass';
-            const titleIcon = isMass ? 'bi bi-stack' : 'bi ' + CATEGORY_ICONS[cat];
-            const title = isMass ? 'Массовое добавление' : 'Добавить товар';
-            showModal(title, titleIcon, color, getProductFormHTML(),
-                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`
-            );
-            // Добавляем кнопку переключения режима в заголовок
-            setTimeout(() => {
-                const header = document.querySelector('.modal-header-custom');
-                if (header) {
-                    const toggleBtn = document.createElement('button');
-                    toggleBtn.className = 'mode-toggle-btn';
-                    toggleBtn.innerHTML = isMass ? '<i class="bi bi-pencil"></i>' : '<i class="bi bi-stack"></i>';
-                    toggleBtn.title = isMass ? 'Одиночный режим' : 'Массовый режим';
-                    toggleBtn.onclick = () => { addProductMode = isMass ? 'single' : 'mass'; renderAddProductForm(); };
-                    header.appendChild(toggleBtn);
-                }
-                if (isMass) {
-                    const flavorsEl = document.getElementById('prod_flavors');
-                    if (flavorsEl) { flavorsEl.addEventListener('input', updateMassPreview); updateMassPreview(); }
-                }
-            }, 50);
+            const cat = cwc; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)'; const isMass = addProductMode === 'mass'; const titleIcon = isMass ? 'bi bi-stack' : 'bi ' + CATEGORY_ICONS[cat]; const title = isMass ? 'Массовое добавление' : 'Добавить товар';
+            showModal(title, titleIcon, color, getProductFormHTML(), `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`);
+            setTimeout(() => { const header = document.querySelector('.modal-header-custom'); if (header) { const toggleBtn = document.createElement('button'); toggleBtn.className = 'mode-toggle-btn'; toggleBtn.innerHTML = isMass ? '<i class="bi bi-pencil"></i>' : '<i class="bi bi-stack"></i>'; toggleBtn.title = isMass ? 'Одиночный режим' : 'Массовый режим'; toggleBtn.onclick = () => { addProductMode = isMass ? 'single' : 'mass'; renderAddProductForm(); }; header.appendChild(toggleBtn); } if (isMass) { const flavorsEl = document.getElementById('prod_flavors'); if (flavorsEl) { flavorsEl.addEventListener('input', updateMassPreview); updateMassPreview(); } } }, 50);
         }
-
         async function saveProduct() {
-            const cat = cwc; const ex = CATEGORY_EXTRA_FIELDS[cat]; const id = document.getElementById('prod_id').value;
-            const manufacturer = document.getElementById('prod_manufacturer').value.trim();
-            const lineup = document.getElementById('prod_lineup').value.trim();
-            const quantity = parseInt(document.getElementById('prod_quantity').value) || 0;
-            const purchase = parseInt(document.getElementById('prod_purchase').value) || 0;
-            const selling = parseInt(document.getElementById('prod_selling').value) || 0;
+            const cat = cwc; const ex = CATEGORY_EXTRA_FIELDS[cat]; const id = document.getElementById('prod_id').value; const manufacturer = document.getElementById('prod_manufacturer').value.trim(); const lineup = document.getElementById('prod_lineup').value.trim(); const quantity = parseInt(document.getElementById('prod_quantity').value) || 0; const purchase = parseInt(document.getElementById('prod_purchase').value) || 0; const selling = parseInt(document.getElementById('prod_selling').value) || 0;
             if (!manufacturer) { await showAlert('Введите производителя', 'error'); return; }
-
-            if (addProductMode === 'mass') {
-                const flavorsEl = document.getElementById('prod_flavors');
-                const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0) : [];
-                if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; }
-                const extraKey = ex[0]?.key || 'lineup';
-                let created = 0, skipped = 0;
-                for (const flavor of flavors) {
-                    // Проверяем существование
-                    const allP = await db.all('products');
-                    const exists = allP.some(p => p.category === cat && norm(p.manufacturer) === norm(manufacturer) && norm(p.lineup) === norm(lineup) && norm(p[extraKey]) === norm(flavor));
-                    if (exists) { skipped++; continue; }
-                    const p = { category: cat, manufacturer, lineup, quantity, purchase, selling };
-                    ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : '');
-                    const nid = await db.add('products', p);
-                    created++;
-                }
-                closeModal();
-                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
-                let msg = `Создано ${created} товаров`;
-                if (skipped > 0) msg += `, пропущено ${skipped} (уже есть)`;
-                showSnackbar(msg);
-            } else {
-                // Обычный режим
-                const p = { category: cat, manufacturer, lineup, quantity, purchase, selling };
-                ex.forEach(e => p[e.key] = document.getElementById('prod_' + e.key).value.trim());
-                const isNew = !id;
-                if (id) { p.id = parseInt(id); await db.pu('products', p); }
-                else { const nid = await db.add('products', p); p.id = nid; }
-                closeModal();
-                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
-                if (isNew) setTimeout(() => { const r = document.querySelector(`.product-row[data-pid="${p.id}"]`); if (r) r.classList.add('pop-anim'); }, 100);
-            }
+            if (addProductMode === 'mass') { const flavorsEl = document.getElementById('prod_flavors'); const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0) : []; if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; } const extraKey = ex[0]?.key || 'lineup'; let created = 0, skipped = 0; for (const flavor of flavors) { const allP = await db.all('products'); const exists = allP.some(p => p.category === cat && norm(p.manufacturer) === norm(manufacturer) && norm(p.lineup) === norm(lineup) && norm(p[extraKey]) === norm(flavor)); if (exists) { skipped++; continue; } const p = { category: cat, manufacturer, lineup, quantity, purchase, selling }; ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : ''); await db.add('products', p); created++; } closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || ''); let msg = `Создано ${created} товаров`; if (skipped > 0) msg += `, пропущено ${skipped} (уже есть)`; showSnackbar(msg); }
+            else { const p = { category: cat, manufacturer, lineup, quantity, purchase, selling }; ex.forEach(e => p[e.key] = document.getElementById('prod_' + e.key).value.trim()); const isNew = !id; if (id) { p.id = parseInt(id); await db.pu('products', p); } else { const nid = await db.add('products', p); p.id = nid; } closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || ''); if (isNew) setTimeout(() => { const r = document.querySelector(`.product-row[data-pid="${p.id}"]`); if (r) r.classList.add('pop-anim'); }, 100); }
         }
-
         function showAddProductModal() { addProductMode = 'single'; renderAddProductForm(); }
         async function editProduct(pid) { const p = await db.g('products', pid); if (!p) return; addProductMode = 'single'; cwc = p.category; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[p.category]).trim() || 'var(--accent)'; showModal('Редактировать товар', 'bi ' + CATEGORY_ICONS[p.category], color, getProductFormHTML(p), `<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`); }
         async function deleteProduct(pid) { const confirmed = await showConfirm('Удалить товар?', 'warning'); if (!confirmed) return; await db.del('products', pid); closeModal(); await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || ''); }
 
         // ============ ПРОДАЖИ ============
         let salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''},deletedSales=[],salesPage=1; const PAGE_SIZE=10;
-        function salesEnterSelectMode() { enterSelectMode('sales'); }
-        function salesExitSelectMode() { exitSelectMode('sales'); }
-        function salesToggleSelect(id) { toggleSelectItem('sales', id); }
-        function salesUpdateSelectUI() { updateSelectUI('sales'); }
-        function salesIsSelectMode() { return SELECT_MODE_CONFIG.sales.selectMode; }
-        function salesGetSelectedIds() { return SELECT_MODE_CONFIG.sales.selectedIds; }
-
+        function salesEnterSelectMode() { enterSelectMode('sales'); } function salesExitSelectMode() { exitSelectMode('sales'); } function salesToggleSelect(id) { toggleSelectItem('sales', id); } function salesUpdateSelectUI() { updateSelectUI('sales'); } function salesIsSelectMode() { return SELECT_MODE_CONFIG.sales.selectMode; } function salesGetSelectedIds() { return SELECT_MODE_CONFIG.sales.selectedIds; }
         async function deleteSelectedSales() { const selectedIds = salesGetSelectedIds(); if (selectedIds.size === 0) return; const confirmed = await showConfirm(`Удалить ${selectedIds.size} продаж?`, 'warning'); if (!confirmed) return; vibrate([20, 50, 20]); deletedSales = []; const wrappers = []; for (const id of selectedIds) { const s = await db.g('sales', id); if (s) { deletedSales.push(s); } const row = document.querySelector(`.sale-row[data-sid="${id}"]`); if (row && row.parentElement) wrappers.push(row.parentElement); } wrappers.forEach(w => w.classList.add('removing')); setTimeout(async () => { for (const s of deletedSales) { await db.del('sales', s.id); } salesExitSelectMode(); await renderSalesTable(); showSnackbar(`Удалено ${deletedSales.length} продаж`, async () => { for (const s of deletedSales) { const cp = {...s}; delete cp.id; await db.add('sales', cp); } await renderSalesTable(); deletedSales = []; }); }, 450); }
         async function getFilteredSales() { let sales = await db.all('sales'); if (salesFilter.client) { const q = salesFilter.client.toLowerCase(); sales = sales.filter(s => (s.client || '').toLowerCase().includes(q)); } if (salesFilter.product) { const q = salesFilter.product.toLowerCase(); sales = sales.filter(s => (s.product || '').toLowerCase().includes(q)); } if (salesFilter.dateFrom) { sales = sales.filter(s => s.date >= salesFilter.dateFrom); } if (salesFilter.dateTo) { sales = sales.filter(s => s.date <= salesFilter.dateTo); } if (salesFilter.note) { sales = sales.filter(s => (s.note || '') === salesFilter.note); } sales.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id); return sales; }
         function hasActiveFilters() { return !!(salesFilter.client || salesFilter.product || salesFilter.dateFrom || salesFilter.dateTo || salesFilter.note); }
-
         function setupSalesSwipe() { document.querySelectorAll('.sale-row').forEach(row => { setupLongPress(row, 'sales', (r) => parseInt(r.dataset.sid)); setupSwipe(row, 'sales', (r) => parseInt(r.dataset.sid), async (sid) => { const s = await db.g('sales', sid); if (s) { deletedSales = [s]; await db.del('sales', sid); } await renderSalesTable(); showSnackbar('Продажа удалена', async () => { for (const ds of deletedSales) { const cp = {...ds}; delete cp.id; await db.add('sales', cp); } await renderSalesTable(); deletedSales = []; }); }); }); }
 
         async function renderSalesTable() { const allSales = await getFilteredSales(); const totalPages = Math.ceil(allSales.length / PAGE_SIZE) || 1; if (salesPage > totalPages) salesPage = totalPages; const start = (salesPage - 1) * PAGE_SIZE; const pageSales = allSales.slice(start, start + PAGE_SIZE); const filterActive = hasActiveFilters(); const filterBtnClass = filterActive ? 'active' : 'filter'; let paginationHTML = ''; if (totalPages > 1) { paginationHTML = `<div class="pagination"><button onclick="goToSalesPage(${salesPage - 1})" ${salesPage <= 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`; for (let i = 1; i <= totalPages; i++) { if (i === 1 || i === totalPages || (i >= salesPage - 1 && i <= salesPage + 1)) { paginationHTML += `<button class="${i === salesPage ? 'active' : ''}" onclick="goToSalesPage(${i})">${i}</button>`; } else if (i === salesPage - 2 || i === salesPage + 2) { paginationHTML += `<span class="page-info">...</span>`; } } paginationHTML += `<button onclick="goToSalesPage(${salesPage + 1})" ${salesPage >= totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`; } document.getElementById('contentBody').innerHTML = `<h2 class="tab-title" onclick="openSidebar()">Продажи</h2><div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterBtnClass}" onclick="showFilterModal()"><i class="bi bi-funnel"></i> Фильтры</button>${filterActive ? `<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i> Сбросить</button>` : ''}</div><button class="round-add-btn" onclick="showAddSaleModal()">+</button></div><div class="sales-table-section"><div class="wh-header"><span style="font-weight:600;">${allSales.length} продаж</span><div class="wh-header-actions"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="salesExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash"></i> Удалить</button></div></div><div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length === 0 ? '<p class="text-center text-muted py-4">Нет продаж</p>' : pageSales.map(s => { let noteClass = ''; if (s.note === 'бронь') noteClass = 'booking'; else if (s.note === 'долг') noteClass = 'debt'; else if (s.note === 'приз') noteClass = 'prize'; return `<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesIsSelectMode())editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="salesToggleSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client || '-'}</div><div class="sale-col">${s.product || '-'}</div><div class="sale-col qty">${s.quantity || 0}</div><div class="sale-col price">${fn(s.total || 0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note || '-'}</div></div></div>`; }).join('')}${paginationHTML}</div>`; setTimeout(() => { if (salesIsSelectMode()) salesUpdateSelectUI(); setupSalesSwipe(); }, 50); }
