@@ -36,9 +36,9 @@
         .nav-item { display: flex; align-items: center; padding: 15px 20px; color: var(--text-primary); text-decoration: none; transition: all 0.3s ease; border-left: 4px solid transparent; margin: 5px 0; font-size: 16px; cursor: pointer; }
         .nav-item i { font-size: 20px; margin-right: 15px; width: 24px; text-align: center; }
         .nav-item.active { background: rgba(129,216,208,0.15); border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
-        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
-        .sidebar-footer-icon-btn { flex: 1; padding: 10px; background: transparent; border: 2px solid var(--border); color: var(--text-secondary); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.2s ease; position: relative; }
-        .sidebar-footer-icon-btn:active { transform: scale(0.93); background: var(--border); }
+        .sidebar-footer { padding: 0 20px 20px 20px; border-top: none; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+        .sidebar-footer-icon-btn { width: 36px; height: 36px; padding: 0; background: transparent; border: 2px solid var(--border); color: var(--text-secondary); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s ease; }
+        .sidebar-footer-icon-btn:active { transform: scale(0.88); background: var(--border); }
         .sidebar-footer-icon-btn.export-btn { border-color: var(--accent); color: var(--accent); }
         .sidebar-footer-icon-btn.export-btn:active { background: var(--accent); color: white; }
         .main-content { padding: 20px 12px 20px; min-height: 100vh; }
@@ -137,8 +137,8 @@
         .accordion-body.open { display: block; }
         .accordion-body .accordion-header { padding-left: 28px; }
 
-        .group-edit-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 16px; padding: 2px 6px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; position: relative; z-index: 10; line-height: 1; }
-        .group-edit-btn:active { transform: scale(1.15); color: var(--accent-hover); }
+        .group-add-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 16px; padding: 2px 6px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; position: relative; z-index: 10; line-height: 1; }
+        .group-add-btn:active { transform: scale(1.15); color: var(--accent-hover); }
 
         .product-row-wrapper { position: relative; overflow: hidden; transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease; max-height: 60px; opacity: 1; margin-bottom: 0; }
         .product-row-wrapper.removing { max-height: 0; opacity: 0; margin-bottom: -2px; padding: 0; }
@@ -248,9 +248,6 @@
         .btn-delete { background: var(--red); color: white; flex: 0.5; }
         .btn-reset { background: transparent; color: var(--text-secondary); border: 2px solid var(--border); }
 
-        .mode-toggle-btn { background: none; border: 2px solid var(--accent); color: var(--accent); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s ease; }
-        .mode-toggle-btn:hover { background: var(--accent); color: white; }
-        .mode-toggle-btn:active { transform: scale(0.85); }
         .preview-text { font-size: 13px; color: var(--accent); margin-top: 8px; font-weight: 600; }
 
         .snackbar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--bg-sidebar); color: white; padding: 14px 24px; border-radius: 25px; z-index: 9999; font-size: 14px; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px; animation: slideUp 0.3s ease; }
@@ -309,20 +306,7 @@
         const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 42;
         class Database {
             constructor() { this.db = null; }
-            async init() {
-                return new Promise((resolve, reject) => {
-                    const r = indexedDB.open(DB_NAME, DB_VERSION);
-                    r.onerror = () => reject(r.error);
-                    r.onsuccess = () => { this.db = r.result; resolve(); };
-                    r.onupgradeneeded = (e) => {
-                        const d = e.target.result;
-                        if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' });
-                        if (!d.objectStoreNames.contains('sales')) { const s = d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }); s.createIndex('date', 'date', { unique: false }); s.createIndex('client', 'client', { unique: false }); }
-                        if (!d.objectStoreNames.contains('products')) { const p = d.createObjectStore('products', { keyPath: 'id', autoIncrement: true }); p.createIndex('category', 'category', { unique: false }); }
-                        if (!d.objectStoreNames.contains('clients')) { const c = d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true }); c.createIndex('name', 'name', { unique: false }); }
-                    };
-                });
-            }
+            async init() { return new Promise((resolve, reject) => { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onerror = () => reject(r.error); r.onsuccess = () => { this.db = r.result; resolve(); }; r.onupgradeneeded = (e) => { const d = e.target.result; if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' }); if (!d.objectStoreNames.contains('sales')) { const s = d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }); s.createIndex('date', 'date', { unique: false }); s.createIndex('client', 'client', { unique: false }); } if (!d.objectStoreNames.contains('products')) { const p = d.createObjectStore('products', { keyPath: 'id', autoIncrement: true }); p.createIndex('category', 'category', { unique: false }); } if (!d.objectStoreNames.contains('clients')) { const c = d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true }); c.createIndex('name', 'name', { unique: false }); } }; }); }
             async g(s, k) { return this.p(this.db.transaction([s],'readonly').objectStore(s).get(k)); }
             async pu(s, d) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).put(d)); }
             async all(s) { return this.p(this.db.transaction([s],'readonly').objectStore(s).getAll()); }
@@ -435,7 +419,7 @@
         function setupLongPress(row,type,idGetter){let pressStartTime=0,animationFrame=null,isPressing=false;let touchStartX=0,touchStartY=0;function updateBrightness(){if(!isPressing)return;const elapsed=Date.now()-pressStartTime;const progress=Math.min(elapsed/1300,1);const brightness=1.0+(progress*0.1);row.style.filter=`brightness(${brightness})`;if(progress<1){animationFrame=requestAnimationFrame(updateBrightness);}else{row.style.filter='brightness(1.0)';row.classList.remove('pressing');vibrate(20);const cfg=getSelectConfig(type);if(!cfg.selectMode){enterSelectMode(type);const itemId=idGetter(row);toggleSelectItem(type,itemId);row.classList.add('selected');row.style.filter='brightness(1.15)';const cb=row.querySelector('.select-checkbox');if(cb)cb.checked=true;}isPressing=false;}}function startPress(e){const cfg=getSelectConfig(type);if(cfg.selectMode)return;if(e.target.closest('.copy-btn')||e.target.closest('.group-edit-btn')||e.target.closest('.select-checkbox')||e.target.closest('.qty-btn'))return;const touch=e.touches?e.touches[0]:e;touchStartX=touch.clientX;touchStartY=touch.clientY;pressStartTime=Date.now();isPressing=true;row.classList.add('pressing');row.style.filter='brightness(1.0)';animationFrame=requestAnimationFrame(updateBrightness);}function endPress(e){if(!isPressing)return;isPressing=false;if(animationFrame)cancelAnimationFrame(animationFrame);row.style.transition='filter 0.1s ease';row.style.filter='brightness(1.0)';row.classList.remove('pressing');setTimeout(()=>{row.style.transition='';},150);}function checkMove(e){if(!isPressing)return;const touch=e.touches?e.touches[0]:e;const cx=touch.clientX,cy=touch.clientY;if(Math.abs(cx-touchStartX)>8||Math.abs(cy-touchStartY)>8)endPress(e);}row.addEventListener('mousedown',startPress);row.addEventListener('mouseup',endPress);row.addEventListener('mouseleave',endPress);row.addEventListener('mousemove',checkMove);row.addEventListener('touchstart',startPress,{passive:true});row.addEventListener('touchend',endPress);row.addEventListener('touchcancel',endPress);row.addEventListener('touchmove',checkMove,{passive:true});}
 
         // ============ ДОЛГОЕ НАЖАТИЕ ДЛЯ ГРУППИРОВОК ============
-        function setupGroupLongPress(headerElement, cat, level, keys) {
+        function setupGroupLongPress(headerElement, cat, level, keys, groupItems) {
             let pressStartTime = 0, animationFrame = null, isPressing = false;
             let touchStartX = 0, touchStartY = 0;
 
@@ -451,14 +435,19 @@
                     headerElement.style.filter = 'brightness(1.0)';
                     headerElement.classList.remove('pressing');
                     vibrate(20);
-                    // Показываем модалку переименования
-                    showRenameGroupModal(cat, level, keys);
+                    const gb = CATEGORY_GROUPS[cat];
+                    const isLastLevel = (level + 1 >= gb.length);
+                    if (isLastLevel) {
+                        showEditGroupModal(cat, level, keys, groupItems);
+                    } else {
+                        showEditGroupModal(cat, level, keys, []);
+                    }
                     isPressing = false;
                 }
             }
 
             function startPress(e) {
-                if (e.target.closest('.group-edit-btn') || e.target.closest('.accordion-arrow')) return;
+                if (e.target.closest('.group-add-btn') || e.target.closest('.accordion-arrow')) return;
                 const touch = e.touches ? e.touches[0] : e;
                 touchStartX = touch.clientX;
                 touchStartY = touch.clientY;
@@ -469,47 +458,36 @@
                 animationFrame = requestAnimationFrame(updateBrightness);
             }
 
-            function endPress(e) {
-                if (!isPressing) return;
-                isPressing = false;
-                if (animationFrame) cancelAnimationFrame(animationFrame);
-                headerElement.style.transition = 'filter 0.1s ease';
-                headerElement.style.filter = 'brightness(1.0)';
-                headerElement.classList.remove('pressing');
-                setTimeout(() => { headerElement.style.transition = ''; }, 150);
-            }
+            function endPress(e) { if (!isPressing) return; isPressing = false; if (animationFrame) cancelAnimationFrame(animationFrame); headerElement.style.transition = 'filter 0.1s ease'; headerElement.style.filter = 'brightness(1.0)'; headerElement.classList.remove('pressing'); setTimeout(() => { headerElement.style.transition = ''; }, 150); }
+            function checkMove(e) { if (!isPressing) return; const touch = e.touches ? e.touches[0] : e; const cx = touch.clientX, cy = touch.clientY; if (Math.abs(cx - touchStartX) > 8 || Math.abs(cy - touchStartY) > 8) endPress(e); }
 
-            function checkMove(e) {
-                if (!isPressing) return;
-                const touch = e.touches ? e.touches[0] : e;
-                const cx = touch.clientX, cy = touch.clientY;
-                if (Math.abs(cx - touchStartX) > 8 || Math.abs(cy - touchStartY) > 8) endPress(e);
-            }
-
-            headerElement.addEventListener('mousedown', startPress);
-            headerElement.addEventListener('mouseup', endPress);
-            headerElement.addEventListener('mouseleave', endPress);
-            headerElement.addEventListener('mousemove', checkMove);
-            headerElement.addEventListener('touchstart', startPress, {passive: true});
-            headerElement.addEventListener('touchend', endPress);
-            headerElement.addEventListener('touchcancel', endPress);
-            headerElement.addEventListener('touchmove', checkMove, {passive: true});
+            headerElement.addEventListener('mousedown', startPress); headerElement.addEventListener('mouseup', endPress); headerElement.addEventListener('mouseleave', endPress); headerElement.addEventListener('mousemove', checkMove);
+            headerElement.addEventListener('touchstart', startPress, {passive: true}); headerElement.addEventListener('touchend', endPress); headerElement.addEventListener('touchcancel', endPress); headerElement.addEventListener('touchmove', checkMove, {passive: true});
         }
 
-        async function showRenameGroupModal(cat, level, keys) {
+        // ============ РЕДАКТИРОВАНИЕ ГРУППЫ ============
+        async function showEditGroupModal(cat, level, keys, groupItems) {
             const gb = CATEGORY_GROUPS[cat];
             const fieldName = gb[level];
             const fieldLabel = COL_LABELS[fieldName] || fieldName;
             const oldValue = keys[keys.length - 1];
-            showModal('Переименовать группу', 'bi bi-pencil', 'var(--accent)',
-                `<div class="form-group"><label class="form-label">${fieldLabel}</label><input type="text" class="form-input" id="rename_group_value" value="${oldValue}"></div><p class="text-muted" style="font-size:13px;">Изменения будут применены ко всем товарам в группе</p>`,
-                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveRenameGroup('${cat}',${level},'${keys.join('|||')}')">Сохранить</button>`
+            const isLastLevel = (level + 1 >= gb.length);
+            const firstItem = groupItems.length > 0 ? groupItems[0] : null;
+
+            let bodyHTML = `<div class="form-group"><label class="form-label">${fieldLabel}</label><input type="text" class="form-input" id="edit_group_name" value="${oldValue}"></div>`;
+            if (isLastLevel && groupItems.length > 0) {
+                bodyHTML += `<div class="form-group"><label class="form-label">Закупка (₽) — оставьте пустым чтобы не менять</label><input type="number" class="form-input" id="edit_group_purchase" value="" step="0.01" placeholder="Не менять"></div>`;
+                bodyHTML += `<div class="form-group"><label class="form-label">Продажа (₽) — оставьте пустым чтобы не менять</label><input type="number" class="form-input" id="edit_group_selling" value="" step="0.01" placeholder="Не менять"></div>`;
+            }
+
+            showModal('Редактировать группу', 'bi bi-pencil', 'var(--accent)', bodyHTML,
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveEditGroup('${cat}',${level},'${keys.join('|||')}')">Сохранить</button>`
             );
         }
 
-        async function saveRenameGroup(cat, level, keysStr) {
+        async function saveEditGroup(cat, level, keysStr) {
             const keys = keysStr.split('|||');
-            const newValue = document.getElementById('rename_group_value').value.trim();
+            const newValue = document.getElementById('edit_group_name').value.trim();
             if (!newValue) { await showAlert('Введите название', 'error'); return; }
             const gb = CATEGORY_GROUPS[cat];
             const fieldName = gb[level];
@@ -518,15 +496,20 @@
                 if (p.category !== cat) return false;
                 return keys.every((k, i) => norm(p[gb[i]]) === k);
             });
+
+            const purchaseEl = document.getElementById('edit_group_purchase');
+            const sellingEl = document.getElementById('edit_group_selling');
+            const newPurchase = purchaseEl ? purchaseEl.value.trim() : '';
+            const newSelling = sellingEl ? sellingEl.value.trim() : '';
+
             for (const p of toUpdate) {
                 p[fieldName] = newValue;
+                if (newPurchase !== '') p.purchase = parseFloat(newPurchase) || 0;
+                if (newSelling !== '') p.selling = parseFloat(newSelling) || 0;
                 await db.pu('products', p);
             }
             closeModal();
-            // Обновляем аккордеон, сохраняя открытые группы
-            const openGroups = new Set(og);
             await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
-            // Восстанавливаем открытые группы (структура изменилась, но пробуем)
             setTimeout(() => restoreOpenGroups(), 100);
             showSnackbar(`Обновлено ${toUpdate.length} товаров`);
         }
@@ -548,39 +531,218 @@
         function groupProductsNested(products,groupBy){if(groupBy.length===0)return{_root:products};const root={};products.forEach(p=>{let current=root;for(let i=0;i<groupBy.length;i++){const field=groupBy[i];const key=norm(p[field]);if(!current[key])current[key]=i===groupBy.length-1?[]:{};if(i===groupBy.length-1)current[key].push(p);else current=current[key];}});return root;}
         function getGroupId(cat,level,keys){return['grp',cat,...keys.slice(0,level+1)].join('_');}
 
-        function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){if(level>=groupBy.length)return'';let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));const isLastLevel=(level+1>=groupBy.length);entries.forEach(([key,value])=>{const currentLevelKeys=[...parentKeys,key];const gid=getGroupId(cat,level,currentLevelKeys);const items=isLastLevel?value:[];const firstItem=isLastLevel?value[0]:Object.values(value)[0]?.[0];const fieldName=groupBy[level];const label=firstItem?firstItem[fieldName]:key;const tab=level>0?'&emsp;&emsp;':'';const ks=currentLevelKeys.join('|||');const eb=isLastLevel?`<button class="group-edit-btn" data-cat="${cat}" data-keys="${ks}" title="Изменить цены"><i class="bi bi-tags"></i></button>`:'';h+=`<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}" data-cat="${cat}" data-level="${level}" data-keys="${ks}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${eb}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;if(!isLastLevel){h+=buildAccordionHTML(value,groupBy,level+1,cat,currentLevelKeys);}else{const cols=CATEGORY_TABLE_COLS[cwc];h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;items.forEach(item=>{h+=`<div class="product-row-wrapper${(item.quantity||0)<=0?' out-of-stock':''}"><div class="swipe-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="product-row" data-pid="${item.id}" ondblclick="if(!whIsSelectMode())editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="whToggleSelect(${item.id})" onclick="event.stopPropagation()"></div>`;cols.forEach(col=>{let v=item[col]||'';if(col==='quantity'){h+=`<div class="product-col qty"><div class="qty-controls"><button class="qty-btn minus" onclick="event.stopPropagation();changeQuantity(${item.id},-1)" style="opacity:${(item.quantity||0)<=0?'0':'1'}">−</button><span class="qty-value">${item.quantity||0}</span><button class="qty-btn plus" onclick="event.stopPropagation();changeQuantity(${item.id},1)">+</button></div></div>`;}else{if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;}});h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;});}h+=`</div></div>`;});return h;}
+        function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){if(level>=groupBy.length)return'';let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));const isLastLevel=(level+1>=groupBy.length);entries.forEach(([key,value])=>{const currentLevelKeys=[...parentKeys,key];const gid=getGroupId(cat,level,currentLevelKeys);const items=isLastLevel?value:[];const firstItem=isLastLevel?value[0]:Object.values(value)[0]?.[0];const fieldName=groupBy[level];const label=firstItem?firstItem[fieldName]:key;const tab=level>0?'&emsp;&emsp;':'';const ks=currentLevelKeys.join('|||');const addBtn = `<button class="group-add-btn" data-cat="${cat}" data-level="${level}" data-keys="${ks}" title="Добавить в группу"><i class="bi bi-plus"></i></button>`;h+=`<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}" data-cat="${cat}" data-level="${level}" data-keys="${ks}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${addBtn}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;if(!isLastLevel){h+=buildAccordionHTML(value,groupBy,level+1,cat,currentLevelKeys);}else{const cols=CATEGORY_TABLE_COLS[cwc];h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;items.forEach(item=>{h+=`<div class="product-row-wrapper${(item.quantity||0)<=0?' out-of-stock':''}"><div class="swipe-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="product-row" data-pid="${item.id}" ondblclick="if(!whIsSelectMode())editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="whToggleSelect(${item.id})" onclick="event.stopPropagation()"></div>`;cols.forEach(col=>{let v=item[col]||'';if(col==='quantity'){h+=`<div class="product-col qty"><div class="qty-controls"><button class="qty-btn minus" onclick="event.stopPropagation();changeQuantity(${item.id},-1)" style="opacity:${(item.quantity||0)<=0?'0':'1'}">−</button><span class="qty-value">${item.quantity||0}</span><button class="qty-btn plus" onclick="event.stopPropagation();changeQuantity(${item.id},1)">+</button></div></div>`;}else{if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;}});h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;});}h+=`</div></div>`;});return h;}
 
         window.toggleAcc=function(gid){const body=document.getElementById(gid);if(!body)return;const hdr=document.getElementById('hdr_'+gid);if(!hdr)return;if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}else{body.classList.add('open');hdr.classList.add('open');og.add(gid);}};
         function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
 
+        // ============ МОДАЛКА ДОБАВЛЕНИЯ В ГРУППУ ============
+        async function showAddToGroupModal(cat, level, keys) {
+            const gb = CATEGORY_GROUPS[cat];
+            const isLastLevel = (level + 1 >= gb.length);
+            const groupLabel = keys.join(' → ');
+            const ex = CATEGORY_EXTRA_FIELDS[cat];
+            const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
+            
+            // Предзаполняем закупку/продажу из последнего товара категории
+            const allP = await db.all('products');
+            const catProducts = allP.filter(p => p.category === cat).sort((a, b) => b.id - a.id);
+            const lastProduct = catProducts[0];
+            const defPurchase = lastProduct ? lastProduct.purchase || '' : '';
+            const defSelling = lastProduct ? lastProduct.selling || '' : '';
+
+            let bodyHTML = '';
+            if (!isLastLevel) {
+                // Группа не последнего уровня (например, Производитель) — только поле для создания линейки
+                const nextField = gb[level + 1];
+                const nextLabel = COL_LABELS[nextField] || nextField;
+                bodyHTML = `<div class="form-group"><label class="form-label">${nextLabel}</label><input type="text" class="form-input" id="group_add_lineup" placeholder="Название"></div>`;
+            } else {
+                // Последний уровень — поля для товаров
+                bodyHTML = `<div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="group_add_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="group_mass_preview">Будет создано: 0 товаров</p>
+                <div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="group_add_quantity" value="0" min="0"></div>
+                <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="group_add_purchase" value="${defPurchase}" step="0.01"></div>
+                <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="group_add_selling" value="${defSelling}" step="0.01"></div>`;
+            }
+
+            showModal(`Добавить в ${groupLabel}`, 'bi bi-plus', 'var(--accent)', bodyHTML,
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveAddToGroup('${cat}',${level},'${keys.join('|||')}')">Добавить</button>`
+            );
+
+            if (isLastLevel) {
+                setTimeout(() => {
+                    const flavorsEl = document.getElementById('group_add_flavors');
+                    const previewEl = document.getElementById('group_mass_preview');
+                    if (flavorsEl && previewEl) {
+                        const updatePreview = () => {
+                            const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+                            previewEl.textContent = `Будет создано: ${lines.length} товаров`;
+                        };
+                        flavorsEl.addEventListener('input', updatePreview);
+                        updatePreview();
+                    }
+                }, 50);
+            }
+        }
+
+        async function saveAddToGroup(cat, level, keysStr) {
+            const keys = keysStr.split('|||');
+            const gb = CATEGORY_GROUPS[cat];
+            const isLastLevel = (level + 1 >= gb.length);
+            const ex = CATEGORY_EXTRA_FIELDS[cat];
+            const extraKey = ex[0]?.key || 'lineup';
+
+            if (!isLastLevel) {
+                // Создаём пустую линейку (добавляем один товар с пустым вкусом)
+                const lineup = document.getElementById('group_add_lineup').value.trim();
+                if (!lineup) { await showAlert('Введите название', 'error'); return; }
+                const manufacturer = keys[0]; // первый ключ — производитель
+                const allP = await db.all('products');
+                const catProducts = allP.filter(p => p.category === cat).sort((a, b) => b.id - a.id);
+                const lastProduct = catProducts[0];
+                const p = {
+                    category: cat,
+                    manufacturer: manufacturer,
+                    lineup: lineup,
+                    quantity: 0,
+                    purchase: lastProduct ? (lastProduct.purchase || 0) : 0,
+                    selling: lastProduct ? (lastProduct.selling || 0) : 0
+                };
+                ex.forEach(e => p[e.key] = '');
+                await db.add('products', p);
+                closeModal();
+                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+                setTimeout(() => restoreOpenGroups(), 100);
+                showSnackbar(`Линейка "${lineup}" создана`);
+            } else {
+                // Добавляем товары в конечную группу
+                const flavorsEl = document.getElementById('group_add_flavors');
+                const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [];
+                if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; }
+                const quantity = parseInt(document.getElementById('group_add_quantity').value) || 0;
+                const purchase = parseFloat(document.getElementById('group_add_purchase').value) || 0;
+                const selling = parseFloat(document.getElementById('group_add_selling').value) || 0;
+                const manufacturer = keys[0];
+                const lineup = keys[1] || '';
+                let created = 0, skipped = 0;
+                for (const flavor of flavors) {
+                    const isDup = await isDuplicateProduct(cat, manufacturer, lineup, flavor);
+                    if (isDup) { skipped++; continue; }
+                    const p = { category: cat, manufacturer, lineup, quantity, purchase, selling };
+                    ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : '');
+                    await db.add('products', p);
+                    created++;
+                }
+                closeModal();
+                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+                setTimeout(() => restoreOpenGroups(), 100);
+                let msg = `Создано ${created} товаров`;
+                if (skipped > 0) msg += `, пропущено ${skipped} (дубликаты)`;
+                showSnackbar(msg);
+            }
+        }
+
         function setupWarehouseSwipe(){
             document.querySelectorAll('.product-row').forEach(row=>{setupLongPress(row,'warehouse',(r)=>parseInt(r.dataset.pid));setupSwipe(row,'warehouse',(r)=>parseInt(r.dataset.pid),async(pid)=>{const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});});});
-            // Долгое нажатие для группировок
+            // Долгое нажатие и кнопка + для группировок
             document.querySelectorAll('.accordion-header').forEach(hdr => {
                 const cat = hdr.dataset.cat;
                 const level = parseInt(hdr.dataset.level);
                 const keys = hdr.dataset.keys;
                 if (cat && level !== undefined && keys) {
-                    setupGroupLongPress(hdr, cat, level, keys.split('|||'));
+                    const gb = CATEGORY_GROUPS[cat];
+                    const isLastLevel = (level + 1 >= gb.length);
+                    const keysArr = keys.split('|||');
+                    // Находим товары этой группы
+                    let groupItems = [];
+                    if (isLastLevel) {
+                        const allP = db.all('products').then(products => {
+                            return products.filter(p => {
+                                if (p.category !== cat) return false;
+                                return keysArr.every((k, i) => norm(p[gb[i]]) === k);
+                            });
+                        });
+                    }
+                    setupGroupLongPress(hdr, cat, level, keysArr, []);
                 }
+            });
+            // Кнопки + в группах
+            document.querySelectorAll('.group-add-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const cat = btn.dataset.cat;
+                    const level = parseInt(btn.dataset.level);
+                    const keys = btn.dataset.keys;
+                    if (cat && level !== undefined && keys) {
+                        showAddToGroupModal(cat, level, keys.split('|||'));
+                    }
+                });
             });
         }
 
-        async function renderWarehouseTable(cat,sq=''){cwc=cat;const ap=await db.all('products');let pr=ap.filter(p=>p.category===cat);if(sq){const q=sq.toLowerCase();pr=pr.filter(p=>CATEGORY_TABLE_COLS[cat].some(c=>(p[c]||'').toString().toLowerCase().includes(q))||(p.manufacturer||'').toLowerCase().includes(q)||(p.lineup||'').toLowerCase().includes(q));og=new Set();}const gb=CATEGORY_GROUPS[cat];const g=groupProductsNested(pr,gb);document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onWarehouseSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;setTimeout(()=>{if(og.size>0)restoreOpenGroups();else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');og.add(gid);}}if(whIsSelectMode())whUpdateSelectUI();setupWarehouseSwipe();},50);}
+        async function renderWarehouseTable(cat,sq=''){cwc=cat;const ap=await db.all('products');let pr=ap.filter(p=>p.category===cat);if(sq){const q=sq.toLowerCase();pr=pr.filter(p=>CATEGORY_TABLE_COLS[cat].some(c=>(p[c]||'').toString().toLowerCase().includes(q))||(p.manufacturer||'').toLowerCase().includes(q)||(p.lineup||'').toLowerCase().includes(q));og=new Set();}const gb=CATEGORY_GROUPS[cat];const g=groupProductsNested(pr,gb);document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showMassAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onWarehouseSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;setTimeout(()=>{if(og.size>0)restoreOpenGroups();else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');og.add(gid);}}if(whIsSelectMode())whUpdateSelectUI();setupWarehouseSwipe();},50);}
         function onWarehouseSearch(v){renderWarehouseTable(cwc,v);}
         async function copyProduct(pid){const p=await db.g('products',pid);if(!p)return;const cp={...p};delete cp.id;const nid=await db.add('products',cp);await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');setTimeout(()=>{const r=document.querySelector(`.product-row[data-pid="${nid}"]`);if(r)r.classList.add('pop-anim');},100);}
-        document.addEventListener('click',function(e){const btn=e.target.closest('.group-edit-btn');if(!btn)return;e.stopPropagation();e.preventDefault();const cat=btn.getAttribute('data-cat');const ks=btn.getAttribute('data-keys');if(!cat||!ks)return;showGroupEditModal(cat,ks.split('|||'));});
-        async function showGroupEditModal(cat,cks){const gb=CATEGORY_GROUPS[cat];const ap=await db.all('products');const cp=ap.filter(p=>p.category===cat);const flt=cp.filter(p=>cks.every((k,i)=>norm(p[gb[i]])===k));if(flt.length===0){await showAlert('Нет товаров в группе','error');return;}const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';showModal('Изменить цены','bi bi-tags',color,`<p class="text-muted mb-3">Группа: <strong>${cks.join(' → ')}</strong> (${flt.length} шт.)</p><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="grp_purchase" placeholder="Не менять" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="grp_selling" placeholder="Не менять" step="0.01"></div><input type="hidden" id="grp_cat" value="${cat}"><input type="hidden" id="grp_keys" value="${cks.join('|||')}">`,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveGroupEdit()">Применить</button>`);}
-        async function saveGroupEdit(){const cat=document.getElementById('grp_cat').value;const ks=document.getElementById('grp_keys').value.split('|||');const pv=document.getElementById('grp_purchase').value;const sv=document.getElementById('grp_selling').value;const gb=CATEGORY_GROUPS[cat];const ap=await db.all('products');const cp=ap.filter(p=>p.category===cat);const flt=cp.filter(p=>ks.every((k,i)=>norm(p[gb[i]])===k));for(const p of flt){if(pv!=='')p.purchase=parseFloat(pv)||0;if(sv!=='')p.selling=parseFloat(sv)||0;await db.pu('products',p);}closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');}
 
-        // ============ ФОРМА ДОБАВЛЕНИЯ ТОВАРА ============
-        let addProductMode='single';
-        function getProductFormHTML(p=null){const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];if(addProductMode==='mass'){const extraField=ex[0]||{key:'lineup',label:'Линейка'};return`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${p?.manufacturer||''}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${p?.lineup||''}"></div><div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="prod_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p><div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="prod_quantity" value="0" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value="" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value="" step="0.01"></div><input type="hidden" id="prod_id" value="">`;}return`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="prod_manufacturer" value="${p?.manufacturer||''}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="prod_lineup" value="${p?.lineup||''}"></div>${ex.map(e=>`<div class="form-group"><label class="form-label">${e.label}</label><input type="text" class="form-input" id="prod_${e.key}" value="${p?.[e.key]||''}"></div>`).join('')}<div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="prod_quantity" value="${p?.quantity||0}" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="prod_purchase" value="${p?.purchase||''}" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="prod_selling" value="${p?.selling||''}" step="0.01"></div><input type="hidden" id="prod_id" value="${p?.id||''}">`;}
-        function updateMassPreview(){const flavorsEl=document.getElementById('prod_flavors');const previewEl=document.getElementById('mass_preview');if(!flavorsEl||!previewEl)return;const lines=flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);previewEl.textContent=`Будет создано: ${lines.length} товаров`;}
-        function renderAddProductForm(){const cat=cwc;const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';const isMass=addProductMode==='mass';const titleIcon=isMass?'bi bi-stack':'bi '+CATEGORY_ICONS[cat];const title=isMass?'Массовое добавление':'Добавить товар';showModal(title,titleIcon,color,getProductFormHTML(),`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Добавить</button>`);setTimeout(()=>{const header=document.querySelector('.modal-header-custom');if(header){const toggleBtn=document.createElement('button');toggleBtn.className='mode-toggle-btn';toggleBtn.innerHTML=isMass?'<i class="bi bi-pencil"></i>':'<i class="bi bi-stack"></i>';toggleBtn.title=isMass?'Одиночный режим':'Массовый режим';toggleBtn.onclick=()=>{addProductMode=isMass?'single':'mass';renderAddProductForm();};header.appendChild(toggleBtn);}if(isMass){const flavorsEl=document.getElementById('prod_flavors');if(flavorsEl){flavorsEl.addEventListener('input',updateMassPreview);updateMassPreview();}}},50);}
-        async function saveProduct(){const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];const id=document.getElementById('prod_id').value;const manufacturer=document.getElementById('prod_manufacturer').value.trim();const lineup=document.getElementById('prod_lineup').value.trim();const quantity=parseInt(document.getElementById('prod_quantity').value)||0;const purchase=parseFloat(document.getElementById('prod_purchase').value)||0;const selling=parseFloat(document.getElementById('prod_selling').value)||0;if(!manufacturer){await showAlert('Введите производителя','error');return;}if(addProductMode==='mass'){const flavorsEl=document.getElementById('prod_flavors');const flavors=flavorsEl?flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0):[];if(flavors.length===0){await showAlert('Введите хотя бы один вкус','error');return;}const extraKey=ex[0]?.key||'lineup';let created=0,skipped=0;for(const flavor of flavors){const isDup=await isDuplicateProduct(cat,manufacturer,lineup,flavor);if(isDup){skipped++;continue;}const p={category:cat,manufacturer,lineup,quantity,purchase,selling};ex.forEach(e=>p[e.key]=(e.key===extraKey)?flavor:'');await db.add('products',p);created++;}closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');let msg=`Создано ${created} товаров`;if(skipped>0)msg+=`, пропущено ${skipped} (дубликаты)`;showSnackbar(msg);}else{const extraKey=ex[0]?.key||'lineup';const extraValue=ex[0]?document.getElementById('prod_'+ex[0].key).value.trim():'';const isDup=await isDuplicateProduct(cat,manufacturer,lineup,extraValue,id?parseInt(id):null);if(isDup){await showAlert('Такой товар уже существует','error');return;}const p={category:cat,manufacturer,lineup,quantity,purchase,selling};ex.forEach(e=>p[e.key]=document.getElementById('prod_'+e.key).value.trim());const isNew=!id;if(id){p.id=parseInt(id);await db.pu('products',p);}else{const nid=await db.add('products',p);p.id=nid;}closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');if(isNew)setTimeout(()=>{const r=document.querySelector(`.product-row[data-pid="${p.id}"]`);if(r)r.classList.add('pop-anim');},100);}}
-        function showAddProductModal(){addProductMode='single';renderAddProductForm();}
-        async function editProduct(pid){const p=await db.g('products',pid);if(!p)return;addProductMode='single';cwc=p.category;const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[p.category]).trim()||'var(--accent)';showModal('Редактировать товар','bi '+CATEGORY_ICONS[p.category],color,getProductFormHTML(p),`<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveProduct()">Сохранить</button>`);}
+        // ============ МАССОВОЕ ДОБАВЛЕНИЕ ТОВАРОВ (ОСНОВНАЯ КНОПКА) ============
+        function showMassAddProductModal() {
+            const cat = cwc;
+            const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)';
+            const ex = CATEGORY_EXTRA_FIELDS[cat];
+            const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
+            showModal('Добавить товары', 'bi bi-stack', color,
+                `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="mass_manufacturer"></div>
+                <div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="mass_lineup"></div>
+                <div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="mass_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div>
+                <p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p>
+                <div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="mass_quantity" value="0" min="0"></div>
+                <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="mass_purchase" value="" step="0.01"></div>
+                <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="mass_selling" value="" step="0.01"></div>`,
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveMassProduct()">Добавить</button>`
+            );
+            setTimeout(() => {
+                const flavorsEl = document.getElementById('mass_flavors');
+                const previewEl = document.getElementById('mass_preview');
+                if (flavorsEl && previewEl) {
+                    const updatePreview = () => { const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; };
+                    flavorsEl.addEventListener('input', updatePreview);
+                    updatePreview();
+                }
+            }, 50);
+        }
+
+        async function saveMassProduct() {
+            const cat = cwc;
+            const ex = CATEGORY_EXTRA_FIELDS[cat];
+            const manufacturer = document.getElementById('mass_manufacturer').value.trim();
+            const lineup = document.getElementById('mass_lineup').value.trim();
+            const flavorsEl = document.getElementById('mass_flavors');
+            const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [];
+            const quantity = parseInt(document.getElementById('mass_quantity').value) || 0;
+            const purchase = parseFloat(document.getElementById('mass_purchase').value) || 0;
+            const selling = parseFloat(document.getElementById('mass_selling').value) || 0;
+            if (!manufacturer) { await showAlert('Введите производителя', 'error'); return; }
+            if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; }
+            const extraKey = ex[0]?.key || 'lineup';
+            let created = 0, skipped = 0;
+            for (const flavor of flavors) {
+                const isDup = await isDuplicateProduct(cat, manufacturer, lineup, flavor);
+                if (isDup) { skipped++; continue; }
+                const p = { category: cat, manufacturer, lineup, quantity, purchase, selling };
+                ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : '');
+                await db.add('products', p);
+                created++;
+            }
+            closeModal();
+            await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+            let msg = `Создано ${created} товаров`;
+            if (skipped > 0) msg += `, пропущено ${skipped} (дубликаты)`;
+            showSnackbar(msg);
+        }
+
+        async function editProduct(pid){const p=await db.g('products',pid);if(!p)return;cwc=p.category;const ex=CATEGORY_EXTRA_FIELDS[cwc];const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[p.category]).trim()||'var(--accent)';showModal('Редактировать товар','bi '+CATEGORY_ICONS[p.category],color,`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="edit_prod_manufacturer" value="${p.manufacturer||''}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="edit_prod_lineup" value="${p.lineup||''}"></div>${ex.map(e=>`<div class="form-group"><label class="form-label">${e.label}</label><input type="text" class="form-input" id="edit_prod_${e.key}" value="${p[e.key]||''}"></div>`).join('')}<div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="edit_prod_quantity" value="${p.quantity||0}" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="edit_prod_purchase" value="${p.purchase||''}" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="edit_prod_selling" value="${p.selling||''}" step="0.01"></div>`,`<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveEditProduct(${p.id})">Сохранить</button>`);}
+        async function saveEditProduct(pid){const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];const manufacturer=document.getElementById('edit_prod_manufacturer').value.trim();const lineup=document.getElementById('edit_prod_lineup').value.trim();const quantity=parseInt(document.getElementById('edit_prod_quantity').value)||0;const purchase=parseFloat(document.getElementById('edit_prod_purchase').value)||0;const selling=parseFloat(document.getElementById('edit_prod_selling').value)||0;if(!manufacturer){await showAlert('Введите производителя','error');return;}const extraKey=ex[0]?.key||'lineup';const extraValue=ex[0]?document.getElementById('edit_prod_'+ex[0].key).value.trim():'';const isDup=await isDuplicateProduct(cat,manufacturer,lineup,extraValue,pid);if(isDup){await showAlert('Такой товар уже существует','error');return;}const p={id:pid,category:cat,manufacturer,lineup,quantity,purchase,selling};ex.forEach(e=>p[e.key]=document.getElementById('edit_prod_'+e.key).value.trim());await db.pu('products',p);closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');}
         async function deleteProduct(pid){const confirmed=await showConfirm('Удалить товар?','warning');if(!confirmed)return;await db.del('products',pid);closeModal();await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');}
 
         // ============ ПРОДАЖИ ============
