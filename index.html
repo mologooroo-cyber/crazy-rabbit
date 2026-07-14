@@ -419,7 +419,7 @@
         function setupLongPress(row,type,idGetter){let pressStartTime=0,animationFrame=null,isPressing=false;let touchStartX=0,touchStartY=0;function updateBrightness(){if(!isPressing)return;const elapsed=Date.now()-pressStartTime;const progress=Math.min(elapsed/1300,1);const brightness=1.0+(progress*0.1);row.style.filter=`brightness(${brightness})`;if(progress<1){animationFrame=requestAnimationFrame(updateBrightness);}else{row.style.filter='brightness(1.0)';row.classList.remove('pressing');vibrate(20);const cfg=getSelectConfig(type);if(!cfg.selectMode){enterSelectMode(type);const itemId=idGetter(row);toggleSelectItem(type,itemId);row.classList.add('selected');row.style.filter='brightness(1.15)';const cb=row.querySelector('.select-checkbox');if(cb)cb.checked=true;}isPressing=false;}}function startPress(e){const cfg=getSelectConfig(type);if(cfg.selectMode)return;if(e.target.closest('.copy-btn')||e.target.closest('.group-edit-btn')||e.target.closest('.select-checkbox')||e.target.closest('.qty-btn'))return;const touch=e.touches?e.touches[0]:e;touchStartX=touch.clientX;touchStartY=touch.clientY;pressStartTime=Date.now();isPressing=true;row.classList.add('pressing');row.style.filter='brightness(1.0)';animationFrame=requestAnimationFrame(updateBrightness);}function endPress(e){if(!isPressing)return;isPressing=false;if(animationFrame)cancelAnimationFrame(animationFrame);row.style.transition='filter 0.1s ease';row.style.filter='brightness(1.0)';row.classList.remove('pressing');setTimeout(()=>{row.style.transition='';},150);}function checkMove(e){if(!isPressing)return;const touch=e.touches?e.touches[0]:e;const cx=touch.clientX,cy=touch.clientY;if(Math.abs(cx-touchStartX)>8||Math.abs(cy-touchStartY)>8)endPress(e);}row.addEventListener('mousedown',startPress);row.addEventListener('mouseup',endPress);row.addEventListener('mouseleave',endPress);row.addEventListener('mousemove',checkMove);row.addEventListener('touchstart',startPress,{passive:true});row.addEventListener('touchend',endPress);row.addEventListener('touchcancel',endPress);row.addEventListener('touchmove',checkMove,{passive:true});}
 
         // ============ ДОЛГОЕ НАЖАТИЕ ДЛЯ ГРУППИРОВОК ============
-        function setupGroupLongPress(headerElement, cat, level, keys, groupItems) {
+        function setupGroupLongPress(headerElement, cat, level, keys) {
             let pressStartTime = 0, animationFrame = null, isPressing = false;
             let touchStartX = 0, touchStartY = 0;
 
@@ -429,53 +429,27 @@
                 const progress = Math.min(elapsed / 1300, 1);
                 const brightness = 1.0 + (progress * 0.1);
                 headerElement.style.filter = `brightness(${brightness})`;
-                if (progress < 1) {
-                    animationFrame = requestAnimationFrame(updateBrightness);
-                } else {
-                    headerElement.style.filter = 'brightness(1.0)';
-                    headerElement.classList.remove('pressing');
-                    vibrate(20);
-                    const gb = CATEGORY_GROUPS[cat];
-                    const isLastLevel = (level + 1 >= gb.length);
-                    if (isLastLevel) {
-                        showEditGroupModal(cat, level, keys, groupItems);
-                    } else {
-                        showEditGroupModal(cat, level, keys, []);
-                    }
-                    isPressing = false;
-                }
+                if (progress < 1) { animationFrame = requestAnimationFrame(updateBrightness); }
+                else { headerElement.style.filter = 'brightness(1.0)'; headerElement.classList.remove('pressing'); vibrate(20); showEditGroupModal(cat, level, keys); isPressing = false; }
             }
 
-            function startPress(e) {
-                if (e.target.closest('.group-add-btn') || e.target.closest('.accordion-arrow')) return;
-                const touch = e.touches ? e.touches[0] : e;
-                touchStartX = touch.clientX;
-                touchStartY = touch.clientY;
-                pressStartTime = Date.now();
-                isPressing = true;
-                headerElement.classList.add('pressing');
-                headerElement.style.filter = 'brightness(1.0)';
-                animationFrame = requestAnimationFrame(updateBrightness);
-            }
-
+            function startPress(e) { if (e.target.closest('.group-add-btn') || e.target.closest('.accordion-arrow')) return; const touch = e.touches ? e.touches[0] : e; touchStartX = touch.clientX; touchStartY = touch.clientY; pressStartTime = Date.now(); isPressing = true; headerElement.classList.add('pressing'); headerElement.style.filter = 'brightness(1.0)'; animationFrame = requestAnimationFrame(updateBrightness); }
             function endPress(e) { if (!isPressing) return; isPressing = false; if (animationFrame) cancelAnimationFrame(animationFrame); headerElement.style.transition = 'filter 0.1s ease'; headerElement.style.filter = 'brightness(1.0)'; headerElement.classList.remove('pressing'); setTimeout(() => { headerElement.style.transition = ''; }, 150); }
             function checkMove(e) { if (!isPressing) return; const touch = e.touches ? e.touches[0] : e; const cx = touch.clientX, cy = touch.clientY; if (Math.abs(cx - touchStartX) > 8 || Math.abs(cy - touchStartY) > 8) endPress(e); }
-
             headerElement.addEventListener('mousedown', startPress); headerElement.addEventListener('mouseup', endPress); headerElement.addEventListener('mouseleave', endPress); headerElement.addEventListener('mousemove', checkMove);
             headerElement.addEventListener('touchstart', startPress, {passive: true}); headerElement.addEventListener('touchend', endPress); headerElement.addEventListener('touchcancel', endPress); headerElement.addEventListener('touchmove', checkMove, {passive: true});
         }
 
         // ============ РЕДАКТИРОВАНИЕ ГРУППЫ ============
-        async function showEditGroupModal(cat, level, keys, groupItems) {
+        async function showEditGroupModal(cat, level, keys) {
             const gb = CATEGORY_GROUPS[cat];
             const fieldName = gb[level];
             const fieldLabel = COL_LABELS[fieldName] || fieldName;
             const oldValue = keys[keys.length - 1];
             const isLastLevel = (level + 1 >= gb.length);
-            const firstItem = groupItems.length > 0 ? groupItems[0] : null;
 
             let bodyHTML = `<div class="form-group"><label class="form-label">${fieldLabel}</label><input type="text" class="form-input" id="edit_group_name" value="${oldValue}"></div>`;
-            if (isLastLevel && groupItems.length > 0) {
+            if (isLastLevel) {
                 bodyHTML += `<div class="form-group"><label class="form-label">Закупка (₽) — оставьте пустым чтобы не менять</label><input type="number" class="form-input" id="edit_group_purchase" value="" step="0.01" placeholder="Не менять"></div>`;
                 bodyHTML += `<div class="form-group"><label class="form-label">Продажа (₽) — оставьте пустым чтобы не менять</label><input type="number" class="form-input" id="edit_group_selling" value="" step="0.01" placeholder="Не менять"></div>`;
             }
@@ -492,10 +466,7 @@
             const gb = CATEGORY_GROUPS[cat];
             const fieldName = gb[level];
             const allP = await db.all('products');
-            const toUpdate = allP.filter(p => {
-                if (p.category !== cat) return false;
-                return keys.every((k, i) => norm(p[gb[i]]) === k);
-            });
+            const toUpdate = allP.filter(p => { if (p.category !== cat) return false; return keys.every((k, i) => norm(p[gb[i]]) === k); });
 
             const purchaseEl = document.getElementById('edit_group_purchase');
             const sellingEl = document.getElementById('edit_group_selling');
@@ -544,7 +515,6 @@
             const ex = CATEGORY_EXTRA_FIELDS[cat];
             const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
             
-            // Предзаполняем закупку/продажу из последнего товара категории
             const allP = await db.all('products');
             const catProducts = allP.filter(p => p.category === cat).sort((a, b) => b.id - a.id);
             const lastProduct = catProducts[0];
@@ -553,12 +523,10 @@
 
             let bodyHTML = '';
             if (!isLastLevel) {
-                // Группа не последнего уровня (например, Производитель) — только поле для создания линейки
                 const nextField = gb[level + 1];
                 const nextLabel = COL_LABELS[nextField] || nextField;
                 bodyHTML = `<div class="form-group"><label class="form-label">${nextLabel}</label><input type="text" class="form-input" id="group_add_lineup" placeholder="Название"></div>`;
             } else {
-                // Последний уровень — поля для товаров
                 bodyHTML = `<div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="group_add_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="group_mass_preview">Будет создано: 0 товаров</p>
                 <div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="group_add_quantity" value="0" min="0"></div>
                 <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="group_add_purchase" value="${defPurchase}" step="0.01"></div>
@@ -574,12 +542,8 @@
                     const flavorsEl = document.getElementById('group_add_flavors');
                     const previewEl = document.getElementById('group_mass_preview');
                     if (flavorsEl && previewEl) {
-                        const updatePreview = () => {
-                            const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-                            previewEl.textContent = `Будет создано: ${lines.length} товаров`;
-                        };
-                        flavorsEl.addEventListener('input', updatePreview);
-                        updatePreview();
+                        const updatePreview = () => { const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; };
+                        flavorsEl.addEventListener('input', updatePreview); updatePreview();
                     }
                 }, 50);
             }
@@ -593,21 +557,13 @@
             const extraKey = ex[0]?.key || 'lineup';
 
             if (!isLastLevel) {
-                // Создаём пустую линейку (добавляем один товар с пустым вкусом)
                 const lineup = document.getElementById('group_add_lineup').value.trim();
                 if (!lineup) { await showAlert('Введите название', 'error'); return; }
-                const manufacturer = keys[0]; // первый ключ — производитель
+                const manufacturer = keys[0];
                 const allP = await db.all('products');
                 const catProducts = allP.filter(p => p.category === cat).sort((a, b) => b.id - a.id);
                 const lastProduct = catProducts[0];
-                const p = {
-                    category: cat,
-                    manufacturer: manufacturer,
-                    lineup: lineup,
-                    quantity: 0,
-                    purchase: lastProduct ? (lastProduct.purchase || 0) : 0,
-                    selling: lastProduct ? (lastProduct.selling || 0) : 0
-                };
+                const p = { category: cat, manufacturer: manufacturer, lineup: lineup, quantity: 0, purchase: lastProduct ? (lastProduct.purchase || 0) : 0, selling: lastProduct ? (lastProduct.selling || 0) : 0 };
                 ex.forEach(e => p[e.key] = '');
                 await db.add('products', p);
                 closeModal();
@@ -615,7 +571,6 @@
                 setTimeout(() => restoreOpenGroups(), 100);
                 showSnackbar(`Линейка "${lineup}" создана`);
             } else {
-                // Добавляем товары в конечную группу
                 const flavorsEl = document.getElementById('group_add_flavors');
                 const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [];
                 if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; }
@@ -644,40 +599,12 @@
 
         function setupWarehouseSwipe(){
             document.querySelectorAll('.product-row').forEach(row=>{setupLongPress(row,'warehouse',(r)=>parseInt(r.dataset.pid));setupSwipe(row,'warehouse',(r)=>parseInt(r.dataset.pid),async(pid)=>{const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});});});
-            // Долгое нажатие и кнопка + для группировок
             document.querySelectorAll('.accordion-header').forEach(hdr => {
-                const cat = hdr.dataset.cat;
-                const level = parseInt(hdr.dataset.level);
-                const keys = hdr.dataset.keys;
-                if (cat && level !== undefined && keys) {
-                    const gb = CATEGORY_GROUPS[cat];
-                    const isLastLevel = (level + 1 >= gb.length);
-                    const keysArr = keys.split('|||');
-                    // Находим товары этой группы
-                    let groupItems = [];
-                    if (isLastLevel) {
-                        const allP = db.all('products').then(products => {
-                            return products.filter(p => {
-                                if (p.category !== cat) return false;
-                                return keysArr.every((k, i) => norm(p[gb[i]]) === k);
-                            });
-                        });
-                    }
-                    setupGroupLongPress(hdr, cat, level, keysArr, []);
-                }
+                const cat = hdr.dataset.cat; const level = parseInt(hdr.dataset.level); const keys = hdr.dataset.keys;
+                if (cat && level !== undefined && keys) { setupGroupLongPress(hdr, cat, level, keys.split('|||')); }
             });
-            // Кнопки + в группах
             document.querySelectorAll('.group-add-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    const cat = btn.dataset.cat;
-                    const level = parseInt(btn.dataset.level);
-                    const keys = btn.dataset.keys;
-                    if (cat && level !== undefined && keys) {
-                        showAddToGroupModal(cat, level, keys.split('|||'));
-                    }
-                });
+                btn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); const cat = btn.dataset.cat; const level = parseInt(btn.dataset.level); const keys = btn.dataset.keys; if (cat && level !== undefined && keys) { showAddToGroupModal(cat, level, keys.split('|||')); } });
             });
         }
 
@@ -685,12 +612,10 @@
         function onWarehouseSearch(v){renderWarehouseTable(cwc,v);}
         async function copyProduct(pid){const p=await db.g('products',pid);if(!p)return;const cp={...p};delete cp.id;const nid=await db.add('products',cp);await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');setTimeout(()=>{const r=document.querySelector(`.product-row[data-pid="${nid}"]`);if(r)r.classList.add('pop-anim');},100);}
 
-        // ============ МАССОВОЕ ДОБАВЛЕНИЕ ТОВАРОВ (ОСНОВНАЯ КНОПКА) ============
+        // ============ МАССОВОЕ ДОБАВЛЕНИЕ ТОВАРОВ ============
         function showMassAddProductModal() {
-            const cat = cwc;
-            const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)';
-            const ex = CATEGORY_EXTRA_FIELDS[cat];
-            const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
+            const cat = cwc; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)';
+            const ex = CATEGORY_EXTRA_FIELDS[cat]; const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
             showModal('Добавить товары', 'bi bi-stack', color,
                 `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="mass_manufacturer"></div>
                 <div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="mass_lineup"></div>
@@ -701,20 +626,11 @@
                 <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="mass_selling" value="" step="0.01"></div>`,
                 `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveMassProduct()">Добавить</button>`
             );
-            setTimeout(() => {
-                const flavorsEl = document.getElementById('mass_flavors');
-                const previewEl = document.getElementById('mass_preview');
-                if (flavorsEl && previewEl) {
-                    const updatePreview = () => { const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; };
-                    flavorsEl.addEventListener('input', updatePreview);
-                    updatePreview();
-                }
-            }, 50);
+            setTimeout(() => { const flavorsEl = document.getElementById('mass_flavors'); const previewEl = document.getElementById('mass_preview'); if (flavorsEl && previewEl) { const updatePreview = () => { const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; }; flavorsEl.addEventListener('input', updatePreview); updatePreview(); } }, 50);
         }
 
         async function saveMassProduct() {
-            const cat = cwc;
-            const ex = CATEGORY_EXTRA_FIELDS[cat];
+            const cat = cwc; const ex = CATEGORY_EXTRA_FIELDS[cat];
             const manufacturer = document.getElementById('mass_manufacturer').value.trim();
             const lineup = document.getElementById('mass_lineup').value.trim();
             const flavorsEl = document.getElementById('mass_flavors');
@@ -724,21 +640,10 @@
             const selling = parseFloat(document.getElementById('mass_selling').value) || 0;
             if (!manufacturer) { await showAlert('Введите производителя', 'error'); return; }
             if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; }
-            const extraKey = ex[0]?.key || 'lineup';
-            let created = 0, skipped = 0;
-            for (const flavor of flavors) {
-                const isDup = await isDuplicateProduct(cat, manufacturer, lineup, flavor);
-                if (isDup) { skipped++; continue; }
-                const p = { category: cat, manufacturer, lineup, quantity, purchase, selling };
-                ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : '');
-                await db.add('products', p);
-                created++;
-            }
-            closeModal();
-            await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
-            let msg = `Создано ${created} товаров`;
-            if (skipped > 0) msg += `, пропущено ${skipped} (дубликаты)`;
-            showSnackbar(msg);
+            const extraKey = ex[0]?.key || 'lineup'; let created = 0, skipped = 0;
+            for (const flavor of flavors) { const isDup = await isDuplicateProduct(cat, manufacturer, lineup, flavor); if (isDup) { skipped++; continue; } const p = { category: cat, manufacturer, lineup, quantity, purchase, selling }; ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : ''); await db.add('products', p); created++; }
+            closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+            let msg = `Создано ${created} товаров`; if (skipped > 0) msg += `, пропущено ${skipped} (дубликаты)`; showSnackbar(msg);
         }
 
         async function editProduct(pid){const p=await db.g('products',pid);if(!p)return;cwc=p.category;const ex=CATEGORY_EXTRA_FIELDS[cwc];const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[p.category]).trim()||'var(--accent)';showModal('Редактировать товар','bi '+CATEGORY_ICONS[p.category],color,`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="edit_prod_manufacturer" value="${p.manufacturer||''}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="edit_prod_lineup" value="${p.lineup||''}"></div>${ex.map(e=>`<div class="form-group"><label class="form-label">${e.label}</label><input type="text" class="form-input" id="edit_prod_${e.key}" value="${p[e.key]||''}"></div>`).join('')}<div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="edit_prod_quantity" value="${p.quantity||0}" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="edit_prod_purchase" value="${p.purchase||''}" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="edit_prod_selling" value="${p.selling||''}" step="0.01"></div>`,`<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveEditProduct(${p.id})">Сохранить</button>`);}
