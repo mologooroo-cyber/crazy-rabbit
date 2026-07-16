@@ -327,6 +327,9 @@
         const CATEGORY_GROUPS = {'liquid':['manufacturer','lineup'],'supplies':['manufacturer'],'pods':['manufacturer','lineup'],'disposable':['manufacturer','lineup'],'snus':['manufacturer','lineup']};
         function norm(s) { return (s||'').trim().toUpperCase(); }
 
+        // Глобальная переменная для хранения удалённых товаров (для undo)
+        let deletedGroupProducts = [];
+
         function openSidebar() { document.getElementById('sidebar').classList.add('active'); }
         function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); }
         function closeSidebarOutside(e) { if(e.target===document.getElementById('sidebar'))closeSidebar(); }
@@ -455,7 +458,7 @@
             }
 
             showModal('Редактировать группу', 'bi bi-pencil', 'var(--accent)', bodyHTML,
-                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveEditGroup('${cat}',${level},'${keys.join('|||')}')">Сохранить</button>`
+                `<button class="btn btn-delete" style="flex:0.4;margin-right:auto;" onclick="deleteGroup('${cat}',${level},'${keys.join('|||')}')"><i class="bi bi-trash"></i> Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveEditGroup('${cat}',${level},'${keys.join('|||')}')">Сохранить</button>`
             );
         }
 
@@ -485,6 +488,50 @@
             showSnackbar(`Обновлено ${toUpdate.length} товаров`);
         }
 
+        // ============ УДАЛЕНИЕ ГРУППЫ ============
+        async function deleteGroup(cat, level, keysStr) {
+            const keys = keysStr.split('|||');
+            const gb = CATEGORY_GROUPS[cat];
+            const allP = await db.all('products');
+            
+            // Собираем все товары группы (включая вложенные)
+            const toDelete = allP.filter(p => {
+                if (p.category !== cat) return false;
+                return keys.every((k, i) => norm(p[gb[i]]) === k);
+            });
+
+            if (toDelete.length === 0) {
+                await showAlert('Нет товаров для удаления', 'error');
+                return;
+            }
+
+            const confirmed = await showConfirm(`Будет удалено ${toDelete.length} товаров. Продолжить?`, 'warning');
+            if (!confirmed) return;
+
+            // Сохраняем для undo
+            deletedGroupProducts = toDelete.map(p => ({...p}));
+            
+            // Удаляем все товары группы
+            for (const p of toDelete) {
+                await db.del('products', p.id);
+            }
+
+            closeModal();
+            await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+            setTimeout(() => restoreOpenGroups(), 100);
+            showSnackbar(`Удалено ${toDelete.length} товаров`, async () => {
+                // Восстанавливаем товары
+                for (const p of deletedGroupProducts) {
+                    const cp = {...p};
+                    delete cp.id;
+                    await db.add('products', cp);
+                }
+                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+                setTimeout(() => restoreOpenGroups(), 100);
+                deletedGroupProducts = [];
+            });
+        }
+
         // ============ ФУНКЦИЯ ПРОВЕРКИ ДУБЛИКАТОВ ============
         async function isDuplicateProduct(cat, manufacturer, lineup, extraValue, excludeId = null) { const allP = await db.all('products'); const ex = CATEGORY_EXTRA_FIELDS[cat]; const extraKey = ex[0]?.key || 'lineup'; return allP.some(p => { if (excludeId && p.id === excludeId) return false; return p.category === cat && norm(p.manufacturer) === norm(manufacturer) && norm(p.lineup) === norm(lineup) && norm(p[extraKey]) === norm(extraValue); }); }
 
@@ -509,142 +556,25 @@
 
         // ============ МОДАЛКА ДОБАВЛЕНИЯ В ГРУППУ ============
         async function showAddToGroupModal(cat, level, keys) {
-            const gb = CATEGORY_GROUPS[cat];
-            const isLastLevel = (level + 1 >= gb.length);
-            const groupLabel = keys.join(' → ');
-            const ex = CATEGORY_EXTRA_FIELDS[cat];
-            const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
-            
-            const allP = await db.all('products');
-            const catProducts = allP.filter(p => p.category === cat).sort((a, b) => b.id - a.id);
-            const lastProduct = catProducts[0];
-            const defPurchase = lastProduct ? lastProduct.purchase || '' : '';
-            const defSelling = lastProduct ? lastProduct.selling || '' : '';
-
+            const gb = CATEGORY_GROUPS[cat]; const isLastLevel = (level + 1 >= gb.length); const groupLabel = keys.join(' → '); const ex = CATEGORY_EXTRA_FIELDS[cat]; const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
+            const allP = await db.all('products'); const catProducts = allP.filter(p => p.category === cat).sort((a, b) => b.id - a.id); const lastProduct = catProducts[0]; const defPurchase = lastProduct ? lastProduct.purchase || '' : ''; const defSelling = lastProduct ? lastProduct.selling || '' : '';
             let bodyHTML = '';
-            if (!isLastLevel) {
-                const nextField = gb[level + 1];
-                const nextLabel = COL_LABELS[nextField] || nextField;
-                bodyHTML = `<div class="form-group"><label class="form-label">${nextLabel}</label><input type="text" class="form-input" id="group_add_lineup" placeholder="Название"></div>`;
-            } else {
-                bodyHTML = `<div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="group_add_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="group_mass_preview">Будет создано: 0 товаров</p>
-                <div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="group_add_quantity" value="0" min="0"></div>
-                <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="group_add_purchase" value="${defPurchase}" step="0.01"></div>
-                <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="group_add_selling" value="${defSelling}" step="0.01"></div>`;
-            }
-
-            showModal(`Добавить в ${groupLabel}`, 'bi bi-plus', 'var(--accent)', bodyHTML,
-                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveAddToGroup('${cat}',${level},'${keys.join('|||')}')">Добавить</button>`
-            );
-
-            if (isLastLevel) {
-                setTimeout(() => {
-                    const flavorsEl = document.getElementById('group_add_flavors');
-                    const previewEl = document.getElementById('group_mass_preview');
-                    if (flavorsEl && previewEl) {
-                        const updatePreview = () => { const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; };
-                        flavorsEl.addEventListener('input', updatePreview); updatePreview();
-                    }
-                }, 50);
-            }
+            if (!isLastLevel) { const nextField = gb[level + 1]; const nextLabel = COL_LABELS[nextField] || nextField; bodyHTML = `<div class="form-group"><label class="form-label">${nextLabel}</label><input type="text" class="form-input" id="group_add_lineup" placeholder="Название"></div>`; }
+            else { bodyHTML = `<div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="group_add_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="group_mass_preview">Будет создано: 0 товаров</p><div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="group_add_quantity" value="0" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="group_add_purchase" value="${defPurchase}" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="group_add_selling" value="${defSelling}" step="0.01"></div>`; }
+            showModal(`Добавить в ${groupLabel}`, 'bi bi-plus', 'var(--accent)', bodyHTML, `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveAddToGroup('${cat}',${level},'${keys.join('|||')}')">Добавить</button>`);
+            if (isLastLevel) { setTimeout(() => { const flavorsEl = document.getElementById('group_add_flavors'); const previewEl = document.getElementById('group_mass_preview'); if (flavorsEl && previewEl) { const updatePreview = () => { const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; }; flavorsEl.addEventListener('input', updatePreview); updatePreview(); } }, 50); }
         }
 
-        async function saveAddToGroup(cat, level, keysStr) {
-            const keys = keysStr.split('|||');
-            const gb = CATEGORY_GROUPS[cat];
-            const isLastLevel = (level + 1 >= gb.length);
-            const ex = CATEGORY_EXTRA_FIELDS[cat];
-            const extraKey = ex[0]?.key || 'lineup';
+        async function saveAddToGroup(cat, level, keysStr) { const keys = keysStr.split('|||'); const gb = CATEGORY_GROUPS[cat]; const isLastLevel = (level + 1 >= gb.length); const ex = CATEGORY_EXTRA_FIELDS[cat]; const extraKey = ex[0]?.key || 'lineup'; if (!isLastLevel) { const lineup = document.getElementById('group_add_lineup').value.trim(); if (!lineup) { await showAlert('Введите название', 'error'); return; } const manufacturer = keys[0]; const allP = await db.all('products'); const catProducts = allP.filter(p => p.category === cat).sort((a, b) => b.id - a.id); const lastProduct = catProducts[0]; const p = { category: cat, manufacturer: manufacturer, lineup: lineup, quantity: 0, purchase: lastProduct ? (lastProduct.purchase || 0) : 0, selling: lastProduct ? (lastProduct.selling || 0) : 0 }; ex.forEach(e => p[e.key] = ''); await db.add('products', p); closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || ''); setTimeout(() => restoreOpenGroups(), 100); showSnackbar(`Линейка "${lineup}" создана`); } else { const flavorsEl = document.getElementById('group_add_flavors'); const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0) : []; if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; } const quantity = parseInt(document.getElementById('group_add_quantity').value) || 0; const purchase = parseFloat(document.getElementById('group_add_purchase').value) || 0; const selling = parseFloat(document.getElementById('group_add_selling').value) || 0; const manufacturer = keys[0]; const lineup = keys[1] || ''; let created = 0, skipped = 0; for (const flavor of flavors) { const isDup = await isDuplicateProduct(cat, manufacturer, lineup, flavor); if (isDup) { skipped++; continue; } const p = { category: cat, manufacturer, lineup, quantity, purchase, selling }; ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : ''); await db.add('products', p); created++; } closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || ''); setTimeout(() => restoreOpenGroups(), 100); let msg = `Создано ${created} товаров`; if (skipped > 0) msg += `, пропущено ${skipped} (дубликаты)`; showSnackbar(msg); } }
 
-            if (!isLastLevel) {
-                const lineup = document.getElementById('group_add_lineup').value.trim();
-                if (!lineup) { await showAlert('Введите название', 'error'); return; }
-                const manufacturer = keys[0];
-                const allP = await db.all('products');
-                const catProducts = allP.filter(p => p.category === cat).sort((a, b) => b.id - a.id);
-                const lastProduct = catProducts[0];
-                const p = { category: cat, manufacturer: manufacturer, lineup: lineup, quantity: 0, purchase: lastProduct ? (lastProduct.purchase || 0) : 0, selling: lastProduct ? (lastProduct.selling || 0) : 0 };
-                ex.forEach(e => p[e.key] = '');
-                await db.add('products', p);
-                closeModal();
-                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
-                setTimeout(() => restoreOpenGroups(), 100);
-                showSnackbar(`Линейка "${lineup}" создана`);
-            } else {
-                const flavorsEl = document.getElementById('group_add_flavors');
-                const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [];
-                if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; }
-                const quantity = parseInt(document.getElementById('group_add_quantity').value) || 0;
-                const purchase = parseFloat(document.getElementById('group_add_purchase').value) || 0;
-                const selling = parseFloat(document.getElementById('group_add_selling').value) || 0;
-                const manufacturer = keys[0];
-                const lineup = keys[1] || '';
-                let created = 0, skipped = 0;
-                for (const flavor of flavors) {
-                    const isDup = await isDuplicateProduct(cat, manufacturer, lineup, flavor);
-                    if (isDup) { skipped++; continue; }
-                    const p = { category: cat, manufacturer, lineup, quantity, purchase, selling };
-                    ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : '');
-                    await db.add('products', p);
-                    created++;
-                }
-                closeModal();
-                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
-                setTimeout(() => restoreOpenGroups(), 100);
-                let msg = `Создано ${created} товаров`;
-                if (skipped > 0) msg += `, пропущено ${skipped} (дубликаты)`;
-                showSnackbar(msg);
-            }
-        }
-
-        function setupWarehouseSwipe(){
-            document.querySelectorAll('.product-row').forEach(row=>{setupLongPress(row,'warehouse',(r)=>parseInt(r.dataset.pid));setupSwipe(row,'warehouse',(r)=>parseInt(r.dataset.pid),async(pid)=>{const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});});});
-            document.querySelectorAll('.accordion-header').forEach(hdr => {
-                const cat = hdr.dataset.cat; const level = parseInt(hdr.dataset.level); const keys = hdr.dataset.keys;
-                if (cat && level !== undefined && keys) { setupGroupLongPress(hdr, cat, level, keys.split('|||')); }
-            });
-            document.querySelectorAll('.group-add-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); const cat = btn.dataset.cat; const level = parseInt(btn.dataset.level); const keys = btn.dataset.keys; if (cat && level !== undefined && keys) { showAddToGroupModal(cat, level, keys.split('|||')); } });
-            });
-        }
+        function setupWarehouseSwipe(){document.querySelectorAll('.product-row').forEach(row=>{setupLongPress(row,'warehouse',(r)=>parseInt(r.dataset.pid));setupSwipe(row,'warehouse',(r)=>parseInt(r.dataset.pid),async(pid)=>{const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});});});document.querySelectorAll('.accordion-header').forEach(hdr=>{const cat=hdr.dataset.cat;const level=parseInt(hdr.dataset.level);const keys=hdr.dataset.keys;if(cat&&level!==undefined&&keys){setupGroupLongPress(hdr,cat,level,keys.split('|||'));}});document.querySelectorAll('.group-add-btn').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();e.preventDefault();const cat=btn.dataset.cat;const level=parseInt(btn.dataset.level);const keys=btn.dataset.keys;if(cat&&level!==undefined&&keys){showAddToGroupModal(cat,level,keys.split('|||'));}});});}
 
         async function renderWarehouseTable(cat,sq=''){cwc=cat;const ap=await db.all('products');let pr=ap.filter(p=>p.category===cat);if(sq){const q=sq.toLowerCase();pr=pr.filter(p=>CATEGORY_TABLE_COLS[cat].some(c=>(p[c]||'').toString().toLowerCase().includes(q))||(p.manufacturer||'').toLowerCase().includes(q)||(p.lineup||'').toLowerCase().includes(q));og=new Set();}const gb=CATEGORY_GROUPS[cat];const g=groupProductsNested(pr,gb);document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showMassAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onWarehouseSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;setTimeout(()=>{if(og.size>0)restoreOpenGroups();else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');og.add(gid);}}if(whIsSelectMode())whUpdateSelectUI();setupWarehouseSwipe();},50);}
         function onWarehouseSearch(v){renderWarehouseTable(cwc,v);}
         async function copyProduct(pid){const p=await db.g('products',pid);if(!p)return;const cp={...p};delete cp.id;const nid=await db.add('products',cp);await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');setTimeout(()=>{const r=document.querySelector(`.product-row[data-pid="${nid}"]`);if(r)r.classList.add('pop-anim');},100);}
 
-        // ============ МАССОВОЕ ДОБАВЛЕНИЕ ТОВАРОВ ============
-        function showMassAddProductModal() {
-            const cat = cwc; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)';
-            const ex = CATEGORY_EXTRA_FIELDS[cat]; const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
-            showModal('Добавить товары', 'bi bi-stack', color,
-                `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="mass_manufacturer"></div>
-                <div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="mass_lineup"></div>
-                <div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="mass_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div>
-                <p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p>
-                <div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="mass_quantity" value="0" min="0"></div>
-                <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="mass_purchase" value="" step="0.01"></div>
-                <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="mass_selling" value="" step="0.01"></div>`,
-                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveMassProduct()">Добавить</button>`
-            );
-            setTimeout(() => { const flavorsEl = document.getElementById('mass_flavors'); const previewEl = document.getElementById('mass_preview'); if (flavorsEl && previewEl) { const updatePreview = () => { const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; }; flavorsEl.addEventListener('input', updatePreview); updatePreview(); } }, 50);
-        }
-
-        async function saveMassProduct() {
-            const cat = cwc; const ex = CATEGORY_EXTRA_FIELDS[cat];
-            const manufacturer = document.getElementById('mass_manufacturer').value.trim();
-            const lineup = document.getElementById('mass_lineup').value.trim();
-            const flavorsEl = document.getElementById('mass_flavors');
-            const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [];
-            const quantity = parseInt(document.getElementById('mass_quantity').value) || 0;
-            const purchase = parseFloat(document.getElementById('mass_purchase').value) || 0;
-            const selling = parseFloat(document.getElementById('mass_selling').value) || 0;
-            if (!manufacturer) { await showAlert('Введите производителя', 'error'); return; }
-            if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; }
-            const extraKey = ex[0]?.key || 'lineup'; let created = 0, skipped = 0;
-            for (const flavor of flavors) { const isDup = await isDuplicateProduct(cat, manufacturer, lineup, flavor); if (isDup) { skipped++; continue; } const p = { category: cat, manufacturer, lineup, quantity, purchase, selling }; ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : ''); await db.add('products', p); created++; }
-            closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
-            let msg = `Создано ${created} товаров`; if (skipped > 0) msg += `, пропущено ${skipped} (дубликаты)`; showSnackbar(msg);
-        }
+        function showMassAddProductModal() { const cat = cwc; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)'; const ex = CATEGORY_EXTRA_FIELDS[cat]; const extraField = ex[0] || { key: 'lineup', label: 'Линейка' }; showModal('Добавить товары', 'bi bi-stack', color, `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="mass_manufacturer"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="mass_lineup"></div><div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="mass_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p><div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="mass_quantity" value="0" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="mass_purchase" value="" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="mass_selling" value="" step="0.01"></div>`, `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveMassProduct()">Добавить</button>`); setTimeout(() => { const flavorsEl = document.getElementById('mass_flavors'); const previewEl = document.getElementById('mass_preview'); if (flavorsEl && previewEl) { const updatePreview = () => { const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; }; flavorsEl.addEventListener('input', updatePreview); updatePreview(); } }, 50); }
+        async function saveMassProduct() { const cat = cwc; const ex = CATEGORY_EXTRA_FIELDS[cat]; const manufacturer = document.getElementById('mass_manufacturer').value.trim(); const lineup = document.getElementById('mass_lineup').value.trim(); const flavorsEl = document.getElementById('mass_flavors'); const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0) : []; const quantity = parseInt(document.getElementById('mass_quantity').value) || 0; const purchase = parseFloat(document.getElementById('mass_purchase').value) || 0; const selling = parseFloat(document.getElementById('mass_selling').value) || 0; if (!manufacturer) { await showAlert('Введите производителя', 'error'); return; } if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; } const extraKey = ex[0]?.key || 'lineup'; let created = 0, skipped = 0; for (const flavor of flavors) { const isDup = await isDuplicateProduct(cat, manufacturer, lineup, flavor); if (isDup) { skipped++; continue; } const p = { category: cat, manufacturer, lineup, quantity, purchase, selling }; ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : ''); await db.add('products', p); created++; } closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || ''); let msg = `Создано ${created} товаров`; if (skipped > 0) msg += `, пропущено ${skipped} (дубликаты)`; showSnackbar(msg); }
 
         async function editProduct(pid){const p=await db.g('products',pid);if(!p)return;cwc=p.category;const ex=CATEGORY_EXTRA_FIELDS[cwc];const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[p.category]).trim()||'var(--accent)';showModal('Редактировать товар','bi '+CATEGORY_ICONS[p.category],color,`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="edit_prod_manufacturer" value="${p.manufacturer||''}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="edit_prod_lineup" value="${p.lineup||''}"></div>${ex.map(e=>`<div class="form-group"><label class="form-label">${e.label}</label><input type="text" class="form-input" id="edit_prod_${e.key}" value="${p[e.key]||''}"></div>`).join('')}<div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="edit_prod_quantity" value="${p.quantity||0}" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="edit_prod_purchase" value="${p.purchase||''}" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="edit_prod_selling" value="${p.selling||''}" step="0.01"></div>`,`<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveEditProduct(${p.id})">Сохранить</button>`);}
         async function saveEditProduct(pid){const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];const manufacturer=document.getElementById('edit_prod_manufacturer').value.trim();const lineup=document.getElementById('edit_prod_lineup').value.trim();const quantity=parseInt(document.getElementById('edit_prod_quantity').value)||0;const purchase=parseFloat(document.getElementById('edit_prod_purchase').value)||0;const selling=parseFloat(document.getElementById('edit_prod_selling').value)||0;if(!manufacturer){await showAlert('Введите производителя','error');return;}const extraKey=ex[0]?.key||'lineup';const extraValue=ex[0]?document.getElementById('edit_prod_'+ex[0].key).value.trim():'';const isDup=await isDuplicateProduct(cat,manufacturer,lineup,extraValue,pid);if(isDup){await showAlert('Такой товар уже существует','error');return;}const p={id:pid,category:cat,manufacturer,lineup,quantity,purchase,selling};ex.forEach(e=>p[e.key]=document.getElementById('edit_prod_'+e.key).value.trim());await db.pu('products',p);closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');}
