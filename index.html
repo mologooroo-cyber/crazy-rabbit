@@ -46,6 +46,7 @@
         .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.15s ease; } .btn:active { transform: scale(0.94); } .btn-save { background: var(--accent); color: white; } .btn-cancel { background: var(--border); color: var(--text-primary); } .btn-delete { background: var(--red); color: white; flex: 0.5; } .btn-reset { background: transparent; color: var(--text-secondary); border: 2px solid var(--border); }
         .preview-text { font-size: 13px; color: var(--accent); margin-top: 8px; font-weight: 600; }
         .snackbar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--bg-sidebar); color: white; padding: 14px 24px; border-radius: 25px; z-index: 9999; font-size: 14px; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px; animation: slideUp 0.3s ease; } .snackbar .snackbar-undo { background: var(--accent); border: none; color: white; padding: 6px 14px; border-radius: 15px; cursor: pointer; font-weight: 700; font-size: 13px; transition: transform 0.15s ease; } .snackbar .snackbar-undo:active { transform: scale(0.93); }
+        .prize-info { background: rgba(129,216,208,0.1); border-radius: 12px; padding: 12px 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; } .prize-info i { font-size: 20px; color: var(--accent); } .prize-modal-btn { background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 6px; transition: transform 0.15s ease; } .prize-modal-btn:active { transform: scale(0.94); }
         @keyframes slideUp { from { transform: translateX(-50%) translateY(100px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } } @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .content-body { } .content-body.fade-in { animation: fadeInUp 0.35s ease; } @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .spinner { animation: spin 1s linear infinite; display: inline-block; }
         .modal-body-custom .sale-row { margin-bottom: 6px; border-radius: 8px; background: var(--bg-primary); gap: 8px; } .modal-body-custom .sale-row:last-child { margin-bottom: 0; } .modal-body-custom .sale-table-header { margin-bottom: 4px; padding: 8px 15px; gap: 8px; }
@@ -61,13 +62,45 @@
     <input type="file" id="importFileInput" style="display:none" accept=".json" onchange="handleFileImport(event)">
 
     <script>
-        // Глобальное хранилище данных групп
+        // ============ УПРАВЛЕНИЕ СОСТОЯНИЕМ (PUB/SUB) ============
+        const AppState = (() => {
+            const _state = {
+                currentPeriod: 'today',
+                categoryMode: 'sum',
+                customStartDate: null,
+                customEndDate: null,
+                currentWarehouseCategory: null,
+                openGroups: new Set(),
+                salesFilter: { client: '', product: '', dateFrom: '', dateTo: '', note: '' },
+                salesPage: 1,
+                clientsSearch: '',
+                clientsPage: 1,
+                clientsFilter: 'all',
+                selectModes: {
+                    warehouse: { selectMode: false, selectedIds: new Set() },
+                    sales: { selectMode: false, selectedIds: new Set() }
+                }
+            };
+            const _listeners = {};
+
+            function get(key) { return _state[key]; }
+            function set(key, value) {
+                const old = _state[key];
+                _state[key] = value;
+                if (old !== value && _listeners[key]) {
+                    _listeners[key].forEach(fn => fn(value, old));
+                }
+            }
+            function on(key, fn) {
+                if (!_listeners[key]) _listeners[key] = [];
+                _listeners[key].push(fn);
+                return () => { _listeners[key] = _listeners[key].filter(f => f !== fn); };
+            }
+            function getState() { return _state; }
+            return { get, set, on, getState };
+        })();
+
         const GROUP_DATA = {};
-
-        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 42;
-        class Database { constructor() { this.db = null; } async init() { return new Promise((resolve, reject) => { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onerror = () => reject(r.error); r.onsuccess = () => { this.db = r.result; resolve(); }; r.onupgradeneeded = (e) => { const d = e.target.result; if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' }); if (!d.objectStoreNames.contains('sales')) { const s = d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }); s.createIndex('date', 'date', { unique: false }); s.createIndex('client', 'client', { unique: false }); } if (!d.objectStoreNames.contains('products')) { const p = d.createObjectStore('products', { keyPath: 'id', autoIncrement: true }); p.createIndex('category', 'category', { unique: false }); } if (!d.objectStoreNames.contains('clients')) { const c = d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true }); c.createIndex('name', 'name', { unique: false }); } }; }); } async g(s, k) { return this.p(this.db.transaction([s],'readonly').objectStore(s).get(k)); } async pu(s, d) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).put(d)); } async all(s) { return this.p(this.db.transaction([s],'readonly').objectStore(s).getAll()); } async add(s, d) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).add(d)); } async del(s, id) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).delete(id)); } async clear(s) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).clear()); } p(r) { return new Promise((rs, rj) => { r.onsuccess = () => rs(r.result); r.onerror = () => rj(r.error); }); } }
-        const db = new Database();
-
         const CATEGORIES = ['liquid','supplies','pods','disposable','snus'];
         const CATEGORY_NAMES = {'liquid':'Жидкости','supplies':'Расходники','pods':'Поды','disposable':'Одноразки','snus':'Снюс'};
         const CATEGORY_ICONS = {'liquid':'bi-droplet','supplies':'bi-tools','pods':'bi-usb-plug','disposable':'bi-phone','snus':'bi-box2'};
@@ -79,17 +112,53 @@
         function norm(s) { return (s||'').trim().toUpperCase(); }
 
         let deletedGroupProducts = [];
-        function openSidebar() { document.getElementById('sidebar').classList.add('active'); }
-        function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); }
-        function closeSidebarOutside(e) { if(e.target===document.getElementById('sidebar'))closeSidebar(); }
+        let deletedProducts = [];
+        let deletedSales = [];
+        const PAGE_SIZE = 10;
+
+        const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 42;
+        class Database { constructor() { this.db = null; } async init() { return new Promise((resolve, reject) => { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onerror = () => reject(r.error); r.onsuccess = () => { this.db = r.result; resolve(); }; r.onupgradeneeded = (e) => { const d = e.target.result; if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' }); if (!d.objectStoreNames.contains('sales')) { const s = d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }); s.createIndex('date', 'date', { unique: false }); s.createIndex('client', 'client', { unique: false }); } if (!d.objectStoreNames.contains('products')) { const p = d.createObjectStore('products', { keyPath: 'id', autoIncrement: true }); p.createIndex('category', 'category', { unique: false }); } if (!d.objectStoreNames.contains('clients')) { const c = d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true }); c.createIndex('name', 'name', { unique: false }); } }; }); } async g(s, k) { return this.p(this.db.transaction([s],'readonly').objectStore(s).get(k)); } async pu(s, d) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).put(d)); } async all(s) { return this.p(this.db.transaction([s],'readonly').objectStore(s).getAll()); } async add(s, d) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).add(d)); } async del(s, id) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).delete(id)); } async clear(s) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).clear()); } p(r) { return new Promise((rs, rj) => { r.onsuccess = () => rs(r.result); r.onerror = () => rj(r.error); }); } }
+        const db = new Database();
+
         function fn(n) { if(!n&&n!==0)return'0'; if(typeof n==='number'&&!Number.isInteger(n))return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,' '); return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
         function fp(p) { if(p===null||p===undefined)return null;return`${p>=0?'+':''}${p.toFixed(1)}%`; }
         function fmtDate(d) { if(!d||d==='-')return'-';const p=d.split('-');if(p.length!==3)return d;return`${p[2]}.${p[1]}.${p[0].slice(2)}`; }
+        function openSidebar() { document.getElementById('sidebar').classList.add('active'); }
+        function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); }
+        function closeSidebarOutside(e) { if(e.target===document.getElementById('sidebar'))closeSidebar(); }
+
         function showModal(title,icon,color,body,footer) { document.getElementById('modalContainer').innerHTML=`<div class="modal-overlay" onclick="closeModal(event)"><div class="modal-dialog-custom" onclick="event.stopPropagation()"><div class="modal-header-custom"><i class="${icon}" style="color:${color};font-size:22px;"></i><h3 style="color:${color};font-size:18px;font-weight:700;margin:0;">${title}</h3></div><div class="modal-body-custom">${body}</div>${footer?`<div class="modal-footer-custom">${footer}</div>`:''}</div></div>`; }
         function closeModal(event) { if(!event||event.target.classList.contains('modal-overlay'))document.getElementById('modalContainer').innerHTML=''; }
         function showAlert(message, type = 'info') { const icons = { error: 'bi-exclamation-triangle', info: 'bi-info-circle' }; const colors = { error: 'var(--yellow)', info: 'var(--accent)' }; return new Promise(resolve => { showModal('Внимание',icons[type]||'bi-info-circle',colors[type]||'var(--accent)',`<div class="dialog-icon-wrap"><div class="dialog-icon-circle ${type}"><i class="bi ${icons[type]}"></i></div></div><p class="dialog-text">${message}</p>`,`<button class="btn btn-save" id="alertOkBtn">OK</button>`); setTimeout(()=>{const btn=document.getElementById('alertOkBtn');if(btn)btn.addEventListener('click',()=>{closeModal();resolve(true);});},50); }); }
         function showConfirm(message) { return new Promise(resolve => { showModal('Подтверждение','bi bi-trash','var(--red)',`<div class="dialog-icon-wrap"><div class="dialog-icon-circle warning"><i class="bi bi-trash"></i></div></div><p class="dialog-text">${message}</p>`,`<button class="btn btn-cancel" id="confirmNoBtn">Отмена</button><button class="btn btn-delete" id="confirmYesBtn">Удалить</button>`); setTimeout(()=>{document.getElementById('confirmYesBtn')?.addEventListener('click',()=>{closeModal();resolve(true);});document.getElementById('confirmNoBtn')?.addEventListener('click',()=>{closeModal();resolve(false);});},50); }); }
-        function showSnackbar(message, undoCallback) { const container=document.getElementById('snackbarContainer');const id='snack_'+Date.now();container.innerHTML=`<div class="snackbar" id="${id}">${message} ${undoCallback?'<button class="snackbar-undo" onclick="window.snackbarUndo(\''+id+'\')">Отменить</button>':''}</div>`;window.snackbarUndo=function(sid){if(sid===id&&undoCallback)undoCallback();document.getElementById(sid)?.remove();};setTimeout(()=>{const el=document.getElementById(id);if(el)el.remove();},3000); }
+
+        // ============ ИСПРАВЛЕННЫЙ SNACKBAR ============
+        const snackbarCallbacks = new Map();
+        function showSnackbar(message, undoCallback) {
+            const container = document.getElementById('snackbarContainer');
+            const id = 'snack_' + Date.now();
+            if (undoCallback) {
+                snackbarCallbacks.set(id, undoCallback);
+            }
+            container.innerHTML = `<div class="snackbar" id="${id}">${message} ${undoCallback ? '<button class="snackbar-undo" onclick="window.snackbarUndo(\'' + id + '\')">Отменить</button>' : ''}</div>`;
+            window.snackbarUndo = function(sid) {
+                const cb = snackbarCallbacks.get(sid);
+                if (cb) {
+                    cb();
+                    snackbarCallbacks.delete(sid);
+                }
+                const el = document.getElementById(sid);
+                if (el) el.remove();
+            };
+            setTimeout(() => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.remove();
+                    snackbarCallbacks.delete(id);
+                }
+            }, 3000);
+        }
+
         function vibrate(pattern) { if (navigator.vibrate) { try { navigator.vibrate(pattern); } catch(e) {} } }
         function showSkeleton(type) { if(type==='statistics')return`<h2 class="tab-title">Статистика</h2><div class="stats-cards"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div><div class="summary-row"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div><div class="skeleton skeleton-chart"></div><div class="skeleton skeleton-chart"></div>`;if(type==='warehouse')return`<h2 class="tab-title">Склад</h2><div class="warehouse-cards">${[...Array(5)].map(()=>'<div class="skeleton skeleton-card"></div>').join('')}</div>`;if(type==='sales'||type==='clients')return`<h2 class="tab-title">${type==='sales'?'Продажи':'Клиенты'}</h2><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div>`;return''; }
         document.addEventListener('selectstart', function(e) { if (e.target.closest('.warehouse-table-section')||e.target.closest('.sales-table-section')||e.target.closest('.clients-table-section')) { e.preventDefault(); } });
@@ -100,115 +169,993 @@
         function importData() { document.getElementById('importFileInput').click(); }
         async function handleFileImport(event) { const file = event.target.files[0]; if (!file) return; try { const text = await file.text(); const data = JSON.parse(text); if (!data.products && !data.sales && !data.clients) { await showAlert('Файл не содержит данных', 'error'); event.target.value = ''; return; } const confirmed = await showConfirm('Все текущие данные будут удалены и заменены данными из файла. Продолжить?'); if (!confirmed) { event.target.value = ''; return; } await db.clear('products'); await db.clear('sales'); await db.clear('clients'); if (data.products) for (const p of data.products) { const cp = {...p}; delete cp.id; await db.add('products', cp); } if (data.sales) for (const s of data.sales) { const cs = {...s}; delete cs.id; await db.add('sales', cs); } if (data.clients) for (const c of data.clients) { const cc = {...c}; delete cc.id; await db.add('clients', cc); } showSnackbar('Данные импортированы'); const activeTab = document.querySelector('.nav-item.active')?.dataset.tab || 'statistics'; await switchTab(activeTab); } catch (e) { await showAlert('Ошибка чтения файла', 'error'); } event.target.value = ''; }
 
+        // ============ СЕЛЕКТ-РЕЖИМ ============
+        function getSelectConfig(type) { return AppState.get('selectModes')[type]; }
+        function enterSelectMode(type) { const configs = AppState.get('selectModes'); const cfg = configs[type]; if (cfg.selectMode) return; cfg.selectMode = true; cfg.selectedIds = new Set(); AppState.set('selectModes', configs); vibrate(30); updateSelectUI(type); }
+        function exitSelectMode(type) { const configs = AppState.get('selectModes'); const cfg = configs[type]; cfg.selectMode = false; cfg.selectedIds = new Set(); AppState.set('selectModes', configs); const rowSelector = type === 'warehouse' ? '.product-row' : '.sale-row'; document.querySelectorAll(rowSelector).forEach(r => { r.classList.remove('selected'); r.style.filter = ''; }); updateSelectUI(type); }
+        function toggleSelectItem(type, id) { const configs = AppState.get('selectModes'); const cfg = configs[type]; if (cfg.selectedIds.has(id)) cfg.selectedIds.delete(id); else cfg.selectedIds.add(id); AppState.set('selectModes', configs); updateSelectUI(type); }
+        function updateSelectUI(type) { const configs = AppState.get('selectModes'); const cfg = configs[type]; const isWh = type === 'warehouse'; const checkboxSelector = isWh ? '.checkbox-col' : '.sale-checkbox-col'; document.querySelectorAll(checkboxSelector).forEach(c => c.classList.toggle('visible', cfg.selectMode)); const rowSelector = isWh ? '.product-row' : '.sale-row'; const idAttr = isWh ? 'data-pid' : 'data-sid'; document.querySelectorAll(rowSelector).forEach(r => { const itemId = parseInt(r.getAttribute(idAttr)); const isSelected = cfg.selectMode && cfg.selectedIds.has(itemId); r.classList.toggle('selected', isSelected); if (!cfg.selectMode) r.style.filter = ''; const cb = r.querySelector('.select-checkbox'); if (cb) cb.checked = isSelected; }); const delBtn = document.querySelector(isWh ? '.wh-delete-selected-btn' : '.sales-delete-selected-btn'); const cancelBtn = document.querySelector(isWh ? '.wh-cancel-select-btn' : '.sales-cancel-select-btn'); if (delBtn) { delBtn.classList.toggle('visible', cfg.selectMode); delBtn.textContent = `Удалить (${cfg.selectedIds.size})`; } if (cancelBtn) cancelBtn.classList.toggle('visible', cfg.selectMode); if (isWh) { const addBtn = document.querySelector('.wh-add-btn'); if (addBtn) addBtn.style.display = cfg.selectMode ? 'none' : 'flex'; } }
+
+        // ============ УЛУЧШЕННЫЙ СВАЙП ============
+        function setupSwipe(row, type, idGetter, onDelete) {
+            const wrapper = row.parentElement;
+            const isWh = type === 'warehouse';
+            const bg = wrapper.querySelector(isWh ? '.swipe-delete-bg' : '.sales-delete-bg');
+            const deleteIcon = wrapper.querySelector('.swipe-delete-icon');
+            let startX = 0, startY = 0, swipeActive = false, wrapperWidth = 0;
+            let docMoveHandler = null, docEndHandler = null;
+            let animFrame = null;
+            const maxSwipeRatio = 0.45;
+            const springBackDuration = 350;
+
+            function onStart(e) {
+                const cfg = getSelectConfig(type);
+                if (cfg.selectMode) return;
+                const touch = e.touches ? e.touches[0] : e;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                swipeActive = false;
+                wrapperWidth = wrapper.getBoundingClientRect().width;
+                row.style.transition = 'none';
+                if (bg) bg.style.opacity = '0';
+                if (deleteIcon) deleteIcon.style.opacity = '0';
+                docMoveHandler = onMove;
+                docEndHandler = onEnd;
+                document.addEventListener('touchmove', docMoveHandler, { passive: false });
+                document.addEventListener('touchend', docEndHandler);
+                document.addEventListener('touchcancel', docEndHandler);
+            }
+
+            function onMove(e) {
+                const cfg = getSelectConfig(type);
+                const touch = e.touches[0];
+                const dx = touch.clientX - startX;
+                const dy = touch.clientY - startY;
+                if (!swipeActive && Math.abs(dx) > Math.abs(dy) && dx < -5) swipeActive = true;
+                if (swipeActive && !cfg.selectMode) {
+                    e.preventDefault();
+                    const maxSwipe = wrapperWidth * maxSwipeRatio;
+                    let swipeDistance = Math.max(-maxSwipe, dx);
+                    if (swipeDistance < -maxSwipe * 0.85) {
+                        const extra = Math.abs(swipeDistance) - (maxSwipe * 0.85);
+                        const resistance = extra * 0.3;
+                        swipeDistance = -(maxSwipe * 0.85 + resistance);
+                        swipeDistance = Math.max(-maxSwipe, swipeDistance);
+                    }
+                    if (animFrame) cancelAnimationFrame(animFrame);
+                    animFrame = requestAnimationFrame(() => {
+                        row.style.transform = `translateX(${swipeDistance}px)`;
+                        if (bg) bg.style.opacity = Math.min(1, Math.abs(swipeDistance) / (maxSwipe * 0.7));
+                        if (deleteIcon) deleteIcon.style.opacity = Math.min(1, Math.abs(swipeDistance) / (maxSwipe * 0.4));
+                    });
+                }
+            }
+
+            function onEnd(e) {
+                document.removeEventListener('touchmove', docMoveHandler);
+                document.removeEventListener('touchend', docEndHandler);
+                document.removeEventListener('touchcancel', docEndHandler);
+                if (animFrame) cancelAnimationFrame(animFrame);
+                const cfg = getSelectConfig(type);
+                if (swipeActive && !cfg.selectMode) {
+                    const touch = e.changedTouches[0];
+                    const dx = touch.clientX - startX;
+                    const maxSwipe = wrapperWidth * maxSwipeRatio;
+                    if (Math.abs(dx) > maxSwipe * 0.65) {
+                        vibrate([15, 30, 15]);
+                        row.style.transition = `transform 0.25s ease`;
+                        row.style.transform = `translateX(-${wrapperWidth}px)`;
+                        if (bg) bg.style.opacity = '1';
+                        if (deleteIcon) deleteIcon.style.opacity = '1';
+                        const itemId = idGetter(row);
+                        wrapper.classList.add('removing');
+                        setTimeout(async () => {
+                            await onDelete(itemId);
+                        }, 400);
+                    } else {
+                        row.style.transition = `transform ${springBackDuration}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
+                        row.style.transform = 'translateX(0)';
+                        if (bg) { bg.style.transition = `opacity ${springBackDuration}ms ease`; bg.style.opacity = '0'; }
+                        if (deleteIcon) { deleteIcon.style.transition = `opacity ${springBackDuration}ms ease`; deleteIcon.style.opacity = '0'; }
+                        setTimeout(() => {
+                            if (bg) bg.style.transition = '';
+                            if (deleteIcon) deleteIcon.style.transition = '';
+                        }, springBackDuration);
+                    }
+                }
+                swipeActive = false;
+            }
+
+            row.addEventListener('touchstart', onStart, { passive: false });
+            row.addEventListener('click', e => {
+                const cfg = getSelectConfig(type);
+                if (cfg.selectMode && !e.target.classList.contains('select-checkbox') && !e.target.closest('.copy-btn') && !e.target.closest('.qty-btn')) {
+                    const itemId = idGetter(row);
+                    toggleSelectItem(type, itemId);
+                }
+            });
+        }
+
+        function setupLongPress(row, type, idGetter) {
+            let pressStartTime = 0, animationFrame = null, isPressing = false;
+            let touchStartX = 0, touchStartY = 0;
+            function updateBrightness() {
+                if (!isPressing) return;
+                const elapsed = Date.now() - pressStartTime;
+                const progress = Math.min(elapsed / 1300, 1);
+                const brightness = 1.0 + (progress * 0.1);
+                row.style.filter = `brightness(${brightness})`;
+                if (progress < 1) {
+                    animationFrame = requestAnimationFrame(updateBrightness);
+                } else {
+                    row.style.filter = 'brightness(1.0)';
+                    row.classList.remove('pressing');
+                    vibrate(20);
+                    const cfg = getSelectConfig(type);
+                    if (!cfg.selectMode) {
+                        enterSelectMode(type);
+                        const itemId = idGetter(row);
+                        toggleSelectItem(type, itemId);
+                        row.classList.add('selected');
+                        row.style.filter = 'brightness(1.15)';
+                        const cb = row.querySelector('.select-checkbox');
+                        if (cb) cb.checked = true;
+                    }
+                    isPressing = false;
+                }
+            }
+            function startPress(e) {
+                const cfg = getSelectConfig(type);
+                if (cfg.selectMode) return;
+                if (e.target.closest('.copy-btn') || e.target.closest('.select-checkbox') || e.target.closest('.qty-btn')) return;
+                const touch = e.touches ? e.touches[0] : e;
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                pressStartTime = Date.now();
+                isPressing = true;
+                row.classList.add('pressing');
+                row.style.filter = 'brightness(1.0)';
+                animationFrame = requestAnimationFrame(updateBrightness);
+            }
+            function endPress(e) {
+                if (!isPressing) return;
+                isPressing = false;
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+                row.style.transition = 'filter 0.1s ease';
+                row.style.filter = 'brightness(1.0)';
+                row.classList.remove('pressing');
+                setTimeout(() => { row.style.transition = ''; }, 150);
+            }
+            function checkMove(e) {
+                if (!isPressing) return;
+                const touch = e.touches ? e.touches[0] : e;
+                const cx = touch.clientX, cy = touch.clientY;
+                if (Math.abs(cx - touchStartX) > 8 || Math.abs(cy - touchStartY) > 8) endPress(e);
+            }
+            row.addEventListener('mousedown', startPress);
+            row.addEventListener('mouseup', endPress);
+            row.addEventListener('mouseleave', endPress);
+            row.addEventListener('mousemove', checkMove);
+            row.addEventListener('touchstart', startPress, { passive: true });
+            row.addEventListener('touchend', endPress);
+            row.addEventListener('touchcancel', endPress);
+            row.addEventListener('touchmove', checkMove, { passive: true });
+        }
+
+        function setupGroupLongPress(headerElement, gid) {
+            let pressStartTime = 0, animationFrame = null, isPressing = false, touchStartX = 0, touchStartY = 0;
+            function updateBrightness() {
+                if (!isPressing) return;
+                const elapsed = Date.now() - pressStartTime;
+                const progress = Math.min(elapsed / 1300, 1);
+                const brightness = 1.0 + (progress * 0.1);
+                headerElement.style.filter = `brightness(${brightness})`;
+                if (progress < 1) {
+                    animationFrame = requestAnimationFrame(updateBrightness);
+                } else {
+                    headerElement.style.filter = 'brightness(1.0)';
+                    headerElement.classList.remove('pressing');
+                    vibrate(20);
+                    const gdata = GROUP_DATA[gid];
+                    if (gdata) {
+                        showEditGroupModal(gdata.cat, gdata.level, gdata.keys);
+                    }
+                    isPressing = false;
+                }
+            }
+            function startPress(e) {
+                if (e.target.closest('.group-add-btn') || e.target.closest('.accordion-arrow')) return;
+                const touch = e.touches ? e.touches[0] : e;
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                pressStartTime = Date.now();
+                isPressing = true;
+                headerElement.classList.add('pressing');
+                headerElement.style.filter = 'brightness(1.0)';
+                animationFrame = requestAnimationFrame(updateBrightness);
+            }
+            function endPress(e) {
+                if (!isPressing) return;
+                isPressing = false;
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+                headerElement.style.transition = 'filter 0.1s ease';
+                headerElement.style.filter = 'brightness(1.0)';
+                headerElement.classList.remove('pressing');
+                setTimeout(() => { headerElement.style.transition = ''; }, 150);
+            }
+            function checkMove(e) {
+                if (!isPressing) return;
+                const touch = e.touches ? e.touches[0] : e;
+                const cx = touch.clientX, cy = touch.clientY;
+                if (Math.abs(cx - touchStartX) > 8 || Math.abs(cy - touchStartY) > 8) endPress(e);
+            }
+            headerElement.addEventListener('mousedown', startPress);
+            headerElement.addEventListener('mouseup', endPress);
+            headerElement.addEventListener('mouseleave', endPress);
+            headerElement.addEventListener('mousemove', checkMove);
+            headerElement.addEventListener('touchstart', startPress, { passive: true });
+            headerElement.addEventListener('touchend', endPress);
+            headerElement.addEventListener('touchcancel', endPress);
+            headerElement.addEventListener('touchmove', checkMove, { passive: true });
+        }
+
+        // ============ РЕДАКТИРОВАНИЕ ГРУПП ============
+        function showEditGroupModal(cat, level, keys) {
+            const gb = CATEGORY_GROUPS[cat];
+            const fieldName = gb[level];
+            const fieldLabel = COL_LABELS[fieldName] || fieldName;
+            const oldValue = keys[keys.length - 1];
+            const isLastLevel = (level + 1 >= gb.length);
+            let bodyHTML = `<div class="form-group"><label class="form-label">${fieldLabel}</label><input type="text" class="form-input" id="edit_group_name" value="${oldValue.replace(/"/g, '&quot;')}">`;
+            if (isLastLevel) {
+                bodyHTML += `<div class="form-group"><label class="form-label">Закупка (₽) — оставьте пустым чтобы не менять</label><input type="number" class="form-input" id="edit_group_purchase" value="" step="0.01" placeholder="Не менять"></div>`;
+                bodyHTML += `<div class="form-group"><label class="form-label">Продажа (₽) — оставьте пустым чтобы не менять</label><input type="number" class="form-input" id="edit_group_selling" value="" step="0.01" placeholder="Не менять"></div>`;
+            }
+            showModal('Редактировать группу', 'bi bi-pencil', 'var(--accent)', bodyHTML, `<button class="btn btn-delete" style="flex:0.4;margin-right:auto;" onclick="window._deleteGroup()"><i class="bi bi-trash"></i> Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="window._saveEditGroup()">Сохранить</button>`);
+            window._currentGroupData = { cat, level, keys };
+        }
+        window._saveEditGroup = async function() {
+            const { cat, level, keys } = window._currentGroupData;
+            const newValue = document.getElementById('edit_group_name').value.trim();
+            if (!newValue) { await showAlert('Введите название', 'error'); return; }
+            const gb = CATEGORY_GROUPS[cat];
+            const fieldName = gb[level];
+            const allP = await db.all('products');
+            const toUpdate = allP.filter(p => {
+                if (p.category !== cat) return false;
+                return keys.every((k, i) => norm(p[gb[i]]) === norm(k));
+            });
+            const purchaseEl = document.getElementById('edit_group_purchase');
+            const sellingEl = document.getElementById('edit_group_selling');
+            const newPurchase = purchaseEl ? purchaseEl.value.trim() : '';
+            const newSelling = sellingEl ? sellingEl.value.trim() : '';
+            for (const p of toUpdate) {
+                p[fieldName] = newValue;
+                if (newPurchase !== '') p.purchase = parseFloat(newPurchase) || 0;
+                if (newSelling !== '') p.selling = parseFloat(newSelling) || 0;
+                await db.pu('products', p);
+            }
+            closeModal();
+            const cwc = AppState.get('currentWarehouseCategory');
+            await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || '');
+            setTimeout(() => restoreOpenGroups(), 100);
+            showSnackbar(`Обновлено ${toUpdate.length} товаров`);
+        };
+        window._deleteGroup = async function() {
+            const { cat, level, keys } = window._currentGroupData;
+            const gb = CATEGORY_GROUPS[cat];
+            const allP = await db.all('products');
+            const toDelete = allP.filter(p => {
+                if (p.category !== cat) return false;
+                return keys.every((k, i) => norm(p[gb[i]]) === norm(k));
+            });
+            if (toDelete.length === 0) { await showAlert('Нет товаров для удаления', 'error'); return; }
+            const confirmed = await showConfirm(`Будет удалено ${toDelete.length} товаров. Продолжить?`);
+            if (!confirmed) return;
+            deletedGroupProducts = toDelete.map(p => ({ ...p }));
+            for (const p of toDelete) { await db.del('products', p.id); }
+            closeModal();
+            const cwc = AppState.get('currentWarehouseCategory');
+            await renderWarehouseTable(cwc, document.querySelector('.search-input')?.value || '');
+            setTimeout(() => restoreOpenGroups(), 100);
+            showSnackbar(`Удалено ${toDelete.length} товаров`, async () => {
+                for (const p of deletedGroupProducts) {
+                    const cp = { ...p };
+                    delete cp.id;
+                    await db.add('products', cp);
+                }
+                const cwc2 = AppState.get('currentWarehouseCategory');
+                await renderWarehouseTable(cwc2, document.querySelector('.search-input')?.value || '');
+                setTimeout(() => restoreOpenGroups(), 100);
+                deletedGroupProducts = [];
+            });
+        };
+
+        async function isDuplicateProduct(cat, manufacturer, lineup, extraValue, excludeId = null) {
+            const allP = await db.all('products');
+            const ex = CATEGORY_EXTRA_FIELDS[cat];
+            const extraKey = ex[0]?.key || 'lineup';
+            return allP.some(p => {
+                if (excludeId && p.id === excludeId) return false;
+                return p.category === cat && norm(p.manufacturer) === norm(manufacturer) && norm(p.lineup) === norm(lineup) && norm(p[extraKey]) === norm(extraValue);
+            });
+        }
+
         // ============ СТАТИСТИКА ============
-        let cp='today',ccm='sum',csd=null,ced=null; let prevStats={revenue:0,profit:0,count:0,bookingSum:0,debtSum:0,newClients:0,leavingClients:0};
-        function getDateRange(p){const n=new Date(),t=n.toISOString().split('T')[0],y=new Date(n-86400000).toISOString().split('T')[0];let s,e,ps,pe;switch(p){case'today':s=t;e=t;ps=y;pe=y;break;case'week':{const d=n.getDay(),m=new Date(n);m.setDate(n.getDate()-(d===0?6:d-1));s=m.toISOString().split('T')[0];e=t;const pm=new Date(m);pm.setDate(m.getDate()-7);const psu=new Date(m);psu.setDate(m.getDate()-1);ps=pm.toISOString().split('T')[0];pe=psu.toISOString().split('T')[0];break;}case'month':s=new Date(n.getFullYear(),n.getMonth(),1).toISOString().split('T')[0];e=t;const pm=new Date(n.getFullYear(),n.getMonth()-1,1),pme=new Date(n.getFullYear(),n.getMonth(),0);ps=pm.toISOString().split('T')[0];pe=pme.toISOString().split('T')[0];break;case'all':s='2020-01-01';e=t;ps=null;pe=null;break;case'custom':s=csd||t;e=ced||t;ps=null;pe=null;break;}return{s,e,ps,pe};}
-        async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
-        function gdd(s,e){return Math.ceil((new Date(e)-new Date(s))/86400000)+1;}
-        function getDailyData(sales,s,e){const sm=gdd(s,e)>31,m=new Map();sales.forEach(x=>{const d=new Date(x.date);let k;if(sm){k=`${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear().toString().slice(2)}`;}else{k=`${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`;}m.set(k,(m.get(k)||0)+(x.profit||0));});return[...m.keys()].sort((a,b)=>{const[pa,pb]=[a.split('.'),b.split('.')];if(sm){return(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}else{return(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}}).map(k=>({label:k,value:m.get(k)}));}
-        function getCategoryData(sales,mode){const map={};CATEGORIES.forEach(c=>map[c]=0);sales.forEach(x=>{const cat=x.category||'liquid';if(map[cat]!==undefined){map[cat]+=(mode==='sum'?(x.profit||0):1);}});return CATEGORIES.map(c=>({category:c,name:CATEGORY_NAMES[c],value:map[c]||0}));}
-        function ssd(p,s,e){if(p==='today')return false;if(p==='custom')return gdd(s,e)>=2;return true;}
-        async function renderStatistics(period){ const prevRev=prevStats.revenue,prevProf=prevStats.profit,prevCnt=prevStats.count; const prevBooking=prevStats.bookingSum,prevDebt=prevStats.debtSum,prevNew=prevStats.newClients,prevLeaving=prevStats.leavingClients; cp=period;const{s,e,ps,pe}=getDateRange(period);const sales=await getSalesInRange2(s,e),prevSales=(ps&&pe)?await getSalesInRange2(ps,pe):[]; const rev=sales.reduce((s,x)=>s+(x.total||0),0),prof=sales.reduce((s,x)=>s+(x.profit||0),0),cnt=sales.length; const pRev=prevSales.reduce((s,x)=>s+(x.total||0),0),pProf=prevSales.reduce((s,x)=>s+(x.profit||0),0),pCnt=prevSales.length; const allSalesAllTime=await db.all('sales'); const bookingSum=allSalesAllTime.filter(s=>s.note==='бронь').reduce((s,x)=>s+(x.total||0),0); const debtSum=allSalesAllTime.filter(s=>s.note==='долг').reduce((s,x)=>s+(x.total||0),0); const allClients=await db.all('clients'); const newClients=allClients.filter(c=>c.created>=s&&c.created<=e).length; const leavingClients=allClients.filter(c=>{const cs=allSalesAllTime.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;}).length; prevStats={revenue:rev,profit:prof,count:cnt,bookingSum,debtSum,newClients,leavingClients}; const sd=ssd(period,s,e);const dd=sd?getDailyData(sales,s,e):[],cd=getCategoryData(sales,ccm); const md=Math.max(...dd.map(d=>d.value),1),mc=Math.max(...cd.map(d=>d.value),1); const showMonths=period==='all'||(period==='custom'&&gdd(s,e)>31); const dailyTitle=showMonths?'Прибыль по месяцам':'Прибыль по дням'; document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Статистика</h2><div class="stats-header"><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div><div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value" id="stat_revenue">${fn(prevRev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}" id="stat_rev_pct">${fp((rev-pRev)/pRev*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value" id="stat_profit">${fn(prevProf)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}" id="stat_prof_pct">${fp((prof-pProf)/pProf*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value" id="stat_count">${fn(prevCnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}" id="stat_cnt_pct">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div></div><div class="summary-row"><div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value" id="sum_booking">${fn(prevBooking)}₽</div></div><div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value" id="sum_debt">${fn(prevDebt)}₽</div></div><div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value" id="sum_new">${prevNew} чел.</div></div><div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value" id="sum_leaving">${prevLeaving} чел.</div></div></div><div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>`<div class="category-column cat-${d.category}"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill-wrap"><div class="category-fill-inner animate" style="--target-height:${mc>0?(d.value/mc*100):0}%;" data-target="${mc>0?(d.value/mc*100):0}"></div></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill-wrap"><div class="bar-fill-inner animate" style="--target-height:${md>0?(d.value/md*100):0}%;" data-target="${md>0?(d.value/md*100):0}"></div></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`:''}`; setTimeout(()=>{ const revEl=document.getElementById('stat_revenue'),profEl=document.getElementById('stat_profit'),cntEl=document.getElementById('stat_count'); if(revEl)animateValue(revEl,prevRev,rev,600,'₽');if(profEl)animateValue(profEl,prevProf,prof,600,'₽');if(cntEl)animateValue(cntEl,prevCnt,cnt,600,''); setTimeout(()=>{const rp=document.getElementById('stat_rev_pct'),pp=document.getElementById('stat_prof_pct'),cp2=document.getElementById('stat_cnt_pct');if(rp&&pRev)rp.textContent=fp((rev-pRev)/pRev*100);if(pp&&pProf)pp.textContent=fp((prof-pProf)/pProf*100);if(cp2&&pCnt)cp2.textContent=fp((cnt-pCnt)/pCnt*100);},700); setTimeout(()=>{document.querySelectorAll('.bar-fill-inner.animate,.category-fill-inner.animate').forEach(el=>el.classList.add('started'));},100); },100); }
-        async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
-        function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
-        async function showBookingModal(){const allSales=await db.all('sales');const bs=allSales.filter(s=>s.note==='бронь');showModal('Бронь','bi bi-calendar-check','var(--green)',bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.3">Клиент</div><div class="sale-col" style="flex:0.7">Товар</div></div>${bs.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.3">${s.client||'-'}</div><div class="sale-col" style="flex:0.7">${s.product||'-'}</div></div>`).join('')}`,'');}
-        async function showDebtModal(){const allSales=await db.all('sales');const ds=allSales.filter(s=>s.note==='долг');showModal('Долги','bi bi-cash-coin','var(--red)',ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.5">Клиент</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">Сумма</div><div class="sale-col" style="flex:0.3">Дата</div></div>${ds.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.5">${s.client||'-'}</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">${fn(s.total||0)}₽</div><div class="sale-col" style="flex:0.3">${fmtDate(s.date)}</div></div>`).join('')}`,'');}
-        async function showNewClientsModal(){const{s,e}=getDateRange(cp);const clients=await db.all('clients');const nc=clients.filter(c=>c.created>=s&&c.created<=e);showModal('Новые клиенты','bi bi-person-plus','var(--accent)',nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');}
-        async function showLeavingClientsModal(){const clients=await db.all('clients');const sales=await db.all('sales');const lc=clients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;});showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;}).join('')}`,'');}
+        let prevStats = { revenue: 0, profit: 0, count: 0, bookingSum: 0, debtSum: 0, newClients: 0, leavingClients: 0 };
+        function getDateRange(p) {
+            const n = new Date(), t = n.toISOString().split('T')[0], y = new Date(n - 86400000).toISOString().split('T')[0];
+            let s, e, ps, pe;
+            const csd = AppState.get('customStartDate'), ced = AppState.get('customEndDate');
+            switch (p) {
+                case 'today': s = t; e = t; ps = y; pe = y; break;
+                case 'week': {
+                    const d = n.getDay(), m = new Date(n);
+                    m.setDate(n.getDate() - (d === 0 ? 6 : d - 1));
+                    s = m.toISOString().split('T')[0]; e = t;
+                    const pm = new Date(m); pm.setDate(m.getDate() - 7);
+                    const psu = new Date(m); psu.setDate(m.getDate() - 1);
+                    ps = pm.toISOString().split('T')[0]; pe = psu.toISOString().split('T')[0]; break;
+                }
+                case 'month': s = new Date(n.getFullYear(), n.getMonth(), 1).toISOString().split('T')[0]; e = t;
+                    const pm = new Date(n.getFullYear(), n.getMonth() - 1, 1), pme = new Date(n.getFullYear(), n.getMonth(), 0);
+                    ps = pm.toISOString().split('T')[0]; pe = pme.toISOString().split('T')[0]; break;
+                case 'all': s = '2020-01-01'; e = t; ps = null; pe = null; break;
+                case 'custom': s = csd || t; e = ced || t; ps = null; pe = null; break;
+            }
+            return { s, e, ps, pe };
+        }
+        async function getSalesInRange2(s, e) { const a = await db.all('sales'); return a.filter(x => x.date >= s && x.date <= e); }
+        function gdd(s, e) { return Math.ceil((new Date(e) - new Date(s)) / 86400000) + 1; }
+        function getDailyData(sales, s, e) {
+            const sm = gdd(s, e) > 31, m = new Map();
+            sales.forEach(x => {
+                const d = new Date(x.date); let k;
+                if (sm) { k = `${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear().toString().slice(2)}`; }
+                else { k = `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}`; }
+                m.set(k, (m.get(k) || 0) + (x.profit || 0));
+            });
+            return [...m.keys()].sort((a, b) => {
+                const [pa, pb] = [a.split('.'), b.split('.')];
+                if (sm) { return (pa[1] + pa[0]).localeCompare(pb[1] + pb[0]); }
+                else { return (pa[1] + pa[0]).localeCompare(pb[1] + pb[0]); }
+            }).map(k => ({ label: k, value: m.get(k) }));
+        }
+        function getCategoryData(sales, mode) {
+            const map = {}; CATEGORIES.forEach(c => map[c] = 0);
+            sales.forEach(x => { const cat = x.category || 'liquid'; if (map[cat] !== undefined) { map[cat] += (mode === 'sum' ? (x.profit || 0) : 1); } });
+            return CATEGORIES.map(c => ({ category: c, name: CATEGORY_NAMES[c], value: map[c] || 0 }));
+        }
+        function ssd(p, s, e) { if (p === 'today') return false; if (p === 'custom') return gdd(s, e) >= 2; return true; }
 
-        // ============ ОБЩИЙ МОДУЛЬ ВЫДЕЛЕНИЯ ============
-        const SELECT_MODE_CONFIG = { warehouse: { selectMode: false, selectedIds: new Set(), prefix: 'wh' }, sales: { selectMode: false, selectedIds: new Set(), prefix: 'sale' } };
-        function getSelectConfig(type) { return SELECT_MODE_CONFIG[type]; }
-        function enterSelectMode(type) { const cfg=getSelectConfig(type);if(cfg.selectMode)return;cfg.selectMode=true;cfg.selectedIds=new Set();vibrate(30);updateSelectUI(type); }
-        function exitSelectMode(type) { const cfg=getSelectConfig(type);cfg.selectMode=false;cfg.selectedIds=new Set();const rowSelector=cfg.prefix==='wh'?'.product-row':'.sale-row';document.querySelectorAll(rowSelector).forEach(r=>{r.classList.remove('selected');r.style.filter='';});updateSelectUI(type); }
-        function toggleSelectItem(type,id) { const cfg=getSelectConfig(type);if(cfg.selectedIds.has(id))cfg.selectedIds.delete(id);else cfg.selectedIds.add(id);updateSelectUI(type); }
-        function updateSelectUI(type) { const cfg=getSelectConfig(type);const isWh=cfg.prefix==='wh';const checkboxSelector=isWh?'.checkbox-col':'.sale-checkbox-col';document.querySelectorAll(checkboxSelector).forEach(c=>c.classList.toggle('visible',cfg.selectMode));const rowSelector=isWh?'.product-row':'.sale-row';const idAttr=isWh?'data-pid':'data-sid';document.querySelectorAll(rowSelector).forEach(r=>{const itemId=parseInt(r.getAttribute(idAttr));const isSelected=cfg.selectMode&&cfg.selectedIds.has(itemId);r.classList.toggle('selected',isSelected);if(!cfg.selectMode)r.style.filter='';const cb=r.querySelector('.select-checkbox');if(cb)cb.checked=isSelected;});const delBtn=document.querySelector(isWh?'.wh-delete-selected-btn':'.sales-delete-selected-btn');const cancelBtn=document.querySelector(isWh?'.wh-cancel-select-btn':'.sales-cancel-select-btn');if(delBtn){delBtn.classList.toggle('visible',cfg.selectMode);delBtn.textContent=`Удалить (${cfg.selectedIds.size})`;}if(cancelBtn)cancelBtn.classList.toggle('visible',cfg.selectMode);if(isWh){const addBtn=document.querySelector('.wh-add-btn');if(addBtn)addBtn.style.display=cfg.selectMode?'none':'flex';} }
-
-        function setupSwipe(row,type,idGetter,onDelete){const wrapper=row.parentElement;const isWh=type==='warehouse';const bg=wrapper.querySelector(isWh?'.swipe-delete-bg':'.sales-delete-bg');const deleteIcon=wrapper.querySelector('.swipe-delete-icon');let startX=0,startY=0,swipeActive=false;let wrapperWidth=0;let docMoveHandler=null,docEndHandler=null;function onStart(e){const cfg=getSelectConfig(type);if(cfg.selectMode)return;const touch=e.touches?e.touches[0]:e;startX=touch.clientX;startY=touch.clientY;swipeActive=false;wrapperWidth=wrapper.getBoundingClientRect().width;docMoveHandler=onMove;docEndHandler=onEnd;document.addEventListener('touchmove',docMoveHandler,{passive:false});document.addEventListener('touchend',docEndHandler);document.addEventListener('touchcancel',docEndHandler);}function onMove(e){const cfg=getSelectConfig(type);const touch=e.touches[0];const dx=touch.clientX-startX;const dy=touch.clientY-startY;if(!swipeActive&&Math.abs(dx)>Math.abs(dy)&&dx<-5)swipeActive=true;if(swipeActive&&!cfg.selectMode){e.preventDefault();const maxSwipe=wrapperWidth*0.5;const swipeDistance=Math.max(-maxSwipe,dx);row.style.transition='none';row.style.transform=`translateX(${swipeDistance}px)`;if(bg)bg.style.opacity=Math.min(1,Math.abs(dx)/maxSwipe);if(deleteIcon)deleteIcon.style.opacity=Math.min(1,Math.abs(dx)/(maxSwipe*0.6));}}async function onEnd(e){document.removeEventListener('touchmove',docMoveHandler);document.removeEventListener('touchend',docEndHandler);document.removeEventListener('touchcancel',docEndHandler);const cfg=getSelectConfig(type);if(swipeActive&&!cfg.selectMode){const touch=e.changedTouches[0];const dx=touch.clientX-startX;if(Math.abs(dx)>wrapperWidth*0.5){vibrate([15,30,15]);const itemId=idGetter(row);wrapper.classList.add('removing');setTimeout(async()=>{await onDelete(itemId);},400);}else{row.style.transition='transform 0.2s ease';row.style.transform='translateX(0)';if(bg)bg.style.opacity='0';if(deleteIcon)deleteIcon.style.opacity='0';}}swipeActive=false;}row.addEventListener('touchstart',onStart,{passive:false});row.addEventListener('click',e=>{const cfg=getSelectConfig(type);if(cfg.selectMode&&!e.target.classList.contains('select-checkbox')&&!e.target.closest('.copy-btn')&&!e.target.closest('.qty-btn')){const itemId=idGetter(row);toggleSelectItem(type,itemId);}});}
-        function setupLongPress(row,type,idGetter){let pressStartTime=0,animationFrame=null,isPressing=false;let touchStartX=0,touchStartY=0;function updateBrightness(){if(!isPressing)return;const elapsed=Date.now()-pressStartTime;const progress=Math.min(elapsed/1300,1);const brightness=1.0+(progress*0.1);row.style.filter=`brightness(${brightness})`;if(progress<1){animationFrame=requestAnimationFrame(updateBrightness);}else{row.style.filter='brightness(1.0)';row.classList.remove('pressing');vibrate(20);const cfg=getSelectConfig(type);if(!cfg.selectMode){enterSelectMode(type);const itemId=idGetter(row);toggleSelectItem(type,itemId);row.classList.add('selected');row.style.filter='brightness(1.15)';const cb=row.querySelector('.select-checkbox');if(cb)cb.checked=true;}isPressing=false;}}function startPress(e){const cfg=getSelectConfig(type);if(cfg.selectMode)return;if(e.target.closest('.copy-btn')||e.target.closest('.select-checkbox')||e.target.closest('.qty-btn'))return;const touch=e.touches?e.touches[0]:e;touchStartX=touch.clientX;touchStartY=touch.clientY;pressStartTime=Date.now();isPressing=true;row.classList.add('pressing');row.style.filter='brightness(1.0)';animationFrame=requestAnimationFrame(updateBrightness);}function endPress(e){if(!isPressing)return;isPressing=false;if(animationFrame)cancelAnimationFrame(animationFrame);row.style.transition='filter 0.1s ease';row.style.filter='brightness(1.0)';row.classList.remove('pressing');setTimeout(()=>{row.style.transition='';},150);}function checkMove(e){if(!isPressing)return;const touch=e.touches?e.touches[0]:e;const cx=touch.clientX,cy=touch.clientY;if(Math.abs(cx-touchStartX)>8||Math.abs(cy-touchStartY)>8)endPress(e);}row.addEventListener('mousedown',startPress);row.addEventListener('mouseup',endPress);row.addEventListener('mouseleave',endPress);row.addEventListener('mousemove',checkMove);row.addEventListener('touchstart',startPress,{passive:true});row.addEventListener('touchend',endPress);row.addEventListener('touchcancel',endPress);row.addEventListener('touchmove',checkMove,{passive:true});}
-
-        function setupGroupLongPress(headerElement, gid) { let pressStartTime=0,animationFrame=null,isPressing=false,touchStartX=0,touchStartY=0; function updateBrightness(){if(!isPressing)return;const elapsed=Date.now()-pressStartTime;const progress=Math.min(elapsed/1300,1);const brightness=1.0+(progress*0.1);headerElement.style.filter=`brightness(${brightness})`;if(progress<1){animationFrame=requestAnimationFrame(updateBrightness);}else{headerElement.style.filter='brightness(1.0)';headerElement.classList.remove('pressing');vibrate(20);const gdata=GROUP_DATA[gid];if(gdata){showEditGroupModal(gdata.cat,gdata.level,gdata.keys);}isPressing=false;}} function startPress(e){if(e.target.closest('.group-add-btn')||e.target.closest('.accordion-arrow'))return;const touch=e.touches?e.touches[0]:e;touchStartX=touch.clientX;touchStartY=touch.clientY;pressStartTime=Date.now();isPressing=true;headerElement.classList.add('pressing');headerElement.style.filter='brightness(1.0)';animationFrame=requestAnimationFrame(updateBrightness);} function endPress(e){if(!isPressing)return;isPressing=false;if(animationFrame)cancelAnimationFrame(animationFrame);headerElement.style.transition='filter 0.1s ease';headerElement.style.filter='brightness(1.0)';headerElement.classList.remove('pressing');setTimeout(()=>{headerElement.style.transition='';},150);} function checkMove(e){if(!isPressing)return;const touch=e.touches?e.touches[0]:e;const cx=touch.clientX,cy=touch.clientY;if(Math.abs(cx-touchStartX)>8||Math.abs(cy-touchStartY)>8)endPress(e);} headerElement.addEventListener('mousedown',startPress);headerElement.addEventListener('mouseup',endPress);headerElement.addEventListener('mouseleave',endPress);headerElement.addEventListener('mousemove',checkMove);headerElement.addEventListener('touchstart',startPress,{passive:true});headerElement.addEventListener('touchend',endPress);headerElement.addEventListener('touchcancel',endPress);headerElement.addEventListener('touchmove',checkMove,{passive:true}); }
-
-        function showEditGroupModal(cat, level, keys) { const gb=CATEGORY_GROUPS[cat];const fieldName=gb[level];const fieldLabel=COL_LABELS[fieldName]||fieldName;const oldValue=keys[keys.length-1];const isLastLevel=(level+1>=gb.length); let bodyHTML=`<div class="form-group"><label class="form-label">${fieldLabel}</label><input type="text" class="form-input" id="edit_group_name" value="${oldValue.replace(/"/g,'&quot;')}">`; if(isLastLevel){bodyHTML+=`<div class="form-group"><label class="form-label">Закупка (₽) — оставьте пустым чтобы не менять</label><input type="number" class="form-input" id="edit_group_purchase" value="" step="0.01" placeholder="Не менять"></div>`;bodyHTML+=`<div class="form-group"><label class="form-label">Продажа (₽) — оставьте пустым чтобы не менять</label><input type="number" class="form-input" id="edit_group_selling" value="" step="0.01" placeholder="Не менять"></div>`;} showModal('Редактировать группу','bi bi-pencil','var(--accent)',bodyHTML,`<button class="btn btn-delete" style="flex:0.4;margin-right:auto;" onclick="window._deleteGroup()"><i class="bi bi-trash"></i> Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="window._saveEditGroup()">Сохранить</button>`); window._currentGroupData={cat,level,keys}; }
-        window._saveEditGroup=async function(){const{cat,level,keys}=window._currentGroupData;const newValue=document.getElementById('edit_group_name').value.trim();if(!newValue){await showAlert('Введите название','error');return;}const gb=CATEGORY_GROUPS[cat];const fieldName=gb[level];const allP=await db.all('products');const toUpdate=allP.filter(p=>{if(p.category!==cat)return false;return keys.every((k,i)=>norm(p[gb[i]])===norm(k));});const purchaseEl=document.getElementById('edit_group_purchase');const sellingEl=document.getElementById('edit_group_selling');const newPurchase=purchaseEl?purchaseEl.value.trim():'';const newSelling=sellingEl?sellingEl.value.trim():'';for(const p of toUpdate){p[fieldName]=newValue;if(newPurchase!=='')p.purchase=parseFloat(newPurchase)||0;if(newSelling!=='')p.selling=parseFloat(newSelling)||0;await db.pu('products',p);}closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');setTimeout(()=>restoreOpenGroups(),100);showSnackbar(`Обновлено ${toUpdate.length} товаров`);};
-        window._deleteGroup=async function(){const{cat,level,keys}=window._currentGroupData;const gb=CATEGORY_GROUPS[cat];const allP=await db.all('products');const toDelete=allP.filter(p=>{if(p.category!==cat)return false;return keys.every((k,i)=>norm(p[gb[i]])===norm(k));});if(toDelete.length===0){await showAlert('Нет товаров для удаления','error');return;}const confirmed=await showConfirm(`Будет удалено ${toDelete.length} товаров. Продолжить?`);if(!confirmed)return;deletedGroupProducts=toDelete.map(p=>({...p}));for(const p of toDelete){await db.del('products',p.id);}closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');setTimeout(()=>restoreOpenGroups(),100);showSnackbar(`Удалено ${toDelete.length} товаров`,async()=>{for(const p of deletedGroupProducts){const cp={...p};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');setTimeout(()=>restoreOpenGroups(),100);deletedGroupProducts=[];});};
-
-        async function isDuplicateProduct(cat, manufacturer, lineup, extraValue, excludeId = null) { const allP=await db.all('products');const ex=CATEGORY_EXTRA_FIELDS[cat];const extraKey=ex[0]?.key||'lineup';return allP.some(p=>{if(excludeId&&p.id===excludeId)return false;return p.category===cat&&norm(p.manufacturer)===norm(manufacturer)&&norm(p.lineup)===norm(lineup)&&norm(p[extraKey])===norm(extraValue);}); }
+        async function renderStatistics(period) {
+            const prevRev = prevStats.revenue, prevProf = prevStats.profit, prevCnt = prevStats.count;
+            const prevBooking = prevStats.bookingSum, prevDebt = prevStats.debtSum, prevNew = prevStats.newClients, prevLeaving = prevStats.leavingClients;
+            AppState.set('currentPeriod', period);
+            const { s, e, ps, pe } = getDateRange(period);
+            const sales = await getSalesInRange2(s, e), prevSales = (ps && pe) ? await getSalesInRange2(ps, pe) : [];
+            const rev = sales.reduce((s, x) => s + (x.total || 0), 0), prof = sales.reduce((s, x) => s + (x.profit || 0), 0), cnt = sales.length;
+            const pRev = prevSales.reduce((s, x) => s + (x.total || 0), 0), pProf = prevSales.reduce((s, x) => s + (x.profit || 0), 0), pCnt = prevSales.length;
+            const allSalesAllTime = await db.all('sales');
+            const bookingSum = allSalesAllTime.filter(s => s.note === 'бронь').reduce((s, x) => s + (x.total || 0), 0);
+            const debtSum = allSalesAllTime.filter(s => s.note === 'долг').reduce((s, x) => s + (x.total || 0), 0);
+            const allClients = await db.all('clients');
+            const newClients = allClients.filter(c => c.created >= s && c.created <= e).length;
+            const leavingClients = allClients.filter(c => {
+                const cs = allSalesAllTime.filter(x => norm(x.client) === norm(c.name));
+                if (cs.length === 0) return false;
+                const last = cs.sort((a, b) => b.date.localeCompare(a.date))[0];
+                return last && (new Date() - new Date(last.date)) / 86400000 > 30;
+            }).length;
+            prevStats = { revenue: rev, profit: prof, count: cnt, bookingSum, debtSum, newClients, leavingClients };
+            const sd = ssd(period, s, e);
+            const dd = sd ? getDailyData(sales, s, e) : [], cd = getCategoryData(sales, AppState.get('categoryMode'));
+            const md = Math.max(...dd.map(d => d.value), 1), mc = Math.max(...cd.map(d => d.value), 1);
+            const showMonths = period === 'all' || (period === 'custom' && gdd(s, e) > 31);
+            const dailyTitle = showMonths ? 'Прибыль по месяцам' : 'Прибыль по дням';
+            document.getElementById('contentBody').innerHTML = `<h2 class="tab-title" onclick="openSidebar()">Статистика</h2><div class="stats-header"><div class="period-buttons">${['today','week','month','all','custom'].map(p => `<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div><div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value" id="stat_revenue">${fn(prevRev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}" id="stat_rev_pct">${fp((rev-pRev)/pRev*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value" id="stat_profit">${fn(prevProf)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}" id="stat_prof_pct">${fp((prof-pProf)/pProf*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value" id="stat_count">${fn(prevCnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}" id="stat_cnt_pct">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div></div><div class="summary-row"><div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value" id="sum_booking">${fn(prevBooking)}₽</div></div><div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value" id="sum_debt">${fn(prevDebt)}₽</div></div><div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value" id="sum_new">${prevNew} чел.</div></div><div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value" id="sum_leaving">${prevLeaving} чел.</div></div></div><div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${AppState.get('categoryMode')==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${AppState.get('categoryMode')==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d => `<div class="category-column cat-${d.category}"><div class="category-value">${fn(d.value)}${AppState.get('categoryMode')==='sum'?'₽':' шт.'}</div><div class="category-fill-wrap"><div class="category-fill-inner animate" style="--target-height:${mc>0?(d.value/mc*100):0}%;" data-target="${mc>0?(d.value/mc*100):0}"></div></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dd.length?`<div class="bar-chart">${dd.map(d => `<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill-wrap"><div class="bar-fill-inner animate" style="--target-height:${md>0?(d.value/md*100):0}%;" data-target="${md>0?(d.value/md*100):0}"></div></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${AppState.get('customStartDate')||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${AppState.get('customEndDate')||''}" onchange="updateCustomDates()"></div>`:''}`;
+            setTimeout(() => {
+                const revEl = document.getElementById('stat_revenue'), profEl = document.getElementById('stat_profit'), cntEl = document.getElementById('stat_count');
+                if (revEl) animateValue(revEl, prevRev, rev, 600, '₽');
+                if (profEl) animateValue(profEl, prevProf, prof, 600, '₽');
+                if (cntEl) animateValue(cntEl, prevCnt, cnt, 600, '');
+                setTimeout(() => { const rp = document.getElementById('stat_rev_pct'), pp = document.getElementById('stat_prof_pct'), cp2 = document.getElementById('stat_cnt_pct'); if (rp && pRev) rp.textContent = fp((rev - pRev) / pRev * 100); if (pp && pProf) pp.textContent = fp((prof - pProf) / pProf * 100); if (cp2 && pCnt) cp2.textContent = fp((cnt - pCnt) / pCnt * 100); }, 700);
+                setTimeout(() => { document.querySelectorAll('.bar-fill-inner.animate,.category-fill-inner.animate').forEach(el => el.classList.add('started')); }, 100);
+            }, 100);
+        }
+        async function setCategoryMode(m) { AppState.set('categoryMode', m); await renderStatistics(AppState.get('currentPeriod')); }
+        function updateCustomDates() {
+            AppState.set('customStartDate', document.getElementById('startDate').value);
+            AppState.set('customEndDate', document.getElementById('endDate').value);
+            if (AppState.get('customStartDate') && AppState.get('customEndDate')) renderStatistics('custom');
+        }
+        async function showBookingModal() { const allSales = await db.all('sales'); const bs = allSales.filter(s => s.note === 'бронь'); showModal('Бронь', 'bi bi-calendar-check', 'var(--green)', bs.length === 0 ? '<p class="text-muted text-center py-4">Нет броней</p>' : `<div class="sale-table-header"><div class="sale-col" style="flex:0.3">Клиент</div><div class="sale-col" style="flex:0.7">Товар</div></div>${bs.map(s => `<div class="sale-row"><div class="sale-col" style="flex:0.3">${s.client||'-'}</div><div class="sale-col" style="flex:0.7">${s.product||'-'}</div></div>`).join('')}`, ''); }
+        async function showDebtModal() { const allSales = await db.all('sales'); const ds = allSales.filter(s => s.note === 'долг'); showModal('Долги', 'bi bi-cash-coin', 'var(--red)', ds.length === 0 ? '<p class="text-muted text-center py-4">Нет долгов</p>' : `<div class="sale-table-header"><div class="sale-col" style="flex:0.5">Клиент</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">Сумма</div><div class="sale-col" style="flex:0.3">Дата</div></div>${ds.map(s => `<div class="sale-row"><div class="sale-col" style="flex:0.5">${s.client||'-'}</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">${fn(s.total||0)}₽</div><div class="sale-col" style="flex:0.3">${fmtDate(s.date)}</div></div>`).join('')}`, ''); }
+        async function showNewClientsModal() { const { s, e } = getDateRange(AppState.get('currentPeriod')); const clients = await db.all('clients'); const nc = clients.filter(c => c.created >= s && c.created <= e); showModal('Новые клиенты', 'bi bi-person-plus', 'var(--accent)', nc.length === 0 ? '<p class="text-muted text-center py-4">Нет новых клиентов</p>' : `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>${nc.map(c => `<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`, ''); }
+        async function showLeavingClientsModal() { const clients = await db.all('clients'); const sales = await db.all('sales'); const lc = clients.filter(c => { const cs = sales.filter(x => norm(x.client) === norm(c.name)); if (cs.length === 0) return false; const last = cs.sort((a, b) => b.date.localeCompare(a.date))[0]; return last && (new Date() - new Date(last.date)) / 86400000 > 30; }); showModal('Уходящие клиенты', 'bi bi-person-dash', 'var(--accent)', lc.length === 0 ? '<p class="text-muted text-center py-4">Нет уходящих клиентов</p>' : `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c => { const cs = sales.filter(x => norm(x.client) === norm(c.name)).sort((a, b) => b.date.localeCompare(a.date)); const last = cs[0]; return `<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`; }).join('')}`, ''); }
 
         // ============ СКЛАД ============
-        let cwc=null,og=new Set(),deletedProducts=[];
-        function whEnterSelectMode(){enterSelectMode('warehouse');}function whExitSelectMode(){exitSelectMode('warehouse');}function whToggleSelect(id){toggleSelectItem('warehouse',id);}function whUpdateSelectUI(){updateSelectUI('warehouse');}function whIsSelectMode(){return SELECT_MODE_CONFIG.warehouse.selectMode;}function whGetSelectedIds(){return SELECT_MODE_CONFIG.warehouse.selectedIds;}
-        async function changeQuantity(pid,delta){const p=await db.g('products',pid);if(!p)return;const newQty=Math.max(0,(p.quantity||0)+delta);if(p.quantity===newQty)return;p.quantity=newQty;await db.pu('products',p);const row=document.querySelector(`.product-row[data-pid="${pid}"]`);if(row){const qtyVal=row.querySelector('.qty-value');if(qtyVal){qtyVal.textContent=newQty;qtyVal.classList.add('qty-pulse');setTimeout(()=>qtyVal.classList.remove('qty-pulse'),300);}const minusBtn=row.querySelector('.qty-btn.minus');if(minusBtn)minusBtn.style.opacity=newQty<=0?'0':'1';const wrapper=row.closest('.product-row-wrapper');if(wrapper)wrapper.classList.toggle('out-of-stock',newQty<=0);}}
-        async function deleteSelectedProducts(){const selectedIds=whGetSelectedIds();if(selectedIds.size===0)return;const confirmed=await showConfirm(`Удалить ${selectedIds.size} товаров?`);if(!confirmed)return;vibrate([20,50,20]);deletedProducts=[];const wrappers=[];for(const id of selectedIds){const p=await db.g('products',id);if(p){deletedProducts.push(p);}const row=document.querySelector(`.product-row[data-pid="${id}"]`);if(row&&row.parentElement)wrappers.push(row.parentElement);}wrappers.forEach(w=>w.classList.add('removing'));setTimeout(async()=>{for(const p of deletedProducts){await db.del('products',p.id);}whExitSelectMode();await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar(`Удалено ${deletedProducts.length} товаров`,async()=>{for(const p of deletedProducts){const cp={...p};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});},450);}
-        async function renderWarehouseCards(){cwc=null;og=new Set();whExitSelectMode();const ap=await db.all('products');const counts={};CATEGORIES.forEach(c=>counts[c]=ap.filter(p=>p.category===c).reduce((s,p)=>s+(p.quantity||0),0));document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Склад</h2><div class="warehouse-cards">${CATEGORIES.map(c=>`<div class="wh-card ${CATEGORY_CLASS[c]}" onclick="openWarehouseCategory('${c}')"><div class="wh-icon"><i class="bi ${CATEGORY_ICONS[c]}"></i></div><div class="wh-label">${CATEGORY_NAMES[c]}</div><div class="wh-count">${counts[c]} шт.</div></div>`).join('')}</div>`;}
-        async function openWarehouseCategory(c){cwc=c;og=new Set();whExitSelectMode();await renderWarehouseTable(c);}
-        function groupProductsNested(products,groupBy){if(groupBy.length===0)return{_root:products};const root={};products.forEach(p=>{let current=root;for(let i=0;i<groupBy.length;i++){const field=groupBy[i];const key=norm(p[field]);if(!current[key])current[key]=i===groupBy.length-1?[]:{};if(i===groupBy.length-1)current[key].push(p);else current=current[key];}});return root;}
-        function getGroupId(cat,level,keys){return['grp',cat,...keys.slice(0,level+1)].join('_');}
+        function whEnterSelectMode() { enterSelectMode('warehouse'); }
+        function whExitSelectMode() { exitSelectMode('warehouse'); }
+        function whToggleSelect(id) { toggleSelectItem('warehouse', id); }
+        function whUpdateSelectUI() { updateSelectUI('warehouse'); }
+        function whIsSelectMode() { return AppState.get('selectModes').warehouse.selectMode; }
+        function whGetSelectedIds() { return AppState.get('selectModes').warehouse.selectedIds; }
 
-        function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){if(level>=groupBy.length)return'';let h='';const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));const isLastLevel=(level+1>=groupBy.length);entries.forEach(([key,value])=>{const currentLevelKeys=[...parentKeys,key];const gid=getGroupId(cat,level,currentLevelKeys);const items=isLastLevel?value:[];const firstItem=isLastLevel?value[0]:Object.values(value)[0]?.[0];const fieldName=groupBy[level];const label=firstItem?firstItem[fieldName]:key;const tab=level>0?'&emsp;&emsp;':''; GROUP_DATA[gid]={cat,level,keys:currentLevelKeys}; const addBtn=`<button class="group-add-btn" data-gid="${gid}" title="Добавить в группу"><i class="bi bi-plus"></i></button>`;h+=`<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}" data-gid="${gid}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${addBtn}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;if(!isLastLevel){h+=buildAccordionHTML(value,groupBy,level+1,cat,currentLevelKeys);}else{const cols=CATEGORY_TABLE_COLS[cwc];h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;items.forEach(item=>{h+=`<div class="product-row-wrapper${(item.quantity||0)<=0?' out-of-stock':''}"><div class="swipe-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="product-row" data-pid="${item.id}" ondblclick="if(!whIsSelectMode())editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="whToggleSelect(${item.id})" onclick="event.stopPropagation()"></div>`;cols.forEach(col=>{let v=item[col]||'';if(col==='quantity'){h+=`<div class="product-col qty"><div class="qty-controls"><button class="qty-btn minus" onclick="event.stopPropagation();changeQuantity(${item.id},-1)" style="opacity:${(item.quantity||0)<=0?'0':'1'}">−</button><span class="qty-value">${item.quantity||0}</span><button class="qty-btn plus" onclick="event.stopPropagation();changeQuantity(${item.id},1)">+</button></div></div>`;}else{if(col==='purchase'||col==='selling')v=fn(v)+'₽';h+=`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`;}});h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;});}h+=`</div></div>`;});return h;}
+        async function changeQuantity(pid, delta) {
+            const p = await db.g('products', pid);
+            if (!p) return;
+            const newQty = Math.max(0, (p.quantity || 0) + delta);
+            if (p.quantity === newQty) return;
+            p.quantity = newQty;
+            await db.pu('products', p);
+            const row = document.querySelector(`.product-row[data-pid="${pid}"]`);
+            if (row) {
+                const qtyVal = row.querySelector('.qty-value');
+                if (qtyVal) { qtyVal.textContent = newQty; qtyVal.classList.add('qty-pulse'); setTimeout(() => qtyVal.classList.remove('qty-pulse'), 300); }
+                const minusBtn = row.querySelector('.qty-btn.minus');
+                if (minusBtn) minusBtn.style.opacity = newQty <= 0 ? '0' : '1';
+                const wrapper = row.closest('.product-row-wrapper');
+                if (wrapper) wrapper.classList.toggle('out-of-stock', newQty <= 0);
+            }
+        }
+        async function deleteSelectedProducts() {
+            const selectedIds = whGetSelectedIds();
+            if (selectedIds.size === 0) return;
+            const confirmed = await showConfirm(`Удалить ${selectedIds.size} товаров?`);
+            if (!confirmed) return;
+            vibrate([20, 50, 20]);
+            deletedProducts = [];
+            const wrappers = [];
+            for (const id of selectedIds) { const p = await db.g('products', id); if (p) { deletedProducts.push(p); } const row = document.querySelector(`.product-row[data-pid="${id}"]`); if (row && row.parentElement) wrappers.push(row.parentElement); }
+            wrappers.forEach(w => w.classList.add('removing'));
+            setTimeout(async () => {
+                for (const p of deletedProducts) { await db.del('products', p.id); }
+                whExitSelectMode();
+                await renderWarehouseTable(AppState.get('currentWarehouseCategory'), document.querySelector('.search-input')?.value || '');
+                showSnackbar(`Удалено ${deletedProducts.length} товаров`, async () => {
+                    for (const p of deletedProducts) { const cp = { ...p }; delete cp.id; await db.add('products', cp); }
+                    await renderWarehouseTable(AppState.get('currentWarehouseCategory'), document.querySelector('.search-input')?.value || '');
+                    deletedProducts = [];
+                });
+            }, 450);
+        }
+        async function renderWarehouseCards() {
+            AppState.set('currentWarehouseCategory', null);
+            AppState.set('openGroups', new Set());
+            for (const key in GROUP_DATA) delete GROUP_DATA[key];
+            whExitSelectMode();
+            const ap = await db.all('products');
+            const counts = {};
+            CATEGORIES.forEach(c => counts[c] = ap.filter(p => p.category === c).reduce((s, p) => s + (p.quantity || 0), 0));
+            document.getElementById('contentBody').innerHTML = `<h2 class="tab-title" onclick="openSidebar()">Склад</h2><div class="warehouse-cards">${CATEGORIES.map(c => `<div class="wh-card ${CATEGORY_CLASS[c]}" onclick="openWarehouseCategory('${c}')"><div class="wh-icon"><i class="bi ${CATEGORY_ICONS[c]}"></i></div><div class="wh-label">${CATEGORY_NAMES[c]}</div><div class="wh-count">${counts[c]} шт.</div></div>`).join('')}</div>`;
+        }
+        async function openWarehouseCategory(c) {
+            AppState.set('currentWarehouseCategory', c);
+            AppState.set('openGroups', new Set());
+            for (const key in GROUP_DATA) delete GROUP_DATA[key];
+            whExitSelectMode();
+            await renderWarehouseTable(c);
+        }
+        function groupProductsNested(products, groupBy) { if (groupBy.length === 0) return { _root: products }; const root = {}; products.forEach(p => { let current = root; for (let i = 0; i < groupBy.length; i++) { const field = groupBy[i]; const key = norm(p[field]); if (!current[key]) current[key] = i === groupBy.length - 1 ? [] : {}; if (i === groupBy.length - 1) current[key].push(p); else current = current[key]; } }); return root; }
+        function getGroupId(cat, level, keys) { return ['grp', cat, ...keys.slice(0, level + 1)].join('_'); }
 
-        window.toggleAcc=function(gid){const body=document.getElementById(gid);if(!body)return;const hdr=document.getElementById('hdr_'+gid);if(!hdr)return;if(body.classList.contains('open')){body.classList.remove('open');hdr.classList.remove('open');og.delete(gid);}else{body.classList.add('open');hdr.classList.add('open');og.add(gid);}};
-        function restoreOpenGroups(){og.forEach(gid=>{const b=document.getElementById(gid);if(b){b.classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');}});}
+        function buildAccordionHTML(groups, groupBy, level, cat, parentKeys) {
+            if (level >= groupBy.length) return '';
+            let h = '';
+            const entries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+            const isLastLevel = (level + 1 >= groupBy.length);
+            entries.forEach(([key, value]) => {
+                const currentLevelKeys = [...parentKeys, key];
+                const gid = getGroupId(cat, level, currentLevelKeys);
+                const items = isLastLevel ? value : [];
+                const firstItem = isLastLevel ? value[0] : Object.values(value)[0]?.[0];
+                const fieldName = groupBy[level];
+                const label = firstItem ? firstItem[fieldName] : key;
+                const tab = level > 0 ? '&emsp;&emsp;' : '';
+                GROUP_DATA[gid] = { cat, level, keys: currentLevelKeys };
+                const addBtn = `<button class="group-add-btn" data-gid="${gid}" title="Добавить в группу"><i class="bi bi-plus"></i></button>`;
+                h += `<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}" data-gid="${gid}"><span class="accordion-header-left" data-action="toggle-acc" data-gid="${gid}">${tab}${label}</span><div class="accordion-header-actions">${addBtn}<i class="bi bi-chevron-down accordion-arrow" data-action="toggle-acc" data-gid="${gid}"></i></div></div><div class="accordion-body" id="${gid}">`;
+                if (!isLastLevel) { h += buildAccordionHTML(value, groupBy, level + 1, cat, currentLevelKeys); }
+                else {
+                    const cols = CATEGORY_TABLE_COLS[cat];
+                    h += `<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col => `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
+                    items.forEach(item => {
+                        h += `<div class="product-row-wrapper${(item.quantity||0)<=0?' out-of-stock':''}"><div class="swipe-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="product-row" data-pid="${item.id}"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" data-action="toggle-select-wh" onclick="event.stopPropagation()"></div>`;
+                        cols.forEach(col => {
+                            let v = item[col] || '';
+                            if (col === 'quantity') { h += `<div class="product-col qty"><div class="qty-controls"><button class="qty-btn minus" data-action="qty-change" data-pid="${item.id}" data-delta="-1" style="opacity:${(item.quantity||0)<=0?'0':'1'}">−</button><span class="qty-value">${item.quantity||0}</span><button class="qty-btn plus" data-action="qty-change" data-pid="${item.id}" data-delta="1">+</button></div></div>`; }
+                            else { if (col === 'purchase' || col === 'selling') v = fn(v) + '₽'; h += `<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${v}</div>`; }
+                        });
+                        h += `<div class="product-col copy-btn" data-action="copy-product" data-pid="${item.id}" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;
+                    });
+                }
+                h += `</div></div>`;
+            });
+            return h;
+        }
 
-        function showAddToGroupModal(gid) { const gdata=GROUP_DATA[gid];if(!gdata)return;const{cat,level,keys}=gdata;const gb=CATEGORY_GROUPS[cat];const isLastLevel=(level+1>=gb.length);const groupLabel=keys.join(' → ');const ex=CATEGORY_EXTRA_FIELDS[cat];const extraField=ex[0]||{key:'lineup',label:'Линейка'}; db.all('products').then(allP=>{const catProducts=allP.filter(p=>p.category===cat).sort((a,b)=>b.id-a.id);const lastProduct=catProducts[0];const defPurchase=lastProduct?lastProduct.purchase||'':'';const defSelling=lastProduct?lastProduct.selling||'':''; let bodyHTML=''; if(!isLastLevel){const nextField=gb[level+1];const nextLabel=COL_LABELS[nextField]||nextField;bodyHTML=`<div class="form-group"><label class="form-label">${nextLabel}</label><input type="text" class="form-input" id="group_add_lineup" placeholder="Название"></div><p class="text-muted" style="font-size:13px;">После создания откроется добавление товаров</p>`;} else {bodyHTML=`<div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="group_add_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="group_mass_preview">Будет создано: 0 товаров</p><div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="group_add_quantity" value="0" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="group_add_purchase" value="${defPurchase}" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="group_add_selling" value="${defSelling}" step="0.01"></div>`;} window._addToGroupGid=gid; showModal(`Добавить в ${groupLabel}`,'bi bi-plus','var(--accent)',bodyHTML,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="window._saveAddToGroup()">${isLastLevel?'Добавить':'Создать'}</button>`); if(isLastLevel){setTimeout(()=>{const flavorsEl=document.getElementById('group_add_flavors');const previewEl=document.getElementById('group_mass_preview');if(flavorsEl&&previewEl){const updatePreview=()=>{const lines=flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);previewEl.textContent=`Будет создано: ${lines.length} товаров`;};flavorsEl.addEventListener('input',updatePreview);updatePreview();}},50);} }); }
-        window._saveAddToGroup=async function(){const gid=window._addToGroupGid;const gdata=GROUP_DATA[gid];if(!gdata)return;const{cat,level,keys}=gdata;const gb=CATEGORY_GROUPS[cat];const isLastLevel=(level+1>=gb.length);const ex=CATEGORY_EXTRA_FIELDS[cat];const extraKey=ex[0]?.key||'lineup'; if(!isLastLevel){const lineup=document.getElementById('group_add_lineup').value.trim();if(!lineup){await showAlert('Введите название','error');return;}const manufacturer=keys[0];const allP=await db.all('products');const catProducts=allP.filter(p=>p.category===cat).sort((a,b)=>b.id-a.id);const lastProduct=catProducts[0];const p={category:cat,manufacturer:manufacturer,lineup:lineup,quantity:0,purchase:lastProduct?(lastProduct.purchase||0):0,selling:lastProduct?(lastProduct.selling||0):0};ex.forEach(e=>p[e.key]='');await db.add('products',p);closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');setTimeout(async()=>{const newKeys=[...keys,lineup];const parentGid=getGroupId(cat,level,keys);const parentBody=document.getElementById(parentGid);if(parentBody){parentBody.classList.add('open');const parentHdr=document.getElementById('hdr_'+parentGid);if(parentHdr)parentHdr.classList.add('open');og.add(parentGid);}const childGid=getGroupId(cat,level+1,newKeys);setTimeout(()=>{const childBody=document.getElementById(childGid);if(childBody){childBody.classList.add('open');const childHdr=document.getElementById('hdr_'+childGid);if(childHdr)childHdr.classList.add('open');og.add(childGid);}if(GROUP_DATA[childGid]){showAddToGroupModal(childGid);}},200);},300);}else{const flavorsEl=document.getElementById('group_add_flavors');const flavors=flavorsEl?flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0):[];if(flavors.length===0){await showAlert('Введите хотя бы один вкус','error');return;}const quantity=parseInt(document.getElementById('group_add_quantity').value)||0;const purchase=parseFloat(document.getElementById('group_add_purchase').value)||0;const selling=parseFloat(document.getElementById('group_add_selling').value)||0;const manufacturer=keys[0];const lineup=keys.length>1?keys[1]:'';let created=0,skipped=0;for(const flavor of flavors){const isDup=await isDuplicateProduct(cat,manufacturer,lineup,flavor);if(isDup){skipped++;continue;}const p={category:cat,manufacturer,lineup,quantity,purchase,selling};ex.forEach(e=>p[e.key]=(e.key===extraKey)?flavor:'');await db.add('products',p);created++;}closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');setTimeout(()=>restoreOpenGroups(),100);let msg=`Создано ${created} товаров`;if(skipped>0)msg+=`, пропущено ${skipped} (дубликаты)`;showSnackbar(msg);}};
+        function toggleAcc(gid) {
+            const body = document.getElementById(gid);
+            if (!body) return;
+            const hdr = document.getElementById('hdr_' + gid);
+            const openGroups = AppState.get('openGroups');
+            if (body.classList.contains('open')) {
+                body.classList.remove('open');
+                if (hdr) hdr.classList.remove('open');
+                openGroups.delete(gid);
+            } else {
+                body.classList.add('open');
+                if (hdr) hdr.classList.add('open');
+                openGroups.add(gid);
+            }
+            AppState.set('openGroups', openGroups);
+        }
+        function restoreOpenGroups() {
+            const openGroups = AppState.get('openGroups');
+            openGroups.forEach(gid => {
+                const b = document.getElementById(gid);
+                if (b) { b.classList.add('open'); const hdr = document.getElementById('hdr_' + gid); if (hdr) hdr.classList.add('open'); }
+            });
+        }
 
-        function setupWarehouseSwipe(){document.querySelectorAll('.product-row').forEach(row=>{setupLongPress(row,'warehouse',(r)=>parseInt(r.dataset.pid));setupSwipe(row,'warehouse',(r)=>parseInt(r.dataset.pid),async(pid)=>{const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');deletedProducts=[];});});});document.querySelectorAll('.accordion-header').forEach(hdr=>{const gid=hdr.dataset.gid;if(gid&&GROUP_DATA[gid]){setupGroupLongPress(hdr,gid);}});document.querySelectorAll('.group-add-btn').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();e.preventDefault();const gid=btn.dataset.gid;if(gid&&GROUP_DATA[gid]){showAddToGroupModal(gid);}});});}
+        function showAddToGroupModal(gid) {
+            const gdata = GROUP_DATA[gid];
+            if (!gdata) return;
+            const { cat, level, keys } = gdata;
+            const gb = CATEGORY_GROUPS[cat];
+            const isLastLevel = (level + 1 >= gb.length);
+            const groupLabel = keys.join(' → ');
+            const ex = CATEGORY_EXTRA_FIELDS[cat];
+            const extraField = ex[0] || { key: 'lineup', label: 'Линейка' };
+            db.all('products').then(allP => {
+                const catProducts = allP.filter(p => p.category === cat).sort((a, b) => b.id - a.id);
+                const lastProduct = catProducts[0];
+                const defPurchase = lastProduct ? lastProduct.purchase || '' : '';
+                const defSelling = lastProduct ? lastProduct.selling || '' : '';
+                let bodyHTML = '';
+                if (!isLastLevel) {
+                    const nextField = gb[level + 1];
+                    const nextLabel = COL_LABELS[nextField] || nextField;
+                    bodyHTML = `<div class="form-group"><label class="form-label">${nextLabel}</label><input type="text" class="form-input" id="group_add_lineup" placeholder="Название"></div><p class="text-muted" style="font-size:13px;">После создания откроется добавление товаров</p>`;
+                } else {
+                    bodyHTML = `<div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="group_add_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="group_mass_preview">Будет создано: 0 товаров</p><div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="group_add_quantity" value="0" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="group_add_purchase" value="${defPurchase}" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="group_add_selling" value="${defSelling}" step="0.01"></div>`;
+                }
+                window._addToGroupGid = gid;
+                showModal(`Добавить в ${groupLabel}`, 'bi bi-plus', 'var(--accent)', bodyHTML, `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="window._saveAddToGroup()">${isLastLevel?'Добавить':'Создать'}</button>`);
+                if (isLastLevel) {
+                    setTimeout(() => {
+                        const flavorsEl = document.getElementById('group_add_flavors');
+                        const previewEl = document.getElementById('group_mass_preview');
+                        if (flavorsEl && previewEl) {
+                            const updatePreview = () => { const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; };
+                            flavorsEl.addEventListener('input', updatePreview); updatePreview();
+                        }
+                    }, 50);
+                }
+            });
+        }
+        window._saveAddToGroup = async function() {
+            const gid = window._addToGroupGid;
+            const gdata = GROUP_DATA[gid];
+            if (!gdata) return;
+            const { cat, level, keys } = gdata;
+            const gb = CATEGORY_GROUPS[cat];
+            const isLastLevel = (level + 1 >= gb.length);
+            const ex = CATEGORY_EXTRA_FIELDS[cat];
+            const extraKey = ex[0]?.key || 'lineup';
+            if (!isLastLevel) {
+                const lineup = document.getElementById('group_add_lineup').value.trim();
+                if (!lineup) { await showAlert('Введите название', 'error'); return; }
+                const manufacturer = keys[0];
+                const allP = await db.all('products');
+                const catProducts = allP.filter(p => p.category === cat).sort((a, b) => b.id - a.id);
+                const lastProduct = catProducts[0];
+                const p = { category: cat, manufacturer: manufacturer, lineup: lineup, quantity: 0, purchase: lastProduct ? (lastProduct.purchase || 0) : 0, selling: lastProduct ? (lastProduct.selling || 0) : 0 };
+                ex.forEach(e => p[e.key] = '');
+                await db.add('products', p);
+                closeModal();
+                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+                setTimeout(async () => {
+                    const newKeys = [...keys, lineup];
+                    const parentGid = getGroupId(cat, level, keys);
+                    const parentBody = document.getElementById(parentGid);
+                    if (parentBody) { parentBody.classList.add('open'); const parentHdr = document.getElementById('hdr_' + parentGid); if (parentHdr) parentHdr.classList.add('open'); AppState.get('openGroups').add(parentGid); }
+                    const childGid = getGroupId(cat, level + 1, newKeys);
+                    setTimeout(() => {
+                        const childBody = document.getElementById(childGid);
+                        if (childBody) { childBody.classList.add('open'); const childHdr = document.getElementById('hdr_' + childGid); if (childHdr) childHdr.classList.add('open'); AppState.get('openGroups').add(childGid); }
+                        if (GROUP_DATA[childGid]) { showAddToGroupModal(childGid); }
+                    }, 200);
+                }, 300);
+            } else {
+                const flavorsEl = document.getElementById('group_add_flavors');
+                const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0) : [];
+                if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; }
+                const quantity = parseInt(document.getElementById('group_add_quantity').value) || 0;
+                const purchase = parseFloat(document.getElementById('group_add_purchase').value) || 0;
+                const selling = parseFloat(document.getElementById('group_add_selling').value) || 0;
+                const manufacturer = keys[0];
+                const lineup = keys.length > 1 ? keys[1] : '';
+                let created = 0, skipped = 0;
+                for (const flavor of flavors) {
+                    const isDup = await isDuplicateProduct(cat, manufacturer, lineup, flavor);
+                    if (isDup) { skipped++; continue; }
+                    const p = { category: cat, manufacturer, lineup, quantity, purchase, selling };
+                    ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : '');
+                    await db.add('products', p);
+                    created++;
+                }
+                closeModal();
+                await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || '');
+                setTimeout(() => restoreOpenGroups(), 100);
+                let msg = `Создано ${created} товаров`;
+                if (skipped > 0) msg += `, пропущено ${skipped} (дубликаты)`;
+                showSnackbar(msg);
+            }
+        };
 
-        async function renderWarehouseTable(cat,sq=''){cwc=cat;const ap=await db.all('products');let pr=ap.filter(p=>p.category===cat);if(sq){const q=sq.toLowerCase();pr=pr.filter(p=>CATEGORY_TABLE_COLS[cat].some(c=>(p[c]||'').toString().toLowerCase().includes(q))||(p.manufacturer||'').toLowerCase().includes(q)||(p.lineup||'').toLowerCase().includes(q));og=new Set();}const gb=CATEGORY_GROUPS[cat];const g=groupProductsNested(pr,gb);document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showMassAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onWarehouseSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;setTimeout(()=>{if(og.size>0)restoreOpenGroups();else{const bodies=document.querySelectorAll('.accordion-body');if(bodies.length===1){const gid=bodies[0].id;bodies[0].classList.add('open');const hdr=document.getElementById('hdr_'+gid);if(hdr)hdr.classList.add('open');og.add(gid);}}if(whIsSelectMode())whUpdateSelectUI();setupWarehouseSwipe();},50);}
-        function onWarehouseSearch(v){renderWarehouseTable(cwc,v);}
-        async function copyProduct(pid){const p=await db.g('products',pid);if(!p)return;const cp={...p};delete cp.id;const nid=await db.add('products',cp);await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');setTimeout(()=>{const r=document.querySelector(`.product-row[data-pid="${nid}"]`);if(r)r.classList.add('pop-anim');},100);}
-        function showMassAddProductModal(){const cat=cwc;const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';const ex=CATEGORY_EXTRA_FIELDS[cat];const extraField=ex[0]||{key:'lineup',label:'Линейка'};showModal('Добавить товары','bi bi-stack',color,`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="mass_manufacturer"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="mass_lineup"></div><div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="mass_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p><div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="mass_quantity" value="0" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="mass_purchase" value="" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="mass_selling" value="" step="0.01"></div>`,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveMassProduct()">Добавить</button>`);setTimeout(()=>{const flavorsEl=document.getElementById('mass_flavors');const previewEl=document.getElementById('mass_preview');if(flavorsEl&&previewEl){const updatePreview=()=>{const lines=flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);previewEl.textContent=`Будет создано: ${lines.length} товаров`;};flavorsEl.addEventListener('input',updatePreview);updatePreview();}},50);}
-        async function saveMassProduct(){const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];const manufacturer=document.getElementById('mass_manufacturer').value.trim();const lineup=document.getElementById('mass_lineup').value.trim();const flavorsEl=document.getElementById('mass_flavors');const flavors=flavorsEl?flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0):[];const quantity=parseInt(document.getElementById('mass_quantity').value)||0;const purchase=parseFloat(document.getElementById('mass_purchase').value)||0;const selling=parseFloat(document.getElementById('mass_selling').value)||0;if(!manufacturer){await showAlert('Введите производителя','error');return;}if(flavors.length===0){await showAlert('Введите хотя бы один вкус','error');return;}const extraKey=ex[0]?.key||'lineup';let created=0,skipped=0;for(const flavor of flavors){const isDup=await isDuplicateProduct(cat,manufacturer,lineup,flavor);if(isDup){skipped++;continue;}const p={category:cat,manufacturer,lineup,quantity,purchase,selling};ex.forEach(e=>p[e.key]=(e.key===extraKey)?flavor:'');await db.add('products',p);created++;}closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');let msg=`Создано ${created} товаров`;if(skipped>0)msg+=`, пропущено ${skipped} (дубликаты)`;showSnackbar(msg);}
-        async function editProduct(pid){const p=await db.g('products',pid);if(!p)return;cwc=p.category;const ex=CATEGORY_EXTRA_FIELDS[cwc];const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[p.category]).trim()||'var(--accent)';showModal('Редактировать товар','bi '+CATEGORY_ICONS[p.category],color,`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="edit_prod_manufacturer" value="${(p.manufacturer||'').replace(/"/g,'&quot;')}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="edit_prod_lineup" value="${(p.lineup||'').replace(/"/g,'&quot;')}"></div>${ex.map(e=>`<div class="form-group"><label class="form-label">${e.label}</label><input type="text" class="form-input" id="edit_prod_${e.key}" value="${(p[e.key]||'').replace(/"/g,'&quot;')}"></div>`).join('')}<div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="edit_prod_quantity" value="${p.quantity||0}" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="edit_prod_purchase" value="${p.purchase||''}" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="edit_prod_selling" value="${p.selling||''}" step="0.01"></div>`,`<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveEditProduct(${p.id})">Сохранить</button>`);}
-        async function saveEditProduct(pid){const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];const manufacturer=document.getElementById('edit_prod_manufacturer').value.trim();const lineup=document.getElementById('edit_prod_lineup').value.trim();const quantity=parseInt(document.getElementById('edit_prod_quantity').value)||0;const purchase=parseFloat(document.getElementById('edit_prod_purchase').value)||0;const selling=parseFloat(document.getElementById('edit_prod_selling').value)||0;if(!manufacturer){await showAlert('Введите производителя','error');return;}const extraKey=ex[0]?.key||'lineup';const extraValue=ex[0]?document.getElementById('edit_prod_'+ex[0].key).value.trim():'';const isDup=await isDuplicateProduct(cat,manufacturer,lineup,extraValue,pid);if(isDup){await showAlert('Такой товар уже существует','error');return;}const p={id:pid,category:cat,manufacturer,lineup,quantity,purchase,selling};ex.forEach(e=>p[e.key]=document.getElementById('edit_prod_'+e.key).value.trim());await db.pu('products',p);closeModal();await renderWarehouseTable(cat,document.querySelector('.search-input')?.value||'');}
-        async function deleteProduct(pid){const confirmed=await showConfirm('Удалить товар?');if(!confirmed)return;await db.del('products',pid);closeModal();await renderWarehouseTable(cwc,document.querySelector('.search-input')?.value||'');}
+        // ============ ДЕЛЕГИРОВАНИЕ СОБЫТИЙ НА СКЛАДЕ ============
+        function setupWarehouseDelegation(container) {
+            if (container._whDelegationSet) return;
+            container._whDelegationSet = true;
+
+            container.addEventListener('click', function(e) {
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+                const action = target.dataset.action;
+                if (action === 'toggle-acc') {
+                    const gid = target.dataset.gid;
+                    if (gid) toggleAcc(gid);
+                } else if (action === 'toggle-select-wh') {
+                    const pid = parseInt(target.dataset.pid);
+                    if (pid) whToggleSelect(pid);
+                } else if (action === 'qty-change') {
+                    e.stopPropagation();
+                    const pid = parseInt(target.dataset.pid);
+                    const delta = parseInt(target.dataset.delta);
+                    if (pid && delta) changeQuantity(pid, delta);
+                } else if (action === 'copy-product') {
+                    e.stopPropagation();
+                    const pid = parseInt(target.dataset.pid);
+                    if (pid) copyProduct(pid);
+                }
+            });
+
+            container.addEventListener('dblclick', function(e) {
+                const row = e.target.closest('.product-row');
+                if (row && !whIsSelectMode()) {
+                    const pid = parseInt(row.dataset.pid);
+                    if (pid) editProduct(pid);
+                }
+            });
+
+            container.addEventListener('click', function(e) {
+                const addBtn = e.target.closest('.group-add-btn');
+                if (addBtn) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const gid = addBtn.dataset.gid;
+                    if (gid && GROUP_DATA[gid]) { showAddToGroupModal(gid); }
+                }
+            });
+        }
+
+        function setupWarehouseSwipe() {
+            document.querySelectorAll('.product-row').forEach(row => {
+                setupLongPress(row, 'warehouse', (r) => parseInt(r.dataset.pid));
+                setupSwipe(row, 'warehouse', (r) => parseInt(r.dataset.pid), async (pid) => {
+                    const p = await db.g('products', pid);
+                    if (p) { deletedProducts = [p]; await db.del('products', pid); }
+                    await renderWarehouseTable(AppState.get('currentWarehouseCategory'), document.querySelector('.search-input')?.value || '');
+                    showSnackbar('Товар удалён', async () => {
+                        for (const pp of deletedProducts) { const cp = { ...pp }; delete cp.id; await db.add('products', cp); }
+                        await renderWarehouseTable(AppState.get('currentWarehouseCategory'), document.querySelector('.search-input')?.value || '');
+                        deletedProducts = [];
+                    });
+                });
+            });
+            document.querySelectorAll('.accordion-header').forEach(hdr => {
+                const gid = hdr.dataset.gid;
+                if (gid && GROUP_DATA[gid]) { setupGroupLongPress(hdr, gid); }
+            });
+        }
+
+        async function renderWarehouseTable(cat, sq = '') {
+            AppState.set('currentWarehouseCategory', cat);
+            const ap = await db.all('products');
+            let pr = ap.filter(p => p.category === cat);
+            if (sq) { const q = sq.toLowerCase(); pr = pr.filter(p => CATEGORY_TABLE_COLS[cat].some(c => (p[c] || '').toString().toLowerCase().includes(q)) || (p.manufacturer || '').toLowerCase().includes(q) || (p.lineup || '').toLowerCase().includes(q)); AppState.set('openGroups', new Set()); }
+            const gb = CATEGORY_GROUPS[cat];
+            const g = groupProductsNested(pr, gb);
+            document.getElementById('contentBody').innerHTML = `<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showMassAddProductModal()">+</button></div></div><input type="text" class="search-input" placeholder="Поиск..." value="${sq}" oninput="onWarehouseSearch(this.value)">${pr.length===0?'<p class="text-center text-muted py-4">Нет товаров</p>':buildAccordionHTML(g,gb,0,cat,[])}</div>`;
+            const section = document.querySelector('.warehouse-table-section');
+            if (section) setupWarehouseDelegation(section);
+            setTimeout(() => {
+                if (AppState.get('openGroups').size > 0) restoreOpenGroups();
+                else { const bodies = document.querySelectorAll('.accordion-body'); if (bodies.length === 1) { const gid = bodies[0].id; bodies[0].classList.add('open'); const hdr = document.getElementById('hdr_' + gid); if (hdr) hdr.classList.add('open'); AppState.get('openGroups').add(gid); } }
+                if (whIsSelectMode()) whUpdateSelectUI();
+                setupWarehouseSwipe();
+            }, 50);
+        }
+        function onWarehouseSearch(v) { renderWarehouseTable(AppState.get('currentWarehouseCategory'), v); }
+        async function copyProduct(pid) { const p = await db.g('products', pid); if (!p) return; const cp = { ...p }; delete cp.id; const nid = await db.add('products', cp); await renderWarehouseTable(AppState.get('currentWarehouseCategory'), document.querySelector('.search-input')?.value || ''); setTimeout(() => { const r = document.querySelector(`.product-row[data-pid="${nid}"]`); if (r) r.classList.add('pop-anim'); }, 100); }
+        function showMassAddProductModal() { const cat = AppState.get('currentWarehouseCategory'); const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[cat]).trim() || 'var(--accent)'; const ex = CATEGORY_EXTRA_FIELDS[cat]; const extraField = ex[0] || { key: 'lineup', label: 'Линейка' }; showModal('Добавить товары', 'bi bi-stack', color, `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="mass_manufacturer"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="mass_lineup"></div><div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="mass_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p><div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="mass_quantity" value="0" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="mass_purchase" value="" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="mass_selling" value="" step="0.01"></div>`, `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveMassProduct()">Добавить</button>`); setTimeout(() => { const flavorsEl = document.getElementById('mass_flavors'); const previewEl = document.getElementById('mass_preview'); if (flavorsEl && previewEl) { const updatePreview = () => { const lines = flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0); previewEl.textContent = `Будет создано: ${lines.length} товаров`; }; flavorsEl.addEventListener('input', updatePreview); updatePreview(); } }, 50); }
+        async function saveMassProduct() { const cat = AppState.get('currentWarehouseCategory'); const ex = CATEGORY_EXTRA_FIELDS[cat]; const manufacturer = document.getElementById('mass_manufacturer').value.trim(); const lineup = document.getElementById('mass_lineup').value.trim(); const flavorsEl = document.getElementById('mass_flavors'); const flavors = flavorsEl ? flavorsEl.value.split('\n').map(s => s.trim()).filter(s => s.length > 0) : []; const quantity = parseInt(document.getElementById('mass_quantity').value) || 0; const purchase = parseFloat(document.getElementById('mass_purchase').value) || 0; const selling = parseFloat(document.getElementById('mass_selling').value) || 0; if (!manufacturer) { await showAlert('Введите производителя', 'error'); return; } if (flavors.length === 0) { await showAlert('Введите хотя бы один вкус', 'error'); return; } const extraKey = ex[0]?.key || 'lineup'; let created = 0, skipped = 0; for (const flavor of flavors) { const isDup = await isDuplicateProduct(cat, manufacturer, lineup, flavor); if (isDup) { skipped++; continue; } const p = { category: cat, manufacturer, lineup, quantity, purchase, selling }; ex.forEach(e => p[e.key] = (e.key === extraKey) ? flavor : ''); await db.add('products', p); created++; } closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || ''); let msg = `Создано ${created} товаров`; if (skipped > 0) msg += `, пропущено ${skipped} (дубликаты)`; showSnackbar(msg); }
+        async function editProduct(pid) { const p = await db.g('products', pid); if (!p) return; AppState.set('currentWarehouseCategory', p.category); const ex = CATEGORY_EXTRA_FIELDS[p.category]; const color = getComputedStyle(document.documentElement).getPropertyValue('--cat-' + CATEGORY_CLASS[p.category]).trim() || 'var(--accent)'; showModal('Редактировать товар', 'bi ' + CATEGORY_ICONS[p.category], color, `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="edit_prod_manufacturer" value="${(p.manufacturer||'').replace(/"/g,'&quot;')}"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="edit_prod_lineup" value="${(p.lineup||'').replace(/"/g,'&quot;')}"></div>${ex.map(e => `<div class="form-group"><label class="form-label">${e.label}</label><input type="text" class="form-input" id="edit_prod_${e.key}" value="${(p[e.key]||'').replace(/"/g,'&quot;')}"></div>`).join('')}<div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="edit_prod_quantity" value="${p.quantity||0}" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="edit_prod_purchase" value="${p.purchase||''}" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="edit_prod_selling" value="${p.selling||''}" step="0.01"></div>`, `<button class="btn btn-delete" onclick="deleteProduct(${p.id})">Удалить</button><button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveEditProduct(${p.id})">Сохранить</button>`); }
+        async function saveEditProduct(pid) { const cat = AppState.get('currentWarehouseCategory'); const ex = CATEGORY_EXTRA_FIELDS[cat]; const manufacturer = document.getElementById('edit_prod_manufacturer').value.trim(); const lineup = document.getElementById('edit_prod_lineup').value.trim(); const quantity = parseInt(document.getElementById('edit_prod_quantity').value) || 0; const purchase = parseFloat(document.getElementById('edit_prod_purchase').value) || 0; const selling = parseFloat(document.getElementById('edit_prod_selling').value) || 0; if (!manufacturer) { await showAlert('Введите производителя', 'error'); return; } const extraKey = ex[0]?.key || 'lineup'; const extraValue = ex[0] ? document.getElementById('edit_prod_' + ex[0].key).value.trim() : ''; const isDup = await isDuplicateProduct(cat, manufacturer, lineup, extraValue, pid); if (isDup) { await showAlert('Такой товар уже существует', 'error'); return; } const p = { id: pid, category: cat, manufacturer, lineup, quantity, purchase, selling }; ex.forEach(e => p[e.key] = document.getElementById('edit_prod_' + e.key).value.trim()); await db.pu('products', p); closeModal(); await renderWarehouseTable(cat, document.querySelector('.search-input')?.value || ''); }
+        async function deleteProduct(pid) { const confirmed = await showConfirm('Удалить товар?'); if (!confirmed) return; await db.del('products', pid); closeModal(); await renderWarehouseTable(AppState.get('currentWarehouseCategory'), document.querySelector('.search-input')?.value || ''); }
 
         // ============ ПРОДАЖИ ============
-        let salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''},deletedSales=[],salesPage=1;const PAGE_SIZE=10;
-        function salesEnterSelectMode(){enterSelectMode('sales');}function salesExitSelectMode(){exitSelectMode('sales');}function salesToggleSelect(id){toggleSelectItem('sales',id);}function salesUpdateSelectUI(){updateSelectUI('sales');}function salesIsSelectMode(){return SELECT_MODE_CONFIG.sales.selectMode;}function salesGetSelectedIds(){return SELECT_MODE_CONFIG.sales.selectedIds;}
-        async function deleteSelectedSales(){const selectedIds=salesGetSelectedIds();if(selectedIds.size===0)return;const confirmed=await showConfirm(`Удалить ${selectedIds.size} продаж?`);if(!confirmed)return;vibrate([20,50,20]);deletedSales=[];const wrappers=[];for(const id of selectedIds){const s=await db.g('sales',id);if(s){deletedSales.push(s);}const row=document.querySelector(`.sale-row[data-sid="${id}"]`);if(row&&row.parentElement)wrappers.push(row.parentElement);}wrappers.forEach(w=>w.classList.add('removing'));setTimeout(async()=>{for(const s of deletedSales){await db.del('sales',s.id);}salesExitSelectMode();await renderSalesTable();showSnackbar(`Удалено ${deletedSales.length} продаж`,async()=>{for(const s of deletedSales){const cp={...s};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});},450);}
-        async function getFilteredSales(){let sales=await db.all('sales');if(salesFilter.client){const q=salesFilter.client.toLowerCase();sales=sales.filter(s=>(s.client||'').toLowerCase().includes(q));}if(salesFilter.product){const q=salesFilter.product.toLowerCase();sales=sales.filter(s=>(s.product||'').toLowerCase().includes(q));}if(salesFilter.dateFrom){sales=sales.filter(s=>s.date>=salesFilter.dateFrom);}if(salesFilter.dateTo){sales=sales.filter(s=>s.date<=salesFilter.dateTo);}if(salesFilter.note){sales=sales.filter(s=>(s.note||'')===salesFilter.note);}sales.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);return sales;}
-        function hasActiveFilters(){return!!(salesFilter.client||salesFilter.product||salesFilter.dateFrom||salesFilter.dateTo||salesFilter.note);}
-        function setupSalesSwipe(){document.querySelectorAll('.sale-row').forEach(row=>{setupLongPress(row,'sales',(r)=>parseInt(r.dataset.sid));setupSwipe(row,'sales',(r)=>parseInt(r.dataset.sid),async(sid)=>{const s=await db.g('sales',sid);if(s){deletedSales=[s];await db.del('sales',sid);}await renderSalesTable();showSnackbar('Продажа удалена',async()=>{for(const ds of deletedSales){const cp={...ds};delete cp.id;await db.add('sales',cp);}await renderSalesTable();deletedSales=[];});});});}
-        async function renderSalesTable(){const allSales=await getFilteredSales();const totalPages=Math.ceil(allSales.length/PAGE_SIZE)||1;if(salesPage>totalPages)salesPage=totalPages;const start=(salesPage-1)*PAGE_SIZE;const pageSales=allSales.slice(start,start+PAGE_SIZE);const filterActive=hasActiveFilters();const filterBtnClass=filterActive?'active':'filter';let paginationHTML='';if(totalPages>1){paginationHTML=`<div class="pagination"><button onclick="goToSalesPage(${salesPage-1})" ${salesPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;for(let i=1;i<=totalPages;i++){if(i===1||i===totalPages||(i>=salesPage-1&&i<=salesPage+1)){paginationHTML+=`<button class="${i===salesPage?'active':''}" onclick="goToSalesPage(${i})">${i}</button>`;}else if(i===salesPage-2||i===salesPage+2){paginationHTML+=`<span class="page-info">...</span>`;}}paginationHTML+=`<button onclick="goToSalesPage(${salesPage+1})" ${salesPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;}document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Продажи</h2><div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterBtnClass}" onclick="showFilterModal()"><i class="bi bi-funnel"></i> Фильтры</button>${filterActive?`<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i> Сбросить</button>`:''}</div><button class="round-add-btn" onclick="showAddSaleModal()">+</button></div><div class="sales-table-section"><div class="wh-header"><span style="font-weight:600;">${allSales.length} продаж</span><div class="wh-header-actions"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="salesExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash"></i> Удалить</button></div></div><div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p class="text-center text-muted py-4">Нет продаж</p>':pageSales.map(s=>{let noteClass='';if(s.note==='бронь')noteClass='booking';else if(s.note==='долг')noteClass='debt';else if(s.note==='приз')noteClass='prize';return`<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesIsSelectMode())editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="salesToggleSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${s.product||'-'}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note||'-'}</div></div></div>`;}).join('')}${paginationHTML}</div>`;setTimeout(()=>{if(salesIsSelectMode())salesUpdateSelectUI();setupSalesSwipe();},50);}
-        function goToSalesPage(p){salesPage=p;renderSalesTable();}
-        function showFilterModal(){showModal('Фильтры','bi bi-funnel','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="flt_client" value="${salesFilter.client}" placeholder="Любое"></div><div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="flt_product" value="${salesFilter.product}" placeholder="Любой"></div><div class="form-group"><label class="form-label">Дата с</label><input type="date" class="form-input" id="flt_dateFrom" value="${salesFilter.dateFrom}"></div><div class="form-group"><label class="form-label">Дата по</label><input type="date" class="form-input" id="flt_dateTo" value="${salesFilter.dateTo}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="flt_note"><option value="">Все</option><option value="бронь" ${salesFilter.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${salesFilter.note==='долг'?'selected':''}>Долг</option><option value="приз" ${salesFilter.note==='приз'?'selected':''}>Приз</option><option value="без заметки" ${salesFilter.note==='без заметки'?'selected':''}>Без заметки</option></select></div>`,`<button class="btn btn-reset" onclick="resetFilters()">Сброс</button><button class="btn btn-save" onclick="applyFilters()">Применить</button>`);}
-        function resetFilters(){salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''};salesPage=1;closeModal();renderSalesTable();}
-        function applyFilters(){salesFilter.client=document.getElementById('flt_client').value.trim();salesFilter.product=document.getElementById('flt_product').value.trim();salesFilter.dateFrom=document.getElementById('flt_dateFrom').value;salesFilter.dateTo=document.getElementById('flt_dateTo').value;salesFilter.note=document.getElementById('flt_note').value;salesPage=1;closeModal();renderSalesTable();}
-        async function getProductListForSelect(){const products=await db.all('products');const names=new Set();products.forEach(p=>{if(p.manufacturer&&p.lineup){let name=p.manufacturer+' '+p.lineup;if(p.flavor)name+=' '+p.flavor;if(p.color)name+=' '+p.color;names.add(name);}});return[...names].sort();}
-        function setupComboBox(inputId,dropdownId,options){const input=document.getElementById(inputId);const dropdown=document.getElementById(dropdownId);if(!input||!dropdown)return;input.addEventListener('input',()=>{const val=input.value.toLowerCase();let visible=0;dropdown.querySelectorAll('.combo-option').forEach(opt=>{if(val===''||opt.textContent.toLowerCase().includes(val)){opt.style.display='block';visible++;}else{opt.style.display='none';}});dropdown.classList.toggle('open',visible>0&&document.activeElement===input);});input.addEventListener('focus',()=>{const val=input.value.toLowerCase();let visible=0;dropdown.querySelectorAll('.combo-option').forEach(opt=>{if(val===''||opt.textContent.toLowerCase().includes(val)){opt.style.display='block';visible++;}else{opt.style.display='none';}});dropdown.classList.toggle('open',visible>0);});input.addEventListener('blur',()=>{setTimeout(()=>dropdown.classList.remove('open'),200);});dropdown.querySelectorAll('.combo-option').forEach(opt=>{opt.addEventListener('click',()=>{input.value=opt.textContent;dropdown.classList.remove('open');onProductChange(input.value);});});}
-        let saleAutoCalc=true;let saleUnitPrice=0;let saleUnitCost=0;
-        function recalcTotal(){if(!saleAutoCalc)return;const qty=parseInt(document.getElementById('sale_quantity').value)||1;const totalInput=document.getElementById('sale_total');const note=document.getElementById('sale_note').value;if(note==='приз'){totalInput.value='0';return;}totalInput.value=(saleUnitPrice*qty).toFixed(2);}
-        async function onProductChange(val){if(val){const found=await findProductByName(val);if(!found){return;}if(found.quantity<=0){await showAlert('Товара нет на складе','error');document.getElementById('sale_product').value='';return;}if(found.selling){saleUnitPrice=found.selling;saleUnitCost=found.purchase||0;saleAutoCalc=true;recalcTotal();}}}
-        function onSaleNoteChange(){const note=document.getElementById('sale_note').value;const totalInput=document.getElementById('sale_total');if(note==='приз'){totalInput.value='0';totalInput.disabled=true;saleAutoCalc=false;}else{totalInput.disabled=false;saleAutoCalc=true;recalcTotal();}}
-        async function showAddSaleModal(sale=null){const isEdit=!!sale;saleAutoCalc=!isEdit;if(isEdit){const found=await findProductByName(sale.product);saleUnitPrice=found?found.selling:(sale.quantity>0?Math.round(sale.total/sale.quantity):0);saleUnitCost=found?found.purchase||0:0;}else{saleUnitPrice=0;saleUnitCost=0;}const productList=await getProductListForSelect();const productOptions=productList.map(p=>`<div class="combo-option">${p}</div>`).join('');const saveBtnText=isEdit?'Сохранить':'Добавить';showModal(isEdit?'Редактировать продажу':'Добавить продажу','bi bi-cart3','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="sale_client" value="${sale?.client||''}"></div><div class="form-group"><label class="form-label">Товар</label><div class="combo-box"><input type="text" class="form-input" id="sale_product" value="${sale?.product||''}" placeholder="Начните вводить..." autocomplete="off"><i class="bi bi-chevron-down combo-arrow"></i><div class="combo-dropdown" id="combo_dropdown">${productOptions}</div></div></div><div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="sale_quantity" value="${sale?.quantity||1}" min="1" onchange="recalcTotal()" oninput="saleAutoCalc=true;recalcTotal()"></div><div class="form-group"><label class="form-label">Сумма (₽)</label><input type="number" class="form-input" id="sale_total" value="${sale?.total||''}" ${sale?.note==='приз'?'disabled':''} step="0.01" oninput="saleAutoCalc=false"></div><div class="form-group"><label class="form-label">Дата</label><input type="date" class="form-input" id="sale_date" value="${sale?.date||new Date().toISOString().split('T')[0]}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="sale_note" onchange="onSaleNoteChange()"><option value="без заметки" ${(sale?.note||'без заметки')==='без заметки'?'selected':''}>Без заметки</option><option value="бронь" ${sale?.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${sale?.note==='долг'?'selected':''}>Долг</option><option value="приз" ${sale?.note==='приз'?'selected':''}>Приз</option></select></div><input type="hidden" id="sale_id" value="${sale?.id||''}">`,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>${isEdit?`<button class="btn btn-delete" onclick="deleteSaleFromModal()">Удалить</button>`:''}<button class="btn btn-save" onclick="saveSale()">${saveBtnText}</button>`);setTimeout(()=>{setupComboBox('sale_product','combo_dropdown',productList);},50);if(sale?.note==='приз'){setTimeout(()=>{const ti=document.getElementById('sale_total');if(ti){ti.value='0';ti.disabled=true;}},50);}}
-        async function saveSale(){const id=document.getElementById('sale_id').value;const note=document.getElementById('sale_note').value;const product=document.getElementById('sale_product').value.trim();const total=note==='приз'?0:(parseFloat(document.getElementById('sale_total').value)||0);const quantity=parseInt(document.getElementById('sale_quantity').value)||1;const client=document.getElementById('sale_client').value.trim();if(!client||!product){await showAlert('Заполните имя и товар','error');return;}const foundProduct=await findProductByName(product);if(!foundProduct){await showAlert('Товар не найден в складе','error');return;}if(!id&&foundProduct.quantity<=0){await showAlert('Товара нет на складе','error');return;}if(!id&&quantity>foundProduct.quantity){await showAlert('Недостаточно товара на складе','error');return;}const cost=(foundProduct.purchase||0)*quantity;const profit=total-cost;const category=foundProduct.category||'liquid';const sale={client:client,product:product,quantity:quantity,total:total,date:document.getElementById('sale_date').value,note:note==='без заметки'?'':note,cost:cost,profit:profit,category:category,items:[]};if(!id&&quantity>0){foundProduct.quantity=Math.max(0,(foundProduct.quantity||0)-quantity);await db.pu('products',foundProduct);}if(id){sale.id=parseInt(id);await db.pu('sales',sale);}else{await db.add('sales',sale);}await autoAddClient(client);closeModal();salesPage=1;await renderSalesTable();}
-        async function editSale(sid){const s=await db.g('sales',sid);if(!s)return;showAddSaleModal(s);}
-        async function deleteSaleFromModal(){const confirmed=await showConfirm('Удалить продажу?');if(!confirmed)return;const id=document.getElementById('sale_id').value;await db.del('sales',parseInt(id));closeModal();salesPage=1;await renderSalesTable();}
+        function salesEnterSelectMode() { enterSelectMode('sales'); }
+        function salesExitSelectMode() { exitSelectMode('sales'); }
+        function salesToggleSelect(id) { toggleSelectItem('sales', id); }
+        function salesUpdateSelectUI() { updateSelectUI('sales'); }
+        function salesIsSelectMode() { return AppState.get('selectModes').sales.selectMode; }
+        function salesGetSelectedIds() { return AppState.get('selectModes').sales.selectedIds; }
+        async function deleteSelectedSales() { const selectedIds = salesGetSelectedIds(); if (selectedIds.size === 0) return; const confirmed = await showConfirm(`Удалить ${selectedIds.size} продаж?`); if (!confirmed) return; vibrate([20, 50, 20]); deletedSales = []; const wrappers = []; for (const id of selectedIds) { const s = await db.g('sales', id); if (s) { deletedSales.push(s); } const row = document.querySelector(`.sale-row[data-sid="${id}"]`); if (row && row.parentElement) wrappers.push(row.parentElement); } wrappers.forEach(w => w.classList.add('removing')); setTimeout(async () => { for (const s of deletedSales) { await db.del('sales', s.id); } salesExitSelectMode(); await renderSalesTable(); showSnackbar(`Удалено ${deletedSales.length} продаж`, async () => { for (const s of deletedSales) { const cp = { ...s }; delete cp.id; await db.add('sales', cp); } await renderSalesTable(); deletedSales = []; }); }, 450); }
+        async function getFilteredSales() { let sales = await db.all('sales'); const sf = AppState.get('salesFilter'); if (sf.client) { const q = sf.client.toLowerCase(); sales = sales.filter(s => (s.client || '').toLowerCase().includes(q)); } if (sf.product) { const q = sf.product.toLowerCase(); sales = sales.filter(s => (s.product || '').toLowerCase().includes(q)); } if (sf.dateFrom) { sales = sales.filter(s => s.date >= sf.dateFrom); } if (sf.dateTo) { sales = sales.filter(s => s.date <= sf.dateTo); } if (sf.note) { sales = sales.filter(s => (s.note || '') === sf.note); } sales.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id); return sales; }
+        function hasActiveFilters() { const sf = AppState.get('salesFilter'); return !!(sf.client || sf.product || sf.dateFrom || sf.dateTo || sf.note); }
+        function setupSalesSwipe() { document.querySelectorAll('.sale-row').forEach(row => { setupLongPress(row, 'sales', (r) => parseInt(r.dataset.sid)); setupSwipe(row, 'sales', (r) => parseInt(r.dataset.sid), async (sid) => { const s = await db.g('sales', sid); if (s) { deletedSales = [s]; await db.del('sales', sid); } await renderSalesTable(); showSnackbar('Продажа удалена', async () => { for (const ds of deletedSales) { const cp = { ...ds }; delete cp.id; await db.add('sales', cp); } await renderSalesTable(); deletedSales = []; }); }); }); }
+        async function renderSalesTable() { const allSales = await getFilteredSales(); const sp = AppState.get('salesPage'); const totalPages = Math.ceil(allSales.length / PAGE_SIZE) || 1; let currentPage = sp; if (currentPage > totalPages) { currentPage = totalPages; AppState.set('salesPage', currentPage); } const start = (currentPage - 1) * PAGE_SIZE; const pageSales = allSales.slice(start, start + PAGE_SIZE); const filterActive = hasActiveFilters(); const filterBtnClass = filterActive ? 'active' : 'filter'; let paginationHTML = ''; if (totalPages > 1) { paginationHTML = `<div class="pagination"><button onclick="goToSalesPage(${currentPage-1})" ${currentPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`; for (let i = 1; i <= totalPages; i++) { if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) { paginationHTML += `<button class="${i===currentPage?'active':''}" onclick="goToSalesPage(${i})">${i}</button>`; } else if (i === currentPage - 2 || i === currentPage + 2) { paginationHTML += `<span class="page-info">...</span>`; } } paginationHTML += `<button onclick="goToSalesPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${currentPage}/${totalPages}</span></div>`; } document.getElementById('contentBody').innerHTML = `<h2 class="tab-title" onclick="openSidebar()">Продажи</h2><div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterBtnClass}" onclick="showFilterModal()"><i class="bi bi-funnel"></i> Фильтры</button>${filterActive?`<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i> Сбросить</button>`:''}</div><button class="round-add-btn" onclick="showAddSaleModal()">+</button></div><div class="sales-table-section"><div class="wh-header"><span style="font-weight:600;">${allSales.length} продаж</span><div class="wh-header-actions"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="salesExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash"></i> Удалить</button></div></div><div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p class="text-center text-muted py-4">Нет продаж</p>':pageSales.map(s => { let noteClass = ''; if (s.note === 'бронь') noteClass = 'booking'; else if (s.note === 'долг') noteClass = 'debt'; else if (s.note === 'приз') noteClass = 'prize'; return `<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="sale-row ${noteClass}" data-sid="${s.id}"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" data-action="toggle-select-sales" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${s.product||'-'}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note||'-'}</div></div></div>`; }).join('')}${paginationHTML}</div>`;
+            const section = document.querySelector('.sales-table-section');
+            if (section) {
+                section.addEventListener('click', function(e) {
+                    const target = e.target.closest('[data-action="toggle-select-sales"]');
+                    if (target) { const sid = parseInt(target.dataset.sid); if (sid) salesToggleSelect(sid); }
+                });
+                section.addEventListener('dblclick', function(e) {
+                    const row = e.target.closest('.sale-row');
+                    if (row && !salesIsSelectMode()) { const sid = parseInt(row.dataset.sid); if (sid) editSale(sid); }
+                });
+            }
+            setTimeout(() => { if (salesIsSelectMode()) salesUpdateSelectUI(); setupSalesSwipe(); }, 50);
+        }
+        function goToSalesPage(p) { AppState.set('salesPage', p); renderSalesTable(); }
+        function showFilterModal() { const sf = AppState.get('salesFilter'); showModal('Фильтры', 'bi bi-funnel', 'var(--accent)', `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="flt_client" value="${sf.client}" placeholder="Любое"></div><div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="flt_product" value="${sf.product}" placeholder="Любой"></div><div class="form-group"><label class="form-label">Дата с</label><input type="date" class="form-input" id="flt_dateFrom" value="${sf.dateFrom}"></div><div class="form-group"><label class="form-label">Дата по</label><input type="date" class="form-input" id="flt_dateTo" value="${sf.dateTo}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="flt_note"><option value="">Все</option><option value="бронь" ${sf.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${sf.note==='долг'?'selected':''}>Долг</option><option value="приз" ${sf.note==='приз'?'selected':''}>Приз</option><option value="без заметки" ${sf.note==='без заметки'?'selected':''}>Без заметки</option></select></div>`, `<button class="btn btn-reset" onclick="resetFilters()">Сброс</button><button class="btn btn-save" onclick="applyFilters()">Применить</button>`); }
+        function resetFilters() { AppState.set('salesFilter', { client: '', product: '', dateFrom: '', dateTo: '', note: '' }); AppState.set('salesPage', 1); closeModal(); renderSalesTable(); }
+        function applyFilters() { AppState.set('salesFilter', { client: document.getElementById('flt_client').value.trim(), product: document.getElementById('flt_product').value.trim(), dateFrom: document.getElementById('flt_dateFrom').value, dateTo: document.getElementById('flt_dateTo').value, note: document.getElementById('flt_note').value }); AppState.set('salesPage', 1); closeModal(); renderSalesTable(); }
+        async function getProductListForSelect() { const products = await db.all('products'); const names = new Set(); products.forEach(p => { if (p.manufacturer && p.lineup) { let name = p.manufacturer + ' ' + p.lineup; if (p.flavor) name += ' ' + p.flavor; if (p.color) name += ' ' + p.color; names.add(name); } }); return [...names].sort(); }
+
+        // ============ ИСПРАВЛЕННЫЙ COMBOBOX ============
+        function setupComboBox(inputId, dropdownId, options) {
+            const input = document.getElementById(inputId);
+            const dropdown = document.getElementById(dropdownId);
+            if (!input || !dropdown) return;
+
+            function filterOptions(val) {
+                let visible = 0;
+                dropdown.querySelectorAll('.combo-option').forEach(opt => {
+                    if (val === '' || opt.textContent.toLowerCase().includes(val.toLowerCase())) {
+                        opt.style.display = 'block'; visible++;
+                    } else { opt.style.display = 'none'; }
+                });
+                dropdown.classList.toggle('open', visible > 0);
+            }
+
+            input.addEventListener('input', () => filterOptions(input.value));
+            input.addEventListener('focus', () => filterOptions(input.value));
+
+            input.addEventListener('blur', () => {
+                setTimeout(() => {
+                    if (document.activeElement !== input && !dropdown.contains(document.activeElement)) {
+                        dropdown.classList.remove('open');
+                    }
+                }, 150);
+            });
+
+            dropdown.querySelectorAll('.combo-option').forEach(opt => {
+                opt.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    input.value = opt.textContent;
+                    dropdown.classList.remove('open');
+                    input.focus();
+                    if (typeof onProductChange === 'function') onProductChange(input.value);
+                });
+            });
+        }
+
+        let saleAutoCalc = true; let saleUnitPrice = 0; let saleUnitCost = 0;
+        function recalcTotal() { if (!saleAutoCalc) return; const qty = parseInt(document.getElementById('sale_quantity').value) || 1; const totalInput = document.getElementById('sale_total'); const note = document.getElementById('sale_note').value; if (note === 'приз') { totalInput.value = '0'; return; } totalInput.value = (saleUnitPrice * qty).toFixed(2); }
+        async function onProductChange(val) { if (val) { const found = await findProductByName(val); if (!found) { return; } if (found.quantity <= 0) { await showAlert('Товара нет на складе', 'error'); document.getElementById('sale_product').value = ''; return; } if (found.selling) { saleUnitPrice = found.selling; saleUnitCost = found.purchase || 0; saleAutoCalc = true; recalcTotal(); } } }
+        function onSaleNoteChange() { const note = document.getElementById('sale_note').value; const totalInput = document.getElementById('sale_total'); if (note === 'приз') { totalInput.value = '0'; totalInput.disabled = true; saleAutoCalc = false; } else { totalInput.disabled = false; saleAutoCalc = true; recalcTotal(); } }
+
+        async function showAddSaleModal(sale = null) {
+            const isEdit = !!sale;
+            saleAutoCalc = !isEdit;
+            if (isEdit) { const found = await findProductByName(sale.product); saleUnitPrice = found ? found.selling : (sale.quantity > 0 ? Math.round(sale.total / sale.quantity) : 0); saleUnitCost = found ? found.purchase || 0 : 0; }
+            else { saleUnitPrice = 0; saleUnitCost = 0; }
+            const productList = await getProductListForSelect();
+            const productOptions = productList.map(p => `<div class="combo-option">${p}</div>`).join('');
+            const saveBtnText = isEdit ? 'Сохранить' : 'Добавить';
+
+            // Призовая информация для нового добавления
+            let prizeInfoHTML = '';
+            if (!isEdit) {
+                prizeInfoHTML = `<div id="sale_prize_info" style="display:none;"></div>`;
+            }
+
+            showModal(isEdit ? 'Редактировать продажу' : 'Добавить продажу', 'bi bi-cart3', 'var(--accent)',
+                `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="sale_client" value="${sale?.client||''}" oninput="updateSalePrizeInfo()"></div>
+                <div class="form-group"><label class="form-label">Товар</label><div class="combo-box"><input type="text" class="form-input" id="sale_product" value="${sale?.product||''}" placeholder="Начните вводить..." autocomplete="off" oninput="updateSalePrizeInfo()"><i class="bi bi-chevron-down combo-arrow"></i><div class="combo-dropdown" id="combo_dropdown">${productOptions}</div></div></div>
+                ${prizeInfoHTML}
+                <div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="sale_quantity" value="${sale?.quantity||1}" min="1" onchange="recalcTotal()" oninput="saleAutoCalc=true;recalcTotal()"></div>
+                <div class="form-group"><label class="form-label">Сумма (₽)</label><input type="number" class="form-input" id="sale_total" value="${sale?.total||''}" ${sale?.note==='приз'?'disabled':''} step="0.01" oninput="saleAutoCalc=false"></div>
+                <div class="form-group"><label class="form-label">Дата</label><input type="date" class="form-input" id="sale_date" value="${sale?.date||new Date().toISOString().split('T')[0]}"></div>
+                <div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="sale_note" onchange="onSaleNoteChange()"><option value="без заметки" ${(sale?.note||'без заметки')==='без заметки'?'selected':''}>Без заметки</option><option value="бронь" ${sale?.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${sale?.note==='долг'?'selected':''}>Долг</option><option value="приз" ${sale?.note==='приз'?'selected':''}>Приз</option></select></div>
+                <input type="hidden" id="sale_id" value="${sale?.id||''}">`,
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>${isEdit?`<button class="btn btn-delete" onclick="deleteSaleFromModal()">Удалить</button>`:''}<button class="btn btn-save" onclick="saveSale()">${saveBtnText}</button>`
+            );
+            setTimeout(() => { setupComboBox('sale_product', 'combo_dropdown', productList); updateSalePrizeInfo(); }, 50);
+            if (sale?.note === 'приз') { setTimeout(() => { const ti = document.getElementById('sale_total'); if (ti) { ti.value = '0'; ti.disabled = true; } }, 50); }
+        }
+
+        // ============ ПРИЗОВАЯ ЛОГИКА ============
+        function getLiquidCountForClient(clientSales) {
+            let count = 0;
+            const sorted = [...clientSales].sort((a, b) => a.date.localeCompare(b.date));
+            for (const s of sorted) {
+                if (s.note === 'приз') { count = 0; continue; }
+                if (s.category === 'liquid') count += s.quantity || 0;
+                if (count >= 9) count = 9;
+            }
+            return count;
+        }
+
+        async function updateSalePrizeInfo() {
+            const prizeInfoEl = document.getElementById('sale_prize_info');
+            if (!prizeInfoEl) return;
+            const clientName = document.getElementById('sale_client')?.value?.trim();
+            const productName = document.getElementById('sale_product')?.value?.trim();
+            if (!clientName || !productName) { prizeInfoEl.style.display = 'none'; return; }
+            const found = await findProductByName(productName);
+            if (!found || found.category !== 'liquid') { prizeInfoEl.style.display = 'none'; return; }
+            const allSales = await db.all('sales');
+            const clientSales = allSales.filter(s => norm(s.client) === norm(clientName));
+            const liquidCount = getLiquidCountForClient(clientSales);
+            prizeInfoEl.style.display = 'block';
+            if (liquidCount >= 9) {
+                prizeInfoEl.innerHTML = `<div class="prize-info"><i class="bi bi-gift-fill"></i><span>Доступен приз! Текущий счёт: <strong>${liquidCount}/9</strong> 🎁</span></div>`;
+            } else {
+                prizeInfoEl.innerHTML = `<div class="prize-info"><i class="bi bi-droplet"></i><span>Жидкостей до приза: <strong>${liquidCount}/9</strong></span></div>`;
+            }
+        }
+
+        async function saveSale() {
+            const id = document.getElementById('sale_id').value;
+            const note = document.getElementById('sale_note').value;
+            const product = document.getElementById('sale_product').value.trim();
+            const total = note === 'приз' ? 0 : (parseFloat(document.getElementById('sale_total').value) || 0);
+            const quantity = parseInt(document.getElementById('sale_quantity').value) || 1;
+            const client = document.getElementById('sale_client').value.trim();
+            if (!client || !product) { await showAlert('Заполните имя и товар', 'error'); return; }
+            const foundProduct = await findProductByName(product);
+            if (!foundProduct) { await showAlert('Товар не найден в складе', 'error'); return; }
+            if (!id && foundProduct.quantity <= 0) { await showAlert('Товара нет на складе', 'error'); return; }
+            if (!id && quantity > foundProduct.quantity) { await showAlert('Недостаточно товара на складе', 'error'); return; }
+            const cost = (foundProduct.purchase || 0) * quantity;
+            const profit = total - cost;
+            const category = foundProduct.category || 'liquid';
+            const sale = { client: client, product: product, quantity: quantity, total: total, date: document.getElementById('sale_date').value, note: note === 'без заметки' ? '' : note, cost: cost, profit: profit, category: category, items: [] };
+            if (!id && quantity > 0) { foundProduct.quantity = Math.max(0, (foundProduct.quantity || 0) - quantity); await db.pu('products', foundProduct); }
+            if (id) { sale.id = parseInt(id); await db.pu('sales', sale); }
+            else { await db.add('sales', sale); }
+            await autoAddClient(client);
+            closeModal();
+            AppState.set('salesPage', 1);
+            await renderSalesTable();
+        }
+        async function editSale(sid) { const s = await db.g('sales', sid); if (!s) return; showAddSaleModal(s); }
+        async function deleteSaleFromModal() { const confirmed = await showConfirm('Удалить продажу?'); if (!confirmed) return; const id = document.getElementById('sale_id').value; await db.del('sales', parseInt(id)); closeModal(); AppState.set('salesPage', 1); await renderSalesTable(); }
 
         // ============ КЛИЕНТЫ ============
-        let clientsSearch='',clientsPage=1,clientsFilter='all';
-        function isLeaving(lastDate){if(!lastDate||lastDate==='-')return false;return(new Date()-new Date(lastDate))/86400000>30;}
-        function getLiquidCount(clientSales){let count=0;const sorted=[...clientSales].sort((a,b)=>a.date.localeCompare(b.date));for(const s of sorted){if(s.note==='приз'){count=0;continue;}if(s.category==='liquid')count+=s.quantity||0;if(count>=9)count=9;}return count;}
-        async function getClientStats(){const clients=await db.all('clients');const sales=await db.all('sales');const stats=[];for(const c of clients){const clientSales=sales.filter(s=>norm(s.client)===norm(c.name));clientSales.sort((a,b)=>b.date.localeCompare(a.date));const totalSum=clientSales.reduce((s,x)=>s+(x.total||0),0);const lastSale=clientSales[0]||null;const firstSale=clientSales[clientSales.length-1]||null;const liquidCount=getLiquidCount(clientSales);stats.push({id:c.id,name:c.name,created:c.created||(firstSale?firstSale.date:'-'),count:clientSales.length,lastDate:lastSale?lastSale.date:'-',totalSum:totalSum,liquidCount:liquidCount,leaving:isLeaving(lastSale?lastSale.date:null)});}stats.sort((a,b)=>b.lastDate.localeCompare(a.lastDate));return stats;}
-        async function renderClientsTable(){let stats=await getClientStats();if(clientsSearch){const q=clientsSearch.toLowerCase();stats=stats.filter(s=>s.name.toLowerCase().includes(q));}if(clientsFilter==='leaving'){stats=stats.filter(s=>s.leaving);}const totalPages=Math.ceil(stats.length/PAGE_SIZE)||1;if(clientsPage>totalPages)clientsPage=totalPages;const start=(clientsPage-1)*PAGE_SIZE;const pageStats=stats.slice(start,start+PAGE_SIZE);let paginationHTML='';if(totalPages>1){paginationHTML=`<div class="pagination"><button onclick="goToClientsPage(${clientsPage-1})" ${clientsPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;for(let i=1;i<=totalPages;i++){if(i===1||i===totalPages||(i>=clientsPage-1&&i<=clientsPage+1)){paginationHTML+=`<button class="${i===clientsPage?'active':''}" onclick="goToClientsPage(${i})">${i}</button>`;}else if(i===clientsPage-2||i===clientsPage+2){paginationHTML+=`<span class="page-info">...</span>`;}}paginationHTML+=`<button onclick="goToClientsPage(${clientsPage+1})" ${clientsPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${clientsPage}/${totalPages}</span></div>`;}const leavingBtnClass=clientsFilter==='leaving'?'active':'filter';document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Клиенты</h2><div class="clients-header"><div class="clients-header-left"><button class="sales-header-btn ${leavingBtnClass}" onclick="toggleClientsFilter()"><i class="bi bi-person-dash"></i> Уходящие</button></div><button class="round-add-btn" onclick="showAddClientModal()">+</button></div><input type="text" class="search-input" placeholder="Поиск по имени..." value="${clientsSearch}" oninput="onClientsSearch(this.value)"><div class="clients-table-section"><div class="client-table-header"><div class="client-col">Имя</div><div class="client-col">Дата</div><div class="client-col prize-progress">До приза</div><div class="client-col">Последняя покупка</div><div class="client-col price">Общая сумма</div></div>${pageStats.length===0?'<p class="text-center text-muted py-4">Нет клиентов</p>':pageStats.map(s=>{const prizeText=s.liquidCount>=9?'<span class="prize-complete">🎁</span>':`<span class="prize-text">${s.liquidCount}/9</span>`;return`<div class="client-row ${s.leaving?'leaving':''}" onclick="showClientModal(${s.id},'${s.name.replace(/'/g,"\\'")}')"><div class="client-col">${s.name}</div><div class="client-col">${fmtDate(s.created)}</div><div class="client-col prize-progress">${prizeText}</div><div class="client-col">${fmtDate(s.lastDate)}</div><div class="client-col price">${fn(s.totalSum)}₽</div></div>`;}).join('')}${paginationHTML}</div>`;}
-        function toggleClientsFilter(){clientsFilter=clientsFilter==='leaving'?'all':'leaving';clientsPage=1;renderClientsTable();}
-        function onClientsSearch(v){clientsSearch=v;clientsPage=1;renderClientsTable();}
-        function goToClientsPage(p){clientsPage=p;renderClientsTable();}
-        function showAddClientModal(){showModal('Добавить клиента','bi bi-person-plus','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="new_client_name" placeholder="Имя"></div>`,`<button class="btn btn-cancel" onclick="closeModal()">Отменить</button><button class="btn btn-save" onclick="addClient()">Добавить</button>`);}
-        async function addClient(){const name=document.getElementById('new_client_name').value.trim();if(!name){await showAlert('Введите имя','error');return;}await db.add('clients',{name:name,created:new Date().toISOString().split('T')[0]});closeModal();clientsPage=1;await renderClientsTable();}
-        let clientModalPage=1;
-        async function showClientModal(clientId,clientName){clientModalPage=1;const sales=await db.all('sales');const clientSales=sales.filter(s=>norm(s.client)===norm(clientName));clientSales.sort((a,b)=>b.date.localeCompare(a.date));renderClientModal(clientId,clientName,clientSales);}
-        function renderClientModal(clientId,clientName,clientSales){const totalPages=Math.ceil(clientSales.length/5)||1;if(clientModalPage>totalPages)clientModalPage=totalPages;const start=(clientModalPage-1)*5;const pageSales=clientSales.slice(start,start+5);let paginationHTML='';if(totalPages>1){paginationHTML=`<div class="pagination"><button onclick="clientModalGoToPage(${clientModalPage-1},${clientId},'${clientName.replace(/'/g,"\\'")}')" ${clientModalPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button><span class="page-info">${clientModalPage}/${totalPages}</span><button onclick="clientModalGoToPage(${clientModalPage+1},${clientId},'${clientName.replace(/'/g,"\\'")}')" ${clientModalPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button></div>`;}showModal(clientName,'bi bi-person','var(--accent)',`<div class="sale-table-header"><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p class="text-muted text-center py-3">Нет покупок</p>':pageSales.map(s=>`<div class="sale-row"><div class="sale-col">${s.product||'-'}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note||'-'}</div></div>`).join('')}${paginationHTML}`,`<button class="btn btn-cancel" onclick="editClientName(${clientId},'${clientName.replace(/'/g,"\\'")}')"><i class="bi bi-pencil"></i> Имя</button><button class="btn btn-delete" onclick="deleteClient(${clientId},'${clientName.replace(/'/g,"\\'")}')"><i class="bi bi-trash"></i> Удалить</button>`);}
-        function clientModalGoToPage(p,clientId,clientName){clientModalPage=p;db.all('sales').then(s=>{const cs=s.filter(x=>norm(x.client)===norm(clientName));cs.sort((a,b)=>b.date.localeCompare(a.date));renderClientModal(clientId,clientName,cs);});}
-        function editClientName(clientId,oldName){showModal('Редактировать имя','bi bi-pencil','var(--accent)',`<div class="form-group"><label class="form-label">Новое имя</label><input type="text" class="form-input" id="edit_client_name" value="${oldName}"></div>`,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveClientName(${clientId},'${oldName.replace(/'/g,"\\'")}')">Сохранить</button>`);}
-        async function saveClientName(clientId,oldName){const newName=document.getElementById('edit_client_name').value.trim();if(!newName){await showAlert('Введите имя','error');return;}const client=await db.g('clients',clientId);if(client){client.name=newName;await db.pu('clients',client);}const sales=await db.all('sales');for(const s of sales){if(norm(s.client)===norm(oldName)){s.client=newName;await db.pu('sales',s);}}closeModal();clientsPage=1;await renderClientsTable();}
-        async function deleteClient(clientId,clientName){const confirmed=await showConfirm(`Удалить клиента "${clientName}"? Продажи останутся.`);if(!confirmed)return;await db.del('clients',clientId);closeModal();clientsPage=1;await renderClientsTable();}
+        function isLeaving(lastDate) { if (!lastDate || lastDate === '-') return false; return (new Date() - new Date(lastDate)) / 86400000 > 30; }
+        function getLiquidCount(clientSales) { return getLiquidCountForClient(clientSales); }
 
-        async function switchTab(tab){document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));const body=document.getElementById('contentBody');const tabNames={'statistics':'statistics','warehouse':'warehouse','sales':'sales','clients':'clients'};const skeletonType=tabNames[tab]||'sales';body.innerHTML=showSkeleton(skeletonType);body.classList.remove('fade-in');setTimeout(async()=>{if(tab==='statistics')await renderStatistics(cp);else if(tab==='warehouse')await renderWarehouseCards();else if(tab==='sales')await renderSalesTable();else if(tab==='clients')await renderClientsTable();else body.innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Вкладка</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;body.classList.add('fade-in');},250);closeSidebar();}
-        async function init(){try{await db.init();await renderStatistics('today');if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');}catch(e){console.error(e);}}
-        document.addEventListener('DOMContentLoaded',init);
+        async function getClientStats() {
+            const clients = await db.all('clients');
+            const sales = await db.all('sales');
+            const stats = [];
+            for (const c of clients) {
+                const clientSales = sales.filter(s => norm(s.client) === norm(c.name));
+                clientSales.sort((a, b) => b.date.localeCompare(a.date));
+                const totalSum = clientSales.reduce((s, x) => s + (x.total || 0), 0);
+                const lastSale = clientSales[0] || null;
+                const firstSale = clientSales[clientSales.length - 1] || null;
+                const liquidCount = getLiquidCount(clientSales);
+                stats.push({ id: c.id, name: c.name, created: c.created || (firstSale ? firstSale.date : '-'), count: clientSales.length, lastDate: lastSale ? lastSale.date : '-', totalSum: totalSum, liquidCount: liquidCount, leaving: isLeaving(lastSale ? lastSale.date : null) });
+            }
+            stats.sort((a, b) => b.lastDate.localeCompare(a.lastDate));
+            return stats;
+        }
+
+        async function renderClientsTable() {
+            let stats = await getClientStats();
+            const cs = AppState.get('clientsSearch');
+            const cf = AppState.get('clientsFilter');
+            const cp = AppState.get('clientsPage');
+            if (cs) { const q = cs.toLowerCase(); stats = stats.filter(s => s.name.toLowerCase().includes(q)); }
+            if (cf === 'leaving') { stats = stats.filter(s => s.leaving); }
+            const totalPages = Math.ceil(stats.length / PAGE_SIZE) || 1;
+            let currentPage = cp;
+            if (currentPage > totalPages) { currentPage = totalPages; AppState.set('clientsPage', currentPage); }
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const pageStats = stats.slice(start, start + PAGE_SIZE);
+            let paginationHTML = '';
+            if (totalPages > 1) {
+                paginationHTML = `<div class="pagination"><button onclick="goToClientsPage(${currentPage-1})" ${currentPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;
+                for (let i = 1; i <= totalPages; i++) { if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) { paginationHTML += `<button class="${i===currentPage?'active':''}" onclick="goToClientsPage(${i})">${i}</button>`; } else if (i === currentPage - 2 || i === currentPage + 2) { paginationHTML += `<span class="page-info">...</span>`; } }
+                paginationHTML += `<button onclick="goToClientsPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${currentPage}/${totalPages}</span></div>`;
+            }
+            const leavingBtnClass = cf === 'leaving' ? 'active' : 'filter';
+            const prizeClients = stats.filter(s => s.liquidCount >= 9);
+            document.getElementById('contentBody').innerHTML = `<h2 class="tab-title" onclick="openSidebar()">Клиенты</h2><div class="clients-header"><div class="clients-header-left"><button class="sales-header-btn ${leavingBtnClass}" onclick="toggleClientsFilter()"><i class="bi bi-person-dash"></i> Уходящие</button>${prizeClients.length > 0 ? `<button class="sales-header-btn filter" onclick="showPrizeClientsModal()"><i class="bi bi-gift-fill"></i> Призы (${prizeClients.length})</button>` : ''}</div><button class="round-add-btn" onclick="showAddClientModal()">+</button></div><input type="text" class="search-input" placeholder="Поиск по имени..." value="${cs}" oninput="onClientsSearch(this.value)"><div class="clients-table-section"><div class="client-table-header"><div class="client-col">Имя</div><div class="client-col">Дата</div><div class="client-col prize-progress">До приза</div><div class="client-col">Последняя покупка</div><div class="client-col price">Общая сумма</div></div>${pageStats.length===0?'<p class="text-center text-muted py-4">Нет клиентов</p>':pageStats.map(s => { const prizeText = s.liquidCount >= 9 ? '<span class="prize-complete">🎁</span>' : `<span class="prize-text">${s.liquidCount}/9</span>`; return `<div class="client-row ${s.leaving?'leaving':''}" onclick="showClientModal(${s.id},'${s.name.replace(/'/g,"\\'")}')"><div class="client-col">${s.name}</div><div class="client-col">${fmtDate(s.created)}</div><div class="client-col prize-progress">${prizeText}</div><div class="client-col">${fmtDate(s.lastDate)}</div><div class="client-col price">${fn(s.totalSum)}₽</div></div>`; }).join('')}${paginationHTML}</div>`;
+        }
+
+        async function showPrizeClientsModal() {
+            const stats = await getClientStats();
+            const prizeClients = stats.filter(s => s.liquidCount >= 9);
+            showModal('Клиенты с доступным призом', 'bi bi-gift-fill', 'var(--accent)',
+                prizeClients.length === 0 ? '<p class="text-muted text-center py-4">Нет клиентов с призом</p>' :
+                `<div class="client-table-header"><div class="client-col">Имя</div><div class="client-col prize-progress">Жидкостей</div><div class="client-col"></div></div>` +
+                prizeClients.map(s => `<div class="client-row" style="cursor:default;"><div class="client-col">${s.name}</div><div class="client-col prize-progress"><span class="prize-complete">${s.liquidCount}/9 🎁</span></div><div class="client-col" style="text-align:right;"><button class="prize-modal-btn" onclick="resetPrizeCounter('${s.name.replace(/'/g,"\\'")}')">Выдать приз</button></div></div>`).join(''),
+                `<button class="btn btn-cancel" onclick="closeModal()">Закрыть</button>`
+            );
+        }
+
+        async function resetPrizeCounter(clientName) {
+            const confirmed = await showConfirm(`Сбросить счётчик приза для "${clientName}"? Будет создана запись о выдаче приза.`);
+            if (!confirmed) return;
+            const sale = {
+                client: clientName,
+                product: 'Выдача приза',
+                quantity: 0,
+                total: 0,
+                date: new Date().toISOString().split('T')[0],
+                note: 'приз',
+                cost: 0,
+                profit: 0,
+                category: 'liquid',
+                items: []
+            };
+            await db.add('sales', sale);
+            closeModal();
+            await renderClientsTable();
+            showSnackbar(`Приз для "${clientName}" выдан, счётчик сброшен`);
+        }
+
+        function toggleClientsFilter() { AppState.set('clientsFilter', AppState.get('clientsFilter') === 'leaving' ? 'all' : 'leaving'); AppState.set('clientsPage', 1); renderClientsTable(); }
+        function onClientsSearch(v) { AppState.set('clientsSearch', v); AppState.set('clientsPage', 1); renderClientsTable(); }
+        function goToClientsPage(p) { AppState.set('clientsPage', p); renderClientsTable(); }
+        function showAddClientModal() { showModal('Добавить клиента', 'bi bi-person-plus', 'var(--accent)', `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="new_client_name" placeholder="Имя"></div>`, `<button class="btn btn-cancel" onclick="closeModal()">Отменить</button><button class="btn btn-save" onclick="addClient()">Добавить</button>`); }
+        async function addClient() { const name = document.getElementById('new_client_name').value.trim(); if (!name) { await showAlert('Введите имя', 'error'); return; } await db.add('clients', { name: name, created: new Date().toISOString().split('T')[0] }); closeModal(); AppState.set('clientsPage', 1); await renderClientsTable(); }
+        let clientModalPage = 1;
+        async function showClientModal(clientId, clientName) { clientModalPage = 1; const sales = await db.all('sales'); const clientSales = sales.filter(s => norm(s.client) === norm(clientName)); clientSales.sort((a, b) => b.date.localeCompare(a.date)); renderClientModal(clientId, clientName, clientSales); }
+        function renderClientModal(clientId, clientName, clientSales) { const totalPages = Math.ceil(clientSales.length / 5) || 1; if (clientModalPage > totalPages) clientModalPage = totalPages; const start = (clientModalPage - 1) * 5; const pageSales = clientSales.slice(start, start + 5); const liquidCount = getLiquidCount(clientSales); let paginationHTML = ''; if (totalPages > 1) { paginationHTML = `<div class="pagination"><button onclick="clientModalGoToPage(${clientModalPage-1},${clientId},'${clientName.replace(/'/g,"\\'")}')" ${clientModalPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button><span class="page-info">${clientModalPage}/${totalPages}</span><button onclick="clientModalGoToPage(${clientModalPage+1},${clientId},'${clientName.replace(/'/g,"\\'")}')" ${clientModalPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button></div>`; } showModal(clientName, 'bi bi-person', 'var(--accent)', `<div class="prize-info"><i class="bi bi-droplet"></i><span>Жидкостей до приза: <strong>${liquidCount}/9</strong> ${liquidCount>=9?'🎁':''}</span>${liquidCount>=9?`<button class="prize-modal-btn" style="margin-left:auto;" onclick="resetPrizeCounter('${clientName.replace(/'/g,"\\'")}');closeModal();">Выдать приз</button>`:''}</div><div class="sale-table-header"><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p class="text-muted text-center py-3">Нет покупок</p>':pageSales.map(s => `<div class="sale-row"><div class="sale-col">${s.product||'-'}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note||'-'}</div></div>`).join('')}${paginationHTML}`, `<button class="btn btn-cancel" onclick="editClientName(${clientId},'${clientName.replace(/'/g,"\\'")}')"><i class="bi bi-pencil"></i> Имя</button><button class="btn btn-delete" onclick="deleteClient(${clientId},'${clientName.replace(/'/g,"\\'")}')"><i class="bi bi-trash"></i> Удалить</button>`); }
+        function clientModalGoToPage(p, clientId, clientName) { clientModalPage = p; db.all('sales').then(s => { const cs = s.filter(x => norm(x.client) === norm(clientName)); cs.sort((a, b) => b.date.localeCompare(a.date)); renderClientModal(clientId, clientName, cs); }); }
+        function editClientName(clientId, oldName) { showModal('Редактировать имя', 'bi bi-pencil', 'var(--accent)', `<div class="form-group"><label class="form-label">Новое имя</label><input type="text" class="form-input" id="edit_client_name" value="${oldName}"></div>`, `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveClientName(${clientId},'${oldName.replace(/'/g,"\\'")}')">Сохранить</button>`); }
+        async function saveClientName(clientId, oldName) { const newName = document.getElementById('edit_client_name').value.trim(); if (!newName) { await showAlert('Введите имя', 'error'); return; } const client = await db.g('clients', clientId); if (client) { client.name = newName; await db.pu('clients', client); } const sales = await db.all('sales'); for (const s of sales) { if (norm(s.client) === norm(oldName)) { s.client = newName; await db.pu('sales', s); } } closeModal(); AppState.set('clientsPage', 1); await renderClientsTable(); }
+        async function deleteClient(clientId, clientName) { const confirmed = await showConfirm(`Удалить клиента "${clientName}"? Продажи останутся.`); if (!confirmed) return; await db.del('clients', clientId); closeModal(); AppState.set('clientsPage', 1); await renderClientsTable(); }
+
+        async function switchTab(tab) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab === tab));
+            const body = document.getElementById('contentBody');
+            const tabNames = { 'statistics': 'statistics', 'warehouse': 'warehouse', 'sales': 'sales', 'clients': 'clients' };
+            const skeletonType = tabNames[tab] || 'sales';
+            body.innerHTML = showSkeleton(skeletonType);
+            body.classList.remove('fade-in');
+            setTimeout(async () => {
+                if (tab === 'statistics') await renderStatistics(AppState.get('currentPeriod'));
+                else if (tab === 'warehouse') await renderWarehouseCards();
+                else if (tab === 'sales') await renderSalesTable();
+                else if (tab === 'clients') await renderClientsTable();
+                else body.innerHTML = `<h2 class="tab-title" onclick="openSidebar()">Вкладка</h2><p class="text-center text-muted py-5">Вкладка пока пустая</p>`;
+                body.classList.add('fade-in');
+            }, 250);
+            closeSidebar();
+        }
+        async function init() { try { await db.init(); await renderStatistics('today'); if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js'); } catch (e) { console.error(e); } }
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
