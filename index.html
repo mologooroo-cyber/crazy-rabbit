@@ -93,6 +93,12 @@
     <input type="file" id="importFileInput" style="display:none" accept=".json" onchange="handleFileImport(event)">
 
     <script>
+        // ============ ИСПРАВЛЕНИЯ В ЭТОЙ ВЕРСИИ ============
+        // 1. Панели "Бронь", "Долг", "Новые", "Уходящие" сразу показывают актуальные значения
+        // 2. Анимация только для трёх основных карточек (Выручка, Прибыль, Продажи)
+        // 3. "Новые" клиенты считаются по первой покупке, а не по дате создания записи
+        // 4. "Уходящие" клиенты — последняя покупка более 30 дней назад
+
         const GROUP_DATA = {};
         const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 42;
         class Database { constructor() { this.db = null; } async init() { return new Promise((resolve, reject) => { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onerror = () => reject(r.error); r.onsuccess = () => { this.db = r.result; resolve(); }; r.onupgradeneeded = (e) => { const d = e.target.result; if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' }); if (!d.objectStoreNames.contains('sales')) { const s = d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }); s.createIndex('date', 'date', { unique: false }); s.createIndex('client', 'client', { unique: false }); } if (!d.objectStoreNames.contains('products')) { const p = d.createObjectStore('products', { keyPath: 'id', autoIncrement: true }); p.createIndex('category', 'category', { unique: false }); } if (!d.objectStoreNames.contains('clients')) { const c = d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true }); c.createIndex('name', 'name', { unique: false }); } }; }); } async g(s, k) { return this.p(this.db.transaction([s],'readonly').objectStore(s).get(k)); } async pu(s, d) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).put(d)); } async all(s) { return this.p(this.db.transaction([s],'readonly').objectStore(s).getAll()); } async add(s, d) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).add(d)); } async del(s, id) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).delete(id)); } async clear(s) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).clear()); } p(r) { return new Promise((rs, rj) => { r.onsuccess = () => rs(r.result); r.onerror = () => rj(r.error); }); } }
@@ -145,13 +151,115 @@
         function getDailyData(sales,s,e){const sm=gdd(s,e)>31,m=new Map();sales.forEach(x=>{const d=new Date(x.date);let k;if(sm){k=`${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear().toString().slice(2)}`;}else{k=`${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`;}m.set(k,(m.get(k)||0)+(x.profit||0));});return[...m.keys()].sort((a,b)=>{const[pa,pb]=[a.split('.'),b.split('.')];if(sm){return(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}else{return(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}}).map(k=>({label:k,value:m.get(k)}));}
         function getCategoryData(sales,mode){const map={};CATEGORIES.forEach(c=>map[c]=0);sales.forEach(x=>{const cat=x.category||'liquid';if(map[cat]!==undefined){map[cat]+=(mode==='sum'?(x.profit||0):1);}});return CATEGORIES.map(c=>({category:c,name:CATEGORY_NAMES[c],value:map[c]||0}));}
         function ssd(p,s,e){if(p==='today')return false;if(p==='custom')return gdd(s,e)>=2;return true;}
-        async function renderStatistics(period){ const prevRev=prevStats.revenue,prevProf=prevStats.profit,prevCnt=prevStats.count; const prevBooking=prevStats.bookingSum,prevDebt=prevStats.debtSum,prevNew=prevStats.newClients,prevLeaving=prevStats.leavingClients; cp=period;const{s,e,ps,pe}=getDateRange(period);const sales=await getSalesInRange2(s,e),prevSales=(ps&&pe)?await getSalesInRange2(ps,pe):[]; const rev=sales.reduce((s,x)=>s+(x.total||0),0),prof=sales.reduce((s,x)=>s+(x.profit||0),0),cnt=sales.length; const pRev=prevSales.reduce((s,x)=>s+(x.total||0),0),pProf=prevSales.reduce((s,x)=>s+(x.profit||0),0),pCnt=prevSales.length; const allSalesAllTime=await db.all('sales'); const bookingSum=allSalesAllTime.filter(s=>s.note==='бронь').reduce((s,x)=>s+(x.total||0),0); const debtSum=allSalesAllTime.filter(s=>s.note==='долг').reduce((s,x)=>s+(x.total||0),0); const allClients=await db.all('clients'); const newClients=allClients.filter(c=>c.created>=s&&c.created<=e).length; const leavingClients=allClients.filter(c=>{const cs=allSalesAllTime.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;}).length; prevStats={revenue:rev,profit:prof,count:cnt,bookingSum,debtSum,newClients,leavingClients}; const sd=ssd(period,s,e);const dd=sd?getDailyData(sales,s,e):[],cd=getCategoryData(sales,ccm); const md=Math.max(...dd.map(d=>d.value),1),mc=Math.max(...cd.map(d=>d.value),1); const showMonths=period==='all'||(period==='custom'&&gdd(s,e)>31); const dailyTitle=showMonths?'Прибыль по месяцам':'Прибыль по дням'; document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Статистика</h2><div class="stats-header"><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div><div class="stats-cards"><div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value" id="stat_revenue">${fn(prevRev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}" id="stat_rev_pct">${fp((rev-pRev)/pRev*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value" id="stat_profit">${fn(prevProf)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}" id="stat_prof_pct">${fp((prof-pProf)/pProf*100)}</div>`:''}</div><div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value" id="stat_count">${fn(prevCnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}" id="stat_cnt_pct">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div></div><div class="summary-row"><div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value" id="sum_booking">${fn(prevBooking)}₽</div></div><div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value" id="sum_debt">${fn(prevDebt)}₽</div></div><div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value" id="sum_new">${prevNew} чел.</div></div><div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value" id="sum_leaving">${prevLeaving} чел.</div></div></div><div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>`<div class="category-column cat-${d.category}"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill-wrap"><div class="category-fill-inner animate" style="--target-height:${mc>0?(d.value/mc*100):0}%;" data-target="${mc>0?(d.value/mc*100):0}"></div></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill-wrap"><div class="bar-fill-inner animate" style="--target-height:${md>0?(d.value/md*100):0}%;" data-target="${md>0?(d.value/md*100):0}"></div></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`:''}`; setTimeout(()=>{ const revEl=document.getElementById('stat_revenue'),profEl=document.getElementById('stat_profit'),cntEl=document.getElementById('stat_count'); if(revEl)animateValue(revEl,prevRev,rev,600,'₽');if(profEl)animateValue(profEl,prevProf,prof,600,'₽');if(cntEl)animateValue(cntEl,prevCnt,cnt,600,''); setTimeout(()=>{const rp=document.getElementById('stat_rev_pct'),pp=document.getElementById('stat_prof_pct'),cp2=document.getElementById('stat_cnt_pct');if(rp&&pRev)rp.textContent=fp((rev-pRev)/pRev*100);if(pp&&pProf)pp.textContent=fp((prof-pProf)/pProf*100);if(cp2&&pCnt)cp2.textContent=fp((cnt-pCnt)/pCnt*100);},700); setTimeout(()=>{document.querySelectorAll('.bar-fill-inner.animate,.category-fill-inner.animate').forEach(el=>el.classList.add('started'));},100); },100); }
+
+        /**
+         * Возвращает количество новых клиентов — по первой покупке в периоде, а не по дате создания
+         * @param {string} s - start date
+         * @param {string} e - end date
+         * @returns {Promise<number>}
+         */
+        async function getNewClientsCount(s, e) {
+            const allSales = await db.all('sales');
+            const clientFirstSale = new Map();
+            for (const sale of allSales) {
+                const name = norm(sale.client);
+                if (!name) continue;
+                if (!clientFirstSale.has(name) || sale.date < clientFirstSale.get(name)) {
+                    clientFirstSale.set(name, sale.date);
+                }
+            }
+            let count = 0;
+            for (const [name, date] of clientFirstSale) {
+                if (date >= s && date <= e) count++;
+            }
+            return count;
+        }
+
+        /**
+         * Возвращает количество уходящих клиентов — последняя покупка более 30 дней назад
+         * @returns {Promise<number>}
+         */
+        async function getLeavingClientsCount() {
+            const allSales = await db.all('sales');
+            const clientLastSale = new Map();
+            for (const sale of allSales) {
+                const name = norm(sale.client);
+                if (!name) continue;
+                if (!clientLastSale.has(name) || sale.date > clientLastSale.get(name)) {
+                    clientLastSale.set(name, sale.date);
+                }
+            }
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const threshold = thirtyDaysAgo.toISOString().split('T')[0];
+            let count = 0;
+            for (const [name, date] of clientLastSale) {
+                if (date < threshold) count++;
+            }
+            return count;
+        }
+
+        async function renderStatistics(period){
+            const prevRev=prevStats.revenue,prevProf=prevStats.profit,prevCnt=prevStats.count;
+            cp=period;const{s,e,ps,pe}=getDateRange(period);
+            const sales=await getSalesInRange2(s,e),prevSales=(ps&&pe)?await getSalesInRange2(ps,pe):[];
+            const rev=sales.reduce((s,x)=>s+(x.total||0),0),prof=sales.reduce((s,x)=>s+(x.profit||0),0),cnt=sales.length;
+            const pRev=prevSales.reduce((s,x)=>s+(x.total||0),0),pProf=prevSales.reduce((s,x)=>s+(x.profit||0),0),pCnt=prevSales.length;
+
+            const allSalesAllTime=await db.all('sales');
+            const bookingSum=allSalesAllTime.filter(s=>s.note==='бронь').reduce((s,x)=>s+(x.total||0),0);
+            const debtSum=allSalesAllTime.filter(s=>s.note==='долг').reduce((s,x)=>s+(x.total||0),0);
+            const newClients = await getNewClientsCount(s, e);
+            const leavingClients = await getLeavingClientsCount();
+
+            prevStats={revenue:rev,profit:prof,count:cnt,bookingSum,debtSum,newClients,leavingClients};
+
+            const sd=ssd(period,s,e);const dd=sd?getDailyData(sales,s,e):[],cd=getCategoryData(sales,ccm);
+            const md=Math.max(...dd.map(d=>d.value),1),mc=Math.max(...cd.map(d=>d.value),1);
+            const showMonths=period==='all'||(period==='custom'&&gdd(s,e)>31);
+            const dailyTitle=showMonths?'Прибыль по месяцам':'Прибыль по дням';
+
+            // Рендерим сразу с актуальными значениями для панелей
+            document.getElementById('contentBody').innerHTML=`
+                <h2 class="tab-title" onclick="openSidebar()">Статистика</h2>
+                <div class="stats-header"><div class="period-buttons">${['today','week','month','all','custom'].map(p=>`<button class="period-btn ${period===p?'active':''}" onclick="renderStatistics('${p}')"><i class="bi ${p==='today'?'bi-calendar-day':p==='week'?'bi-calendar-week':p==='month'?'bi-calendar-month':p==='all'?'bi-infinity':'bi-calendar-range'}"></i></button>`).join('')}</div></div>
+                <div class="stats-cards">
+                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-stack"></i></div><div class="stat-label">Выручка</div><div class="stat-value" id="stat_revenue">${fn(prevRev)}₽</div>${period!=='all'&&pRev?`<div class="stat-percent ${rev>=pRev?'positive':'negative'}" id="stat_rev_pct">${fp((rev-pRev)/pRev*100)}</div>`:''}</div>
+                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-graph-up"></i></div><div class="stat-label">Прибыль</div><div class="stat-value" id="stat_profit">${fn(prevProf)}₽</div>${period!=='all'&&pProf?`<div class="stat-percent ${prof>=pProf?'positive':'negative'}" id="stat_prof_pct">${fp((prof-pProf)/pProf*100)}</div>`:''}</div>
+                    <div class="stat-card"><div class="stat-icon"><i class="bi bi-cart-check"></i></div><div class="stat-label">Продажи</div><div class="stat-value" id="stat_count">${fn(prevCnt)}</div>${period!=='all'&&pCnt?`<div class="stat-percent ${cnt>=pCnt?'positive':'negative'}" id="stat_cnt_pct">${fp((cnt-pCnt)/pCnt*100)}</div>`:''}</div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-item booking" onclick="showBookingModal()"><div class="summary-icon"><i class="bi bi-calendar-check"></i></div><div class="summary-label">Бронь</div><div class="summary-value">${fn(bookingSum)}₽</div></div>
+                    <div class="summary-item debt" onclick="showDebtModal()"><div class="summary-icon"><i class="bi bi-cash-coin"></i></div><div class="summary-label">Долг</div><div class="summary-value">${fn(debtSum)}₽</div></div>
+                    <div class="summary-item new-clients" onclick="showNewClientsModal()"><div class="summary-icon"><i class="bi bi-person-plus"></i></div><div class="summary-label">Новые</div><div class="summary-value">${newClients} чел.</div></div>
+                    <div class="summary-item leaving-clients" onclick="showLeavingClientsModal()"><div class="summary-icon"><i class="bi bi-person-dash"></i></div><div class="summary-label">Уходящие</div><div class="summary-value">${leavingClients} чел.</div></div>
+                </div>
+                <div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-pie-chart"></i> Продажи по категориям</div><div class="chart-switch"><button class="switch-btn ${ccm==='sum'?'active':''}" onclick="setCategoryMode('sum')">Сумма</button><button class="switch-btn ${ccm==='count'?'active':''}" onclick="setCategoryMode('count')">Кол-во</button></div></div><div class="category-chart">${cd.map(d=>`<div class="category-column cat-${d.category}"><div class="category-value">${fn(d.value)}${ccm==='sum'?'₽':' шт.'}</div><div class="category-fill-wrap"><div class="category-fill-inner animate" style="--target-height:${mc>0?(d.value/mc*100):0}%;" data-target="${mc>0?(d.value/mc*100):0}"></div></div><div class="category-label">${d.name}</div></div>`).join('')}</div></div>
+                ${sd?`<div class="chart-block"><div class="chart-header"><div class="chart-title"><i class="bi bi-graph-up"></i> ${dailyTitle}</div></div>${dd.length?`<div class="bar-chart">${dd.map(d=>`<div class="bar-column"><div class="bar-value">${fn(d.value)}₽</div><div class="bar-fill-wrap"><div class="bar-fill-inner animate" style="--target-height:${md>0?(d.value/md*100):0}%;" data-target="${md>0?(d.value/md*100):0}"></div></div><div class="bar-label">${d.label}</div></div>`).join('')}</div>`:'<p class="text-muted text-center py-3">Нет данных</p>'}</div>`:''}
+                ${period==='custom'?`<div class="date-range"><input type="date" class="date-input" id="startDate" value="${csd||''}" onchange="updateCustomDates()"><span class="date-separator">—</span><input type="date" class="date-input" id="endDate" value="${ced||''}" onchange="updateCustomDates()"></div>`:''}`;
+
+            // Анимируем только три основные карточки
+            setTimeout(()=>{
+                const revEl=document.getElementById('stat_revenue'),profEl=document.getElementById('stat_profit'),cntEl=document.getElementById('stat_count');
+                if(revEl)animateValue(revEl,prevRev,rev,600,'₽');
+                if(profEl)animateValue(profEl,prevProf,prof,600,'₽');
+                if(cntEl)animateValue(cntEl,prevCnt,cnt,600,'');
+                setTimeout(()=>{
+                    const rp=document.getElementById('stat_rev_pct'),pp=document.getElementById('stat_prof_pct'),cp2=document.getElementById('stat_cnt_pct');
+                    if(rp&&pRev)rp.textContent=fp((rev-pRev)/pRev*100);
+                    if(pp&&pProf)pp.textContent=fp((prof-pProf)/pProf*100);
+                    if(cp2&&pCnt)cp2.textContent=fp((cnt-pCnt)/pCnt*100);
+                },700);
+                setTimeout(()=>{document.querySelectorAll('.bar-fill-inner.animate,.category-fill-inner.animate').forEach(el=>el.classList.add('started'));},100);
+            },100);
+        }
+
         async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
         function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
         async function showBookingModal(){const allSales=await db.all('sales');const bs=allSales.filter(s=>s.note==='бронь');showModal('Бронь','bi bi-calendar-check','var(--green)',bs.length===0?'<p class="text-muted text-center py-4">Нет броней</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.3">Клиент</div><div class="sale-col" style="flex:0.7">Товар</div></div>${bs.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.3">${s.client||'-'}</div><div class="sale-col" style="flex:0.7">${s.product||'-'}</div></div>`).join('')}`,'');}
         async function showDebtModal(){const allSales=await db.all('sales');const ds=allSales.filter(s=>s.note==='долг');showModal('Долги','bi bi-cash-coin','var(--red)',ds.length===0?'<p class="text-muted text-center py-4">Нет долгов</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.5">Клиент</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">Сумма</div><div class="sale-col" style="flex:0.3">Дата</div></div>${ds.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.5">${s.client||'-'}</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">${fn(s.total||0)}₽</div><div class="sale-col" style="flex:0.3">${fmtDate(s.date)}</div></div>`).join('')}`,'');}
-        async function showNewClientsModal(){const{s,e}=getDateRange(cp);const clients=await db.all('clients');const nc=clients.filter(c=>c.created>=s&&c.created<=e);showModal('Новые клиенты','bi bi-person-plus','var(--accent)',nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Дата</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.created)}</div></div>`).join('')}`,'');}
-        async function showLeavingClientsModal(){const clients=await db.all('clients');const sales=await db.all('sales');const lc=clients.filter(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name));if(cs.length===0)return false;const last=cs.sort((a,b)=>b.date.localeCompare(a.date))[0];return last&&(new Date()-new Date(last.date))/86400000>30;});showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>{const cs=sales.filter(x=>norm(x.client)===norm(c.name)).sort((a,b)=>b.date.localeCompare(a.date));const last=cs[0];return`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(last.date)}</div></div>`;}).join('')}`,'');}
+        async function showNewClientsModal(){const{s,e}=getDateRange(cp);const allSales=await db.all('sales');const clientFirstSale=new Map();for(const sale of allSales){const name=norm(sale.client);if(!name)continue;if(!clientFirstSale.has(name)||sale.date<clientFirstSale.get(name)){clientFirstSale.set(name,sale.date);}}const nc=[];for(const[name,date]of clientFirstSale){if(date>=s&&date<=e)nc.push({name,date});}nc.sort((a,b)=>b.date.localeCompare(a.date));showModal('Новые клиенты','bi bi-person-plus','var(--accent)',nc.length===0?'<p class="text-muted text-center py-4">Нет новых клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Первая покупка</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.date)}</div></div>`).join('')}`,'');}
+        async function showLeavingClientsModal(){const allSales=await db.all('sales');const clientLastSale=new Map();for(const sale of allSales){const name=norm(sale.client);if(!name)continue;if(!clientLastSale.has(name)||sale.date>clientLastSale.get(name)){clientLastSale.set(name,sale.date);}}const thirtyDaysAgo=new Date();thirtyDaysAgo.setDate(thirtyDaysAgo.getDate()-30);const threshold=thirtyDaysAgo.toISOString().split('T')[0];const lc=[];for(const[name,date]of clientLastSale){if(date<threshold)lc.push({name,date});}lc.sort((a,b)=>b.date.localeCompare(a.date));showModal('Уходящие клиенты','bi bi-person-dash','var(--accent)',lc.length===0?'<p class="text-muted text-center py-4">Нет уходящих клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.date)}</div></div>`).join('')}`,'');}
 
         // ============ ОБЩИЙ МОДУЛЬ ВЫДЕЛЕНИЯ ============
         const SELECT_MODE_CONFIG = { warehouse: { selectMode: false, selectedIds: new Set(), prefix: 'wh' }, sales: { selectMode: false, selectedIds: new Set(), prefix: 'sale' } };
@@ -189,59 +297,10 @@
 
         function setupWarehouseSwipe(){document.querySelectorAll('.product-row').forEach(row=>{setupLongPress(row,'warehouse',(r)=>parseInt(r.dataset.pid));setupSwipe(row,'warehouse',(r)=>parseInt(r.dataset.pid),async(pid)=>{const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);cachedProducts = [];}await renderWarehouseTableContent(cwc,document.getElementById('warehouseSearch')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}cachedProducts = [];await renderWarehouseTableContent(cwc,document.getElementById('warehouseSearch')?.value||'');deletedProducts=[];});});});document.querySelectorAll('.accordion-header').forEach(hdr=>{const gid=hdr.dataset.gid;if(gid&&GROUP_DATA[gid]){setupGroupLongPress(hdr,gid);}});document.querySelectorAll('.group-add-btn').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();e.preventDefault();const gid=btn.dataset.gid;if(gid&&GROUP_DATA[gid]){showAddToGroupModal(gid);}});});}
 
-        function setStockFilter(filter) {
-            stockFilter = filter;
-            const btn = document.getElementById('stockFilterBtn');
-            if (btn) {
-                btn.className = 'stock-filter-btn mode-' + filter;
-                btn.querySelector('i').className = 'bi ' + STOCK_FILTER_ICONS[filter];
-                btn.style.transform = 'scale(0.88)';
-                setTimeout(() => { btn.style.transform = 'scale(1)'; }, 100);
-            }
-            renderWarehouseTableContent(cwc, document.getElementById('warehouseSearch')?.value || '');
-        }
-
-        function toggleStockFilter() {
-            const idx = STOCK_FILTER_MODES.indexOf(stockFilter);
-            const next = STOCK_FILTER_MODES[(idx + 1) % STOCK_FILTER_MODES.length];
-            setStockFilter(next);
-        }
-
-        async function renderWarehouseTableContent(cat, sq) {
-            let ap; if (cachedProducts.length > 0) { ap = cachedProducts; } else { ap = await db.all('products'); cachedProducts = ap; }
-            let pr = ap.filter(p => p.category === cat);
-            if (stockFilter === 'in_stock') { pr = pr.filter(p => (p.quantity || 0) > 0); }
-            else if (stockFilter === 'out_of_stock') { pr = pr.filter(p => (p.quantity || 0) <= 0); }
-            if (sq) { const q = sq.toLowerCase(); pr = pr.filter(p => CATEGORY_TABLE_COLS[cat].some(c => (p[c] || '').toString().toLowerCase().includes(q)) || (p.manufacturer || '').toLowerCase().includes(q) || (p.lineup || '').toLowerCase().includes(q)); og = new Set(); }
-            const gb = CATEGORY_GROUPS[cat]; const g = groupProductsNested(pr, gb);
-            const tableHTML = buildAccordionHTML(g, gb, 0, cat, []);
-            const tableArea = document.getElementById('warehouseTableContent');
-            if (tableArea) { tableArea.innerHTML = pr.length === 0 ? '<p class="text-center text-muted py-4">Нет товаров</p>' : tableHTML; }
-            setTimeout(() => { if (og.size > 0) restoreOpenGroups(); else { const bodies = document.querySelectorAll('.accordion-body'); if (bodies.length === 1) { const gid = bodies[0].id; bodies[0].classList.add('open'); const hdr = document.getElementById('hdr_' + gid); if (hdr) hdr.classList.add('open'); og.add(gid); } } if (whIsSelectMode()) whUpdateSelectUI(); setupWarehouseSwipe(); }, 50);
-        }
-
-        async function renderWarehouseTable(cat, sq = '') {
-            cwc = cat; const searchValue = sq || '';
-            document.getElementById('contentBody').innerHTML = `
-                <div class="warehouse-table-section">
-                    <div class="wh-header">
-                        <button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button>
-                        <span class="wh-category-title">${CATEGORY_NAMES[cat]}</span>
-                        <div style="display:flex;gap:8px;">
-                            <button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button>
-                            <button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button>
-                            <button class="wh-add-btn" onclick="showMassAddProductModal()">+</button>
-                        </div>
-                    </div>
-                    <div class="search-row">
-                        <input type="text" class="search-input" id="warehouseSearch" placeholder="Поиск..." value="${searchValue}" oninput="renderWarehouseTableContent(cwc, this.value)" autocomplete="off">
-                        <button class="stock-filter-btn mode-${stockFilter}" id="stockFilterBtn" onclick="toggleStockFilter()" title="${stockFilter==='all'?'Все':stockFilter==='in_stock'?'В наличии':'Нет в наличии'}"><i class="bi ${STOCK_FILTER_ICONS[stockFilter]}"></i></button>
-                    </div>
-                    <div id="warehouseTableContent"></div>
-                </div>`;
-            await renderWarehouseTableContent(cat, searchValue);
-        }
-
+        function setStockFilter(filter) { stockFilter = filter; const btn = document.getElementById('stockFilterBtn'); if (btn) { btn.className = 'stock-filter-btn mode-' + filter; btn.querySelector('i').className = 'bi ' + STOCK_FILTER_ICONS[filter]; btn.style.transform = 'scale(0.88)'; setTimeout(() => { btn.style.transform = 'scale(1)'; }, 100); } renderWarehouseTableContent(cwc, document.getElementById('warehouseSearch')?.value || ''); }
+        function toggleStockFilter() { const idx = STOCK_FILTER_MODES.indexOf(stockFilter); const next = STOCK_FILTER_MODES[(idx + 1) % STOCK_FILTER_MODES.length]; setStockFilter(next); }
+        async function renderWarehouseTableContent(cat, sq) { let ap; if (cachedProducts.length > 0) { ap = cachedProducts; } else { ap = await db.all('products'); cachedProducts = ap; } let pr = ap.filter(p => p.category === cat); if (stockFilter === 'in_stock') { pr = pr.filter(p => (p.quantity || 0) > 0); } else if (stockFilter === 'out_of_stock') { pr = pr.filter(p => (p.quantity || 0) <= 0); } if (sq) { const q = sq.toLowerCase(); pr = pr.filter(p => CATEGORY_TABLE_COLS[cat].some(c => (p[c] || '').toString().toLowerCase().includes(q)) || (p.manufacturer || '').toLowerCase().includes(q) || (p.lineup || '').toLowerCase().includes(q)); og = new Set(); } const gb = CATEGORY_GROUPS[cat]; const g = groupProductsNested(pr, gb); const tableHTML = buildAccordionHTML(g, gb, 0, cat, []); const tableArea = document.getElementById('warehouseTableContent'); if (tableArea) { tableArea.innerHTML = pr.length === 0 ? '<p class="text-center text-muted py-4">Нет товаров</p>' : tableHTML; } setTimeout(() => { if (og.size > 0) restoreOpenGroups(); else { const bodies = document.querySelectorAll('.accordion-body'); if (bodies.length === 1) { const gid = bodies[0].id; bodies[0].classList.add('open'); const hdr = document.getElementById('hdr_' + gid); if (hdr) hdr.classList.add('open'); og.add(gid); } } if (whIsSelectMode()) whUpdateSelectUI(); setupWarehouseSwipe(); }, 50); }
+        async function renderWarehouseTable(cat, sq = '') { cwc = cat; const searchValue = sq || ''; document.getElementById('contentBody').innerHTML = `<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showMassAddProductModal()">+</button></div></div><div class="search-row"><input type="text" class="search-input" id="warehouseSearch" placeholder="Поиск..." value="${searchValue}" oninput="renderWarehouseTableContent(cwc, this.value)" autocomplete="off"><button class="stock-filter-btn mode-${stockFilter}" id="stockFilterBtn" onclick="toggleStockFilter()" title="${stockFilter==='all'?'Все':stockFilter==='in_stock'?'В наличии':'Нет в наличии'}"><i class="bi ${STOCK_FILTER_ICONS[stockFilter]}"></i></button></div><div id="warehouseTableContent"></div></div>`; await renderWarehouseTableContent(cat, searchValue); }
         async function copyProduct(pid){const p=await db.g('products',pid);if(!p)return;const cp={...p};delete cp.id;const nid=await db.add('products',cp);cachedProducts = [];await renderWarehouseTableContent(cwc,document.getElementById('warehouseSearch')?.value||'');setTimeout(()=>{const r=document.querySelector(`.product-row[data-pid="${nid}"]`);if(r)r.classList.add('pop-anim');},100);}
         function showMassAddProductModal(){const cat=cwc;const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';const ex=CATEGORY_EXTRA_FIELDS[cat];const extraField=ex[0]||{key:'lineup',label:'Линейка'};showModal('Добавить товары','bi bi-stack',color,`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="mass_manufacturer"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="mass_lineup"></div><div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="mass_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p><div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="mass_quantity" value="0" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="mass_purchase" value="" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="mass_selling" value="" step="0.01"></div>`,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveMassProduct()">Добавить</button>`);setTimeout(()=>{const flavorsEl=document.getElementById('mass_flavors');const previewEl=document.getElementById('mass_preview');if(flavorsEl&&previewEl){const updatePreview=()=>{const lines=flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);previewEl.textContent=`Будет создано: ${lines.length} товаров`;};flavorsEl.addEventListener('input',updatePreview);updatePreview();}},50);}
         async function saveMassProduct(){const cat=cwc;const ex=CATEGORY_EXTRA_FIELDS[cat];const manufacturer=document.getElementById('mass_manufacturer').value.trim();const lineup=document.getElementById('mass_lineup').value.trim();const flavorsEl=document.getElementById('mass_flavors');const flavors=flavorsEl?flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0):[];const quantity=parseInt(document.getElementById('mass_quantity').value)||0;const purchase=parseFloat(document.getElementById('mass_purchase').value)||0;const selling=parseFloat(document.getElementById('mass_selling').value)||0;if(!manufacturer){await showAlert('Введите производителя','error');return;}if(flavors.length===0){await showAlert('Введите хотя бы один вкус','error');return;}const extraKey=ex[0]?.key||'lineup';let created=0,skipped=0;for(const flavor of flavors){const isDup=await isDuplicateProduct(cat,manufacturer,lineup,flavor);if(isDup){skipped++;continue;}const p={category:cat,manufacturer,lineup,quantity,purchase,selling};ex.forEach(e=>p[e.key]=(e.key===extraKey)?flavor:'');await db.add('products',p);created++;}cachedProducts = [];closeModal();await renderWarehouseTableContent(cat,document.getElementById('warehouseSearch')?.value||'');let msg=`Создано ${created} товаров`;if(skipped>0)msg+=`, пропущено ${skipped} (дубликаты)`;showSnackbar(msg);}
