@@ -56,6 +56,29 @@
         .round-add-btn { background: var(--accent); color: white; border: none; width: 36px; height: 36px; border-radius: 10px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.15s ease; } .round-add-btn:active { transform: scale(0.85); }
         .dialog-text { font-size: 15px; color: var(--text-primary); text-align: center; padding: 0 10px; line-height: 1.4; } .dialog-icon-wrap { display: flex; justify-content: center; margin-bottom: 12px; } .dialog-icon-circle { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; } .dialog-icon-circle.warning { background: rgba(231,76,60,0.15); color: var(--red); } .dialog-icon-circle.error { background: rgba(241,196,15,0.15); color: var(--yellow); } .dialog-icon-circle.info { background: rgba(129,216,208,0.15); color: var(--accent); }
         .warehouse-table-section, .warehouse-table-section *, .product-row, .product-row *, .accordion-header, .accordion-header *, .table-header-row, .table-header-row *, .product-row-wrapper, .product-row-wrapper *, .sales-table-section, .sales-table-section *, .sale-row, .sale-row *, .sale-row-wrapper, .sale-row-wrapper *, .sale-table-header, .sale-table-header *, .clients-table-section, .clients-table-section *, .client-row, .client-row *, .client-table-header, .client-table-header * { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        .sale-items-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .sale-item-card { background: var(--bg-primary); border-radius: 10px; padding: 12px; position: relative; }
+        .sale-item-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .sale-item-row:last-child { margin-bottom: 0; }
+        .sale-item-product { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sale-item-qty { width: 50px; }
+        .sale-item-qty input { width: 100%; padding: 6px 4px; border: 2px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-primary); font-size: 13px; text-align: center; outline: none; }
+        .sale-item-qty input:focus { border-color: var(--accent); }
+        .sale-item-price { width: 70px; }
+        .sale-item-price input { width: 100%; padding: 6px 4px; border: 2px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-primary); font-size: 13px; text-align: right; outline: none; }
+        .sale-item-price input:focus { border-color: var(--accent); }
+        .sale-item-sum { font-size: 13px; font-weight: 600; color: var(--accent); min-width: 60px; text-align: right; }
+        .sale-item-remove { background: none; border: none; color: var(--red); cursor: pointer; font-size: 16px; padding: 2px 4px; transition: transform 0.15s ease; }
+        .sale-item-remove:active { transform: scale(1.2); }
+        .add-item-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 10px; background: transparent; border: 2px dashed var(--border); border-radius: 10px; color: var(--accent); cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s ease; }
+        .add-item-btn:active { background: rgba(129,216,208,0.1); border-color: var(--accent); }
+        .sale-total-summary { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 15px; font-weight: 700; }
+        .sale-total-summary .total-label { color: var(--text-secondary); }
+        .sale-total-summary .total-value { color: var(--accent); font-size: 18px; }
+        .item-selector-row { display: flex; gap: 8px; align-items: center; }
+        .item-selector-row .combo-box { flex: 1; }
+        .item-selector-row .btn-confirm { padding: 10px 14px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; white-space: nowrap; transition: transform 0.15s ease; }
+        .item-selector-row .btn-confirm:active { transform: scale(0.93); }
     </style>
 </head>
 <body>
@@ -66,15 +89,13 @@
 
     <script>
         // ============ ИЗМЕНЕНИЯ В ЭТОЙ ВЕРСИИ ============
-        // 1. Разделители по датам в таблице продаж (Сегодня, Вчера, 25 июля, 13 июля 2025)
-        // 2. Колонка "Дата" убрана
-        // 3. Пагинация сохранена
-        // 4. Выпадающий список товаров — только в наличии
-        // 5. Snackbar прогресса до приза — жёлтый сверху
-        // 6. Жёлтая обводка строки клиента при 9/9
-        // 7. Поле поиска в клиентах и складе — клавиатура не прыгает
-        // 8. Кнопка "Уходящие" обновляет только контент таблицы
-        // 9. Исправлено отображение чисел в animateValue
+        // 1. Множественные товары в одной продаже
+        // 2. Список товаров в модалке + кнопка "+ Добавить товар"
+        // 3. Общая сумма пересчитывается автоматически
+        // 4. Прогресс до приза суммирует все liquid-товары
+        // 5. Разделители по датам в таблице продаж
+        // 6. Выпадающий список только с товарами в наличии
+        // 7. Все предыдущие исправления сохранены
 
         const GROUP_DATA = {};
         const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 42;
@@ -166,18 +187,7 @@
         window._saveAddToGroup=async function(){const gid=window._addToGroupGid;const gdata=GROUP_DATA[gid];if(!gdata)return;const{cat,level,keys}=gdata;const gb=CATEGORY_GROUPS[cat];const isLastLevel=(level+1>=gb.length);const ex=CATEGORY_EXTRA_FIELDS[cat];const extraKey=ex[0]?.key||'lineup'; if(!isLastLevel){const lineup=document.getElementById('group_add_lineup').value.trim();if(!lineup){await showAlert('Введите название','error');return;}const manufacturer=keys[0];const allP=await db.all('products');const catProducts=allP.filter(p=>p.category===cat).sort((a,b)=>b.id-a.id);const lastProduct=catProducts[0];const p={category:cat,manufacturer:manufacturer,lineup:lineup,quantity:0,purchase:lastProduct?(lastProduct.purchase||0):0,selling:lastProduct?(lastProduct.selling||0):0};ex.forEach(e=>p[e.key]='');await db.add('products',p);cachedProducts = [];closeModal();await renderWarehouseTable(cat,document.getElementById('warehouseSearch')?.value||'');setTimeout(async()=>{const newKeys=[...keys,lineup];const parentGid=getGroupId(cat,level,keys);const parentBody=document.getElementById(parentGid);if(parentBody){parentBody.classList.add('open');const parentHdr=document.getElementById('hdr_'+parentGid);if(parentHdr)parentHdr.classList.add('open');og.add(parentGid);}const childGid=getGroupId(cat,level+1,newKeys);setTimeout(()=>{const childBody=document.getElementById(childGid);if(childBody){childBody.classList.add('open');const childHdr=document.getElementById('hdr_'+childGid);if(childHdr)childHdr.classList.add('open');og.add(childGid);}if(GROUP_DATA[childGid]){showAddToGroupModal(childGid);}},200);},300);}else{const flavorsEl=document.getElementById('group_add_flavors');const flavors=flavorsEl?flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0):[];if(flavors.length===0){await showAlert('Введите хотя бы один вкус','error');return;}const quantity=parseInt(document.getElementById('group_add_quantity').value)||0;const purchase=parseFloat(document.getElementById('group_add_purchase').value)||0;const selling=parseFloat(document.getElementById('group_add_selling').value)||0;const manufacturer=keys[0];const lineup=keys.length>1?keys[1]:'';let created=0,skipped=0;for(const flavor of flavors){const isDup=await isDuplicateProduct(cat,manufacturer,lineup,flavor);if(isDup){skipped++;continue;}const p={category:cat,manufacturer,lineup,quantity,purchase,selling};ex.forEach(e=>p[e.key]=(e.key===extraKey)?flavor:'');await db.add('products',p);created++;}cachedProducts = [];closeModal();await renderWarehouseTable(cat,document.getElementById('warehouseSearch')?.value||'');setTimeout(()=>restoreOpenGroups(),100);let msg=`Создано ${created} товаров`;if(skipped>0)msg+=`, пропущено ${skipped} (дубликаты)`;showSnackbar(msg);}};
 
         function setupWarehouseSwipe(){document.querySelectorAll('.product-row').forEach(row=>{setupLongPress(row,'warehouse',(r)=>parseInt(r.dataset.pid));setupSwipe(row,'warehouse',(r)=>parseInt(r.dataset.pid),async(pid)=>{const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);cachedProducts = [];}await renderWarehouseTableContent(cwc,document.getElementById('warehouseSearch')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}cachedProducts = [];await renderWarehouseTableContent(cwc,document.getElementById('warehouseSearch')?.value||'');deletedProducts=[];});});});document.querySelectorAll('.accordion-header').forEach(hdr=>{const gid=hdr.dataset.gid;if(gid&&GROUP_DATA[gid]){setupGroupLongPress(hdr,gid);}});document.querySelectorAll('.group-add-btn').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();e.preventDefault();const gid=btn.dataset.gid;if(gid&&GROUP_DATA[gid]){showAddToGroupModal(gid);}});});}
-
-        async function renderWarehouseTableContent(cat, sq) {
-            let ap; if (cachedProducts.length > 0) { ap = cachedProducts; } else { ap = await db.all('products'); cachedProducts = ap; }
-            let pr = ap.filter(p => p.category === cat);
-            if (sq) { const q = sq.toLowerCase(); pr = pr.filter(p => CATEGORY_TABLE_COLS[cat].some(c => (p[c] || '').toString().toLowerCase().includes(q)) || (p.manufacturer || '').toLowerCase().includes(q) || (p.lineup || '').toLowerCase().includes(q)); og = new Set(); }
-            const gb = CATEGORY_GROUPS[cat]; const g = groupProductsNested(pr, gb);
-            const tableHTML = buildAccordionHTML(g, gb, 0, cat, []);
-            const tableArea = document.getElementById('warehouseTableContent');
-            if (tableArea) { tableArea.innerHTML = pr.length === 0 ? '<p class="text-center text-muted py-4">Нет товаров</p>' : tableHTML; }
-            setTimeout(() => { if (og.size > 0) restoreOpenGroups(); else { const bodies = document.querySelectorAll('.accordion-body'); if (bodies.length === 1) { const gid = bodies[0].id; bodies[0].classList.add('open'); const hdr = document.getElementById('hdr_' + gid); if (hdr) hdr.classList.add('open'); og.add(gid); } } if (whIsSelectMode()) whUpdateSelectUI(); setupWarehouseSwipe(); }, 50);
-        }
-
+        async function renderWarehouseTableContent(cat, sq) { let ap; if (cachedProducts.length > 0) { ap = cachedProducts; } else { ap = await db.all('products'); cachedProducts = ap; } let pr = ap.filter(p => p.category === cat); if (sq) { const q = sq.toLowerCase(); pr = pr.filter(p => CATEGORY_TABLE_COLS[cat].some(c => (p[c] || '').toString().toLowerCase().includes(q)) || (p.manufacturer || '').toLowerCase().includes(q) || (p.lineup || '').toLowerCase().includes(q)); og = new Set(); } const gb = CATEGORY_GROUPS[cat]; const g = groupProductsNested(pr, gb); const tableHTML = buildAccordionHTML(g, gb, 0, cat, []); const tableArea = document.getElementById('warehouseTableContent'); if (tableArea) { tableArea.innerHTML = pr.length === 0 ? '<p class="text-center text-muted py-4">Нет товаров</p>' : tableHTML; } setTimeout(() => { if (og.size > 0) restoreOpenGroups(); else { const bodies = document.querySelectorAll('.accordion-body'); if (bodies.length === 1) { const gid = bodies[0].id; bodies[0].classList.add('open'); const hdr = document.getElementById('hdr_' + gid); if (hdr) hdr.classList.add('open'); og.add(gid); } } if (whIsSelectMode()) whUpdateSelectUI(); setupWarehouseSwipe(); }, 50); }
         async function renderWarehouseTable(cat, sq = '') { cwc = cat; const searchValue = sq || ''; document.getElementById('contentBody').innerHTML = `<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash"></i> Удалить</button><button class="wh-add-btn" onclick="showMassAddProductModal()">+</button></div></div><div class="search-wrapper"><input type="text" class="search-input" id="warehouseSearch" placeholder="Поиск..." value="${searchValue}" oninput="renderWarehouseTableContent(cwc, this.value)" autocomplete="off"></div><div id="warehouseTableContent"></div></div>`; await renderWarehouseTableContent(cat, searchValue); }
         async function copyProduct(pid){const p=await db.g('products',pid);if(!p)return;const cp={...p};delete cp.id;const nid=await db.add('products',cp);cachedProducts = [];await renderWarehouseTableContent(cwc,document.getElementById('warehouseSearch')?.value||'');setTimeout(()=>{const r=document.querySelector(`.product-row[data-pid="${nid}"]`);if(r)r.classList.add('pop-anim');},100);}
         function showMassAddProductModal(){const cat=cwc;const color=getComputedStyle(document.documentElement).getPropertyValue('--cat-'+CATEGORY_CLASS[cat]).trim()||'var(--accent)';const ex=CATEGORY_EXTRA_FIELDS[cat];const extraField=ex[0]||{key:'lineup',label:'Линейка'};showModal('Добавить товары','bi bi-stack',color,`<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="mass_manufacturer"></div><div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="mass_lineup"></div><div class="form-group"><label class="form-label">${extraField.label} (каждый с новой строки)</label><textarea class="form-input" id="mass_flavors" rows="4" placeholder="Вкус 1&#10;Вкус 2&#10;Вкус 3"></textarea></div><p class="preview-text" id="mass_preview">Будет создано: 0 товаров</p><div class="form-group"><label class="form-label">Количество (общее для всех)</label><input type="number" class="form-input" id="mass_quantity" value="0" min="0"></div><div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="mass_purchase" value="" step="0.01"></div><div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="mass_selling" value="" step="0.01"></div>`,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveMassProduct()">Добавить</button>`);setTimeout(()=>{const flavorsEl=document.getElementById('mass_flavors');const previewEl=document.getElementById('mass_preview');if(flavorsEl&&previewEl){const updatePreview=()=>{const lines=flavorsEl.value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);previewEl.textContent=`Будет создано: ${lines.length} товаров`;};flavorsEl.addEventListener('input',updatePreview);updatePreview();}},50);}
@@ -189,6 +199,8 @@
         // ============ ПРОДАЖИ ============
         let salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''},deletedSales=[],salesPage=1;const PAGE_SIZE=10;
         let cachedSales = [];
+        let saleItems = [];
+        let saleAutoCalc=true;let saleUnitPrice=0;let saleUnitCost=0;
         function salesEnterSelectMode(){enterSelectMode('sales');}function salesExitSelectMode(){exitSelectMode('sales');}
         function salesToggleSelect(id){toggleSelectItem('sales',id);}function salesUpdateSelectUI(){updateSelectUI('sales');}
         function salesIsSelectMode(){return SELECT_MODE_CONFIG.sales.selectMode;}
@@ -198,66 +210,170 @@
         function hasActiveFilters(){return!!(salesFilter.client||salesFilter.product||salesFilter.dateFrom||salesFilter.dateTo||salesFilter.note);}
         function setupSalesSwipe(){document.querySelectorAll('.sale-row').forEach(row=>{setupLongPress(row,'sales',(r)=>parseInt(r.dataset.sid));setupSwipe(row,'sales',(r)=>parseInt(r.dataset.sid),async(sid)=>{const s=await db.g('sales',sid);if(s){deletedSales=[s];await db.del('sales',sid);cachedSales = [];}await renderSalesTable();showSnackbar('Продажа удалена',async()=>{for(const ds of deletedSales){const cp={...ds};delete cp.id;await db.add('sales',cp);}cachedSales = [];await renderSalesTable();deletedSales=[];});});});}
 
-        /**
-         * Форматирует дату для разделителя: "Сегодня", "Вчера", "25 июля", "13 июля 2025"
-         * @param {string} dateStr - YYYY-MM-DD
-         * @returns {string}
-         */
-        function formatDateDivider(dateStr) {
-            const d = new Date(dateStr + 'T00:00:00');
-            const now = new Date(); now.setHours(0,0,0,0);
-            const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-            const today = new Date(now);
-            const saleDate = new Date(d); saleDate.setHours(0,0,0,0);
-
-            if (saleDate.getTime() === today.getTime()) return 'сегодня';
-            if (saleDate.getTime() === yesterday.getTime()) return 'вчера';
-
-            const day = d.getDate();
-            const month = MONTHS[d.getMonth()];
-            const year = d.getFullYear();
-            const currentYear = new Date().getFullYear();
-
-            if (year === currentYear) return `${day} ${month}`;
-            return `${day} ${month} ${year}`;
-        }
+        function formatDateDivider(dateStr) { const d = new Date(dateStr + 'T00:00:00'); const now = new Date(); now.setHours(0,0,0,0); const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1); const today = new Date(now); const saleDate = new Date(d); saleDate.setHours(0,0,0,0); if (saleDate.getTime() === today.getTime()) return 'сегодня'; if (saleDate.getTime() === yesterday.getTime()) return 'вчера'; const day = d.getDate(); const month = MONTHS[d.getMonth()]; const year = d.getFullYear(); const currentYear = new Date().getFullYear(); if (year === currentYear) return `${day} ${month}`; return `${day} ${month} ${year}`; }
 
         async function renderSalesTable(){const allSales=await getFilteredSales();const totalPages=Math.ceil(allSales.length/PAGE_SIZE)||1;if(salesPage>totalPages)salesPage=totalPages;const start=(salesPage-1)*PAGE_SIZE;const pageSales=allSales.slice(start,start+PAGE_SIZE);const filterActive=hasActiveFilters();const filterBtnClass=filterActive?'active':'filter';
         let paginationHTML='';if(totalPages>1){paginationHTML=`<div class="pagination"><button onclick="goToSalesPage(${salesPage-1})" ${salesPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;for(let i=1;i<=totalPages;i++){if(i===1||i===totalPages||(i>=salesPage-1&&i<=salesPage+1)){paginationHTML+=`<button class="${i===salesPage?'active':''}" onclick="goToSalesPage(${i})">${i}</button>`;}else if(i===salesPage-2||i===salesPage+2){paginationHTML+=`<span class="page-info">...</span>`;}}paginationHTML+=`<button onclick="goToSalesPage(${salesPage+1})" ${salesPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;}
-        let salesHTML = '';
-        let currentDateGroup = '';
+        let salesHTML = ''; let currentDateGroup = '';
         for (const s of pageSales) {
             const dateLabel = formatDateDivider(s.date);
-            if (dateLabel !== currentDateGroup) {
-                currentDateGroup = dateLabel;
-                salesHTML += `<div class="date-divider"><span>${currentDateGroup}</span></div>`;
-            }
+            if (dateLabel !== currentDateGroup) { currentDateGroup = dateLabel; salesHTML += `<div class="date-divider"><span>${currentDateGroup}</span></div>`; }
             let noteClass='';if(s.note==='бронь')noteClass='booking';else if(s.note==='долг')noteClass='debt';else if(s.note==='приз')noteClass='prize';
-            salesHTML+=`<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesIsSelectMode())editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="salesToggleSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${s.product||'-'}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${s.note||'-'}</div></div></div>`;
+            const items = s.items || [];
+            let productDisplay = s.product || '-';
+            if (items.length > 1) { productDisplay = items[0].product + ' + ещё ' + (items.length - 1); } else if (items.length === 1) { productDisplay = items[0].product; }
+            const totalQty = items.length > 0 ? items.reduce((sum, it) => sum + (it.quantity || 0), 0) : (s.quantity || 0);
+            salesHTML+=`<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesIsSelectMode())editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="salesToggleSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client||'-'}</div><div class="sale-col">${productDisplay}</div><div class="sale-col qty">${totalQty}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${s.note||'-'}</div></div></div>`;
         }
         document.getElementById('contentBody').innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Продажи</h2><div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterBtnClass}" onclick="showFilterModal()"><i class="bi bi-funnel"></i> Фильтры</button>${filterActive?`<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i> Сбросить</button>`:''}</div><button class="round-add-btn" onclick="showAddSaleModal()">+</button></div><div class="sales-table-section"><div class="wh-header"><span style="font-weight:600;">${allSales.length} продаж</span><div class="wh-header-actions"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="salesExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash"></i> Удалить</button></div></div><div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p class="text-center text-muted py-4">Нет продаж</p>':salesHTML}${paginationHTML}</div>`;setTimeout(()=>{if(salesIsSelectMode())salesUpdateSelectUI();setupSalesSwipe();},50);}
         function goToSalesPage(p){salesPage=p;renderSalesTable();}
         function showFilterModal(){showModal('Фильтры','bi bi-funnel','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="flt_client" value="${salesFilter.client}" placeholder="Любое"></div><div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="flt_product" value="${salesFilter.product}" placeholder="Любой"></div><div class="form-group"><label class="form-label">Дата с</label><input type="date" class="form-input" id="flt_dateFrom" value="${salesFilter.dateFrom}"></div><div class="form-group"><label class="form-label">Дата по</label><input type="date" class="form-input" id="flt_dateTo" value="${salesFilter.dateTo}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="flt_note"><option value="">Все</option><option value="бронь" ${salesFilter.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${salesFilter.note==='долг'?'selected':''}>Долг</option><option value="приз" ${salesFilter.note==='приз'?'selected':''}>Приз</option><option value="без заметки" ${salesFilter.note==='без заметки'?'selected':''}>Без заметки</option></select></div>`,`<button class="btn btn-reset" onclick="resetFilters()">Сброс</button><button class="btn btn-save" onclick="applyFilters()">Применить</button>`);}
         function resetFilters(){salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''};cachedSales = []; salesPage=1;closeModal();renderSalesTable();}
         function applyFilters(){salesFilter.client=document.getElementById('flt_client').value.trim();salesFilter.product=document.getElementById('flt_product').value.trim();salesFilter.dateFrom=document.getElementById('flt_dateFrom').value;salesFilter.dateTo=document.getElementById('flt_dateTo').value;salesFilter.note=document.getElementById('flt_note').value;cachedSales = []; salesPage=1;closeModal();renderSalesTable();}
-        async function getProductListForSelect(currentProductName = null) {
-            const products = await db.all('products'); const names = new Map();
-            products.forEach(p => { if (p.manufacturer && p.lineup) { let name = p.manufacturer + ' ' + p.lineup; if (p.flavor) name += ' ' + p.flavor; if (p.color) name += ' ' + p.color; const inStock = (p.quantity || 0) > 0; if (inStock) { names.set(name, { name, inStock: true }); } else if (currentProductName && norm(name) === norm(currentProductName)) { names.set(name, { name, inStock: false }); } } });
-            return [...names.values()].sort((a, b) => a.name.localeCompare(b.name));
-        }
-        function setupComboBox(inputId, dropdownId, options) {
-            const input = document.getElementById(inputId); const dropdown = document.getElementById(dropdownId); if (!input || !dropdown) return;
-            const renderOptions = (filterText) => { const val = (filterText || input.value).toLowerCase(); let visible = 0; dropdown.querySelectorAll('.combo-option').forEach(opt => { if (val === '' || opt.textContent.toLowerCase().includes(val)) { opt.style.display = 'block'; visible++; } else { opt.style.display = 'none'; } }); dropdown.classList.toggle('open', visible > 0 && document.activeElement === input); };
-            input.addEventListener('input', () => renderOptions()); input.addEventListener('focus', () => renderOptions()); input.addEventListener('blur', () => { setTimeout(() => dropdown.classList.remove('open'), 200); });
-            dropdown.querySelectorAll('.combo-option').forEach(opt => { opt.addEventListener('click', () => { input.value = opt.getAttribute('data-name') || opt.textContent; dropdown.classList.remove('open'); onProductChange(input.value); }); });
-        }
-        let saleAutoCalc=true;let saleUnitPrice=0;let saleUnitCost=0;
-        function recalcTotal(){if(!saleAutoCalc)return;const qty=parseInt(document.getElementById('sale_quantity').value)||1;const totalInput=document.getElementById('sale_total');const note=document.getElementById('sale_note').value;if(note==='приз'){totalInput.value='0';return;}totalInput.value=(saleUnitPrice*qty).toFixed(2);}
-        async function onProductChange(val){if(val){const found=await findProductByName(val);if(!found){return;}if(found.quantity<=0){await showAlert('Товара нет на складе','error');document.getElementById('sale_product').value='';return;}if(found.selling){saleUnitPrice=found.selling;saleUnitCost=found.purchase||0;saleAutoCalc=true;recalcTotal();}}}
-        function onSaleNoteChange(){const note=document.getElementById('sale_note').value;const totalInput=document.getElementById('sale_total');if(note==='приз'){totalInput.value='0';totalInput.disabled=true;saleAutoCalc=false;}else{totalInput.disabled=false;saleAutoCalc=true;recalcTotal();}}
+        async function getProductListForSelect(currentProductName = null) { const products = await db.all('products'); const names = new Map(); products.forEach(p => { if (p.manufacturer && p.lineup) { let name = p.manufacturer + ' ' + p.lineup; if (p.flavor) name += ' ' + p.flavor; if (p.color) name += ' ' + p.color; const inStock = (p.quantity || 0) > 0; if (inStock) { names.set(name, { name, inStock: true }); } else if (currentProductName && norm(name) === norm(currentProductName)) { names.set(name, { name, inStock: false }); } } }); return [...names.values()].sort((a, b) => a.name.localeCompare(b.name)); }
+        function recalcTotal(){ if(!saleAutoCalc)return; const qty=parseInt(document.getElementById('sale_quantity')?.value)||1; const totalInput=document.getElementById('sale_total'); const note=document.getElementById('sale_note')?.value; if(note==='приз'){totalInput.value='0';return;} totalInput.value=(saleUnitPrice*qty).toFixed(2); }
+        async function onProductChange(val){if(val){const found=await findProductByName(val);if(!found){return;}if(found.quantity<=0){await showAlert('Товара нет на складе','error');return;}if(found.selling){saleUnitPrice=found.selling;saleUnitCost=found.purchase||0;saleAutoCalc=true;recalcTotal();}}}
+        function onSaleNoteChange(){const note=document.getElementById('sale_note')?.value;const totalInput=document.getElementById('sale_total');if(note==='приз'){if(totalInput){totalInput.value='0';totalInput.disabled=true;}saleAutoCalc=false;}else{if(totalInput)totalInput.disabled=false;saleAutoCalc=true;recalcTotal();}}
         async function checkPrizeProgress(clientName) { const allSales = await db.all('sales'); const clientSales = allSales.filter(s => norm(s.client) === norm(clientName)); const count = getLiquidCount(clientSales); if (count === 7) { showSnackbar(`${clientName} — 2 жижи до приза`); } else if (count === 8) { showSnackbar(`${clientName} — 1 жижа до приза`); } else if (count >= 9) { showSnackbar(`${clientName} — ПРИЗ 🎁`, null, true); } }
-        async function showAddSaleModal(sale=null){const isEdit=!!sale;saleAutoCalc=!isEdit;if(isEdit){const found=await findProductByName(sale.product);saleUnitPrice=found?found.selling:(sale.quantity>0?Math.round(sale.total/sale.quantity):0);saleUnitCost=found?found.purchase||0:0;}else{saleUnitPrice=0;saleUnitCost=0;}const currentProductName = sale ? sale.product : null;const productList = await getProductListForSelect(currentProductName);const productOptions = productList.map(p => { const cls = p.inStock ? '' : ' out-of-stock'; const label = p.inStock ? p.name : `${p.name} (нет в наличии)`; return `<div class="combo-option${cls}" data-name="${p.name.replace(/"/g, '&quot;')}">${label}</div>`; }).join('');const saveBtnText=isEdit?'Сохранить':'Добавить';showModal(isEdit?'Редактировать продажу':'Добавить продажу','bi bi-cart3','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="sale_client" value="${sale?.client||''}"></div><div class="form-group"><label class="form-label">Товар</label><div class="combo-box"><input type="text" class="form-input" id="sale_product" value="${sale?.product||''}" placeholder="Начните вводить..." autocomplete="off"><i class="bi bi-chevron-down combo-arrow"></i><div class="combo-dropdown" id="combo_dropdown">${productOptions}</div></div></div><div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="sale_quantity" value="${sale?.quantity||1}" min="1" onchange="recalcTotal()" oninput="saleAutoCalc=true;recalcTotal()"></div><div class="form-group"><label class="form-label">Сумма (₽)</label><input type="number" class="form-input" id="sale_total" value="${sale?.total||''}" ${sale?.note==='приз'?'disabled':''} step="0.01" oninput="saleAutoCalc=false"></div><div class="form-group"><label class="form-label">Дата</label><input type="date" class="form-input" id="sale_date" value="${sale?.date||new Date().toISOString().split('T')[0]}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="sale_note" onchange="onSaleNoteChange()"><option value="без заметки" ${(sale?.note||'без заметки')==='без заметки'?'selected':''}>Без заметки</option><option value="бронь" ${sale?.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${sale?.note==='долг'?'selected':''}>Долг</option><option value="приз" ${sale?.note==='приз'?'selected':''}>Приз</option></select></div><input type="hidden" id="sale_id" value="${sale?.id||''}">`,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>${isEdit?`<button class="btn btn-delete" onclick="deleteSaleFromModal()">Удалить</button>`:''}<button class="btn btn-save" onclick="saveSale()">${saveBtnText}</button>`);setTimeout(()=>{setupComboBox('sale_product','combo_dropdown',productList);},50);if(sale?.note==='приз'){setTimeout(()=>{const ti=document.getElementById('sale_total');if(ti){ti.value='0';ti.disabled=true;}},50);}}
-        async function saveSale(){const id=document.getElementById('sale_id').value;const note=document.getElementById('sale_note').value;const product=document.getElementById('sale_product').value.trim();const total=note==='приз'?0:(parseFloat(document.getElementById('sale_total').value)||0);const quantity=parseInt(document.getElementById('sale_quantity').value)||1;const client=document.getElementById('sale_client').value.trim();if(!client||!product){await showAlert('Заполните имя и товар','error');return;}const foundProduct=await findProductByName(product);if(!foundProduct){await showAlert('Товар не найден в складе','error');return;}if(!id&&foundProduct.quantity<=0){await showAlert('Товара нет на складе','error');return;}if(!id&&quantity>foundProduct.quantity){await showAlert('Недостаточно товара на складе','error');return;}const cost=(foundProduct.purchase||0)*quantity;const profit=total-cost;const category=foundProduct.category||'liquid';const sale={client:client,product:product,quantity:quantity,total:total,date:document.getElementById('sale_date').value,note:note==='без заметки'?'':note,cost:cost,profit:profit,category:category,items:[]};if(!id&&quantity>0){foundProduct.quantity=Math.max(0,(foundProduct.quantity||0)-quantity);await db.pu('products',foundProduct);cachedProducts = [];}if(id){sale.id=parseInt(id);await db.pu('sales',sale);}else{await db.add('sales',sale);}cachedSales = []; cachedClientStats = []; await autoAddClient(client);closeModal();salesPage=1;await renderSalesTable(); await checkPrizeProgress(client); }
+
+        // ============ МУЛЬТИТОВАРНАЯ МОДАЛКА ============
+        let saleModalItems = [];
+        let saleModalProductList = [];
+
+        function addItemToSaleList() {
+            const sel = document.getElementById('saleItemSelect');
+            if (!sel || !sel.value) return;
+            const productName = sel.value;
+            if (saleModalItems.some(it => it.product === productName)) { showSnackbar('Этот товар уже добавлен'); return; }
+            const found = saleModalProductList.find(p => p.name === productName);
+            if (!found || !found.inStock) { showSnackbar('Товара нет в наличии'); return; }
+            saleModalItems.push({ product: productName, quantity: 1, price: found.selling || 0 });
+            sel.value = '';
+            renderSaleItemsList();
+            updateSaleTotal();
+        }
+
+        function removeItemFromSaleList(index) {
+            saleModalItems.splice(index, 1);
+            renderSaleItemsList();
+            updateSaleTotal();
+        }
+
+        function updateItemField(index, field, value) {
+            if (index < 0 || index >= saleModalItems.length) return;
+            if (field === 'quantity') { const q = parseInt(value) || 1; saleModalItems[index].quantity = Math.max(1, q); }
+            if (field === 'price') { const p = parseFloat(value) || 0; saleModalItems[index].price = Math.max(0, p); }
+            updateSaleTotal();
+        }
+
+        function updateSaleTotal() {
+            const totalEl = document.getElementById('saleTotalDisplay');
+            if (!totalEl) return;
+            const total = saleModalItems.reduce((sum, it) => sum + it.quantity * it.price, 0);
+            totalEl.textContent = fn(total) + '₽';
+        }
+
+        function renderSaleItemsList() {
+            const container = document.getElementById('saleItemsContainer');
+            if (!container) return;
+            if (saleModalItems.length === 0) { container.innerHTML = '<div class="text-muted text-center py-2" style="font-size:13px;">Нет добавленных товаров</div>'; return; }
+            container.innerHTML = saleModalItems.map((item, i) => `
+                <div class="sale-item-card">
+                    <div class="sale-item-row">
+                        <span class="sale-item-product">${item.product}</span>
+                        <button class="sale-item-remove" onclick="removeItemFromSaleList(${i})" title="Удалить"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="sale-item-row">
+                        <div class="sale-item-qty"><input type="number" value="${item.quantity}" min="1" onchange="updateItemField(${i},'quantity',this.value)" oninput="updateItemField(${i},'quantity',this.value)"></div>
+                        <div class="sale-item-price"><input type="number" value="${item.price}" min="0" step="0.01" onchange="updateItemField(${i},'price',this.value)" oninput="updateItemField(${i},'price',this.value)"></div>
+                        <span class="sale-item-sum">${fn(item.quantity * item.price)}₽</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupItemSelectComboBox() {
+            const input = document.getElementById('saleItemSelect');
+            const dropdown = document.getElementById('itemSelectDropdown');
+            if (!input || !dropdown) return;
+            const renderOptions = (filterText) => { const val = (filterText || input.value).toLowerCase(); let visible = 0; dropdown.querySelectorAll('.combo-option').forEach(opt => { if (val === '' || opt.textContent.toLowerCase().includes(val)) { opt.style.display = 'block'; visible++; } else { opt.style.display = 'none'; } }); dropdown.classList.toggle('open', visible > 0 && document.activeElement === input); };
+            input.addEventListener('input', () => renderOptions());
+            input.addEventListener('focus', () => renderOptions());
+            input.addEventListener('blur', () => { setTimeout(() => dropdown.classList.remove('open'), 200); });
+            dropdown.querySelectorAll('.combo-option').forEach(opt => { opt.addEventListener('click', () => { input.value = opt.getAttribute('data-name') || opt.textContent; dropdown.classList.remove('open'); }); });
+            input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addItemToSaleList(); } });
+        }
+
+        async function showAddSaleModal(sale=null){
+            const isEdit=!!sale;
+            if(isEdit){
+                saleModalItems = (sale.items && sale.items.length > 0) ? sale.items.map(it => ({ product: it.product, quantity: it.quantity, price: it.price })) : [{ product: sale.product, quantity: sale.quantity, price: sale.total / Math.max(1, sale.quantity) }];
+            } else {
+                saleModalItems = [];
+            }
+            const currentProductName = sale ? sale.product : null;
+            saleModalProductList = await getProductListForSelect(currentProductName);
+            const productOptions = saleModalProductList.map(p => { const cls = p.inStock ? '' : ' out-of-stock'; const label = p.inStock ? p.name : `${p.name} (нет в наличии)`; return `<div class="combo-option${cls}" data-name="${p.name.replace(/"/g, '&quot;')}">${label}</div>`; }).join('');
+            const saveBtnText=isEdit?'Сохранить':'Добавить';
+            showModal(isEdit?'Редактировать продажу':'Добавить продажу','bi bi-cart3','var(--accent)',
+                `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="sale_client" value="${sale?.client||''}"></div>
+                <div class="form-group"><label class="form-label">Товары</label>
+                    <div class="sale-items-container" id="saleItemsContainer"></div>
+                    <div class="item-selector-row">
+                        <div class="combo-box" style="flex:1;"><input type="text" class="form-input" id="saleItemSelect" placeholder="Выберите товар..." autocomplete="off"><i class="bi bi-chevron-down combo-arrow"></i><div class="combo-dropdown" id="itemSelectDropdown">${productOptions}</div></div>
+                        <button class="btn-confirm" onclick="addItemToSaleList()">+</button>
+                    </div>
+                </div>
+                <div class="sale-total-summary"><span class="total-label">Общая сумма:</span><span class="total-value" id="saleTotalDisplay">0₽</span></div>
+                <div class="form-group"><label class="form-label">Дата</label><input type="date" class="form-input" id="sale_date" value="${sale?.date||new Date().toISOString().split('T')[0]}"></div>
+                <div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="sale_note" onchange="onSaleNoteChange()"><option value="без заметки" ${(sale?.note||'без заметки')==='без заметки'?'selected':''}>Без заметки</option><option value="бронь" ${sale?.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${sale?.note==='долг'?'selected':''}>Долг</option><option value="приз" ${sale?.note==='приз'?'selected':''}>Приз</option></select></div>
+                <input type="hidden" id="sale_id" value="${sale?.id||''}">`,
+                `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>${isEdit?`<button class="btn btn-delete" onclick="deleteSaleFromModal()">Удалить</button>`:''}<button class="btn btn-save" onclick="saveSale()">${saveBtnText}</button>`);
+            setTimeout(()=>{ renderSaleItemsList(); updateSaleTotal(); setupItemSelectComboBox(); },50);
+        }
+
+        async function saveSale(){
+            const id=document.getElementById('sale_id').value;
+            const note=document.getElementById('sale_note').value;
+            const client=document.getElementById('sale_client').value.trim();
+            const date=document.getElementById('sale_date').value;
+            if(!client){await showAlert('Введите имя клиента','error');return;}
+            if(saleModalItems.length===0){await showAlert('Добавьте хотя бы один товар','error');return;}
+
+            const items = [];
+            let totalCost = 0;
+            let totalProfit = 0;
+            let mainProduct = '';
+            let mainCategory = 'liquid';
+
+            for (const item of saleModalItems) {
+                if (!item.product || item.quantity < 1) { await showAlert('Проверьте все товары','error'); return; }
+                const found = await findProductByName(item.product);
+                if (!found) { await showAlert(`Товар "${item.product}" не найден на складе`,'error'); return; }
+                if (found.quantity < item.quantity) { await showAlert(`Недостаточно "${item.product}" на складе (есть ${found.quantity})`,'error'); return; }
+                const cost = (found.purchase || 0) * item.quantity;
+                const profit = item.quantity * item.price - cost;
+                items.push({ product: item.product, quantity: item.quantity, price: item.price, cost, profit, category: found.category });
+                totalCost += cost;
+                totalProfit += profit;
+                if (!mainProduct) { mainProduct = item.product; mainCategory = found.category; }
+            }
+
+            if (note === 'приз') {
+                items.forEach(it => { it.price = 0; it.profit = -it.cost; });
+                totalProfit = items.reduce((s, it) => s + it.profit, 0);
+            }
+
+            const total = note === 'приз' ? 0 : items.reduce((s, it) => s + it.quantity * it.price, 0);
+            const sale = { client, product: mainProduct, quantity: items.reduce((s,it)=>s+it.quantity,0), total, date, note: note==='без заметки'?'':note, cost: totalCost, profit: totalProfit, category: mainCategory, items };
+
+            for (const item of saleModalItems) { const found = await findProductByName(item.product); if (found) { found.quantity = Math.max(0, (found.quantity || 0) - item.quantity); await db.pu('products', found); } }
+            cachedProducts = [];
+            if (id) { sale.id = parseInt(id); await db.pu('sales', sale); } else { await db.add('sales', sale); }
+            cachedSales = []; cachedClientStats = []; await autoAddClient(client);
+            closeModal(); salesPage=1; await renderSalesTable(); await checkPrizeProgress(client);
+        }
+
         async function editSale(sid){const s=await db.g('sales',sid);if(!s)return;showAddSaleModal(s);}
         async function deleteSaleFromModal(){const confirmed=await showConfirm('Удалить продажу?');if(!confirmed)return;const id=document.getElementById('sale_id').value;await db.del('sales',parseInt(id));cachedSales = []; cachedClientStats = []; closeModal();salesPage=1;await renderSalesTable();}
 
@@ -265,7 +381,7 @@
         let clientsSearch='',clientsPage=1,clientsFilter='all';
         let cachedClientStats = [];
         function isLeaving(lastDate){if(!lastDate||lastDate==='-')return false;return(new Date()-new Date(lastDate))/86400000>30;}
-        function getLiquidCount(clientSales){let count=0;const sorted=[...clientSales].sort((a,b)=>a.date.localeCompare(b.date));for(const s of sorted){if(s.note==='приз'){count=0;continue;}if(s.category==='liquid')count+=s.quantity||0;if(count>=9)count=9;}return count;}
+        function getLiquidCount(clientSales){let count=0;const sorted=[...clientSales].sort((a,b)=>a.date.localeCompare(b.date));for(const s of sorted){if(s.note==='приз'){count=0;continue;}const items = s.items || []; if (items.length > 0) { for (const it of items) { if (it.category === 'liquid') count += it.quantity || 0; } } else { if (s.category === 'liquid') count += s.quantity || 0; } if (count >= 9) count = 9; } return count; }
         async function getClientStats(){if(cachedClientStats.length > 0) return cachedClientStats; const clients=await db.all('clients');const sales=await db.all('sales');const stats=[];for(const c of clients){const clientSales=sales.filter(s=>norm(s.client)===norm(c.name));clientSales.sort((a,b)=>b.date.localeCompare(a.date));const totalSum=clientSales.reduce((s,x)=>s+(x.total||0),0);const lastSale=clientSales[0]||null;const firstSale=clientSales[clientSales.length-1]||null;const liquidCount=getLiquidCount(clientSales);stats.push({id:c.id,name:c.name,created:c.created||(firstSale?firstSale.date:'-'),count:clientSales.length,lastDate:lastSale?lastSale.date:'-',totalSum:totalSum,liquidCount:liquidCount,leaving:isLeaving(lastSale?lastSale.date:null)});}stats.sort((a,b)=>b.lastDate.localeCompare(a.lastDate));cachedClientStats = stats; return stats;}
         async function renderClientsTableContent() { let stats = await getClientStats(); const searchValue = document.getElementById('clientsSearch')?.value || ''; if (searchValue) { const q = searchValue.toLowerCase(); stats = stats.filter(s => s.name.toLowerCase().includes(q)); } if (clientsFilter === 'leaving') { stats = stats.filter(s => s.leaving); } const totalPages = Math.ceil(stats.length / PAGE_SIZE) || 1; if (clientsPage > totalPages) clientsPage = totalPages; const start = (clientsPage - 1) * PAGE_SIZE; const pageStats = stats.slice(start, start + PAGE_SIZE); let paginationHTML = ''; if (totalPages > 1) { paginationHTML = `<div class="pagination"><button onclick="goToClientsPage(${clientsPage - 1})" ${clientsPage <= 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`; for (let i = 1; i <= totalPages; i++) { if (i === 1 || i === totalPages || (i >= clientsPage - 1 && i <= clientsPage + 1)) { paginationHTML += `<button class="${i === clientsPage ? 'active' : ''}" onclick="goToClientsPage(${i})">${i}</button>`; } else if (i === clientsPage - 2 || i === clientsPage + 2) { paginationHTML += `<span class="page-info">...</span>`; } } paginationHTML += `<button onclick="goToClientsPage(${clientsPage + 1})" ${clientsPage >= totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${clientsPage}/${totalPages}</span></div>`; } const tableArea = document.getElementById('clientsTableContent'); if (tableArea) { tableArea.innerHTML = `<div class="client-table-header"><div class="client-col">Имя</div><div class="client-col">Дата</div><div class="client-col prize-progress">До приза</div><div class="client-col">Последняя покупка</div><div class="client-col price">Общая сумма</div></div>${pageStats.length === 0 ? '<p class="text-center text-muted py-4">Нет клиентов</p>' : pageStats.map(s => { const prizeText = s.liquidCount >= 9 ? '<span class="prize-complete">🎁</span>' : `<span class="prize-text">${s.liquidCount}/9</span>`; const prizeClass = s.liquidCount >= 9 ? ' prize-ready' : ''; return `<div class="client-row ${s.leaving ? 'leaving' : ''}${prizeClass}" onclick="showClientModal(${s.id},'${s.name.replace(/'/g, "\\'")}')"><div class="client-col">${s.name}</div><div class="client-col">${fmtDate(s.created)}</div><div class="client-col prize-progress">${prizeText}</div><div class="client-col">${fmtDate(s.lastDate)}</div><div class="client-col price">${fn(s.totalSum)}₽</div></div>`; }).join('')}${paginationHTML}`; } }
         async function renderClientsTable() { const leavingBtnClass = clientsFilter === 'leaving' ? 'active' : 'filter'; document.getElementById('contentBody').innerHTML = `<h2 class="tab-title" onclick="openSidebar()">Клиенты</h2><div class="clients-header"><div class="clients-header-left"><button class="sales-header-btn ${leavingBtnClass}" id="clientsFilterBtn" onclick="toggleClientsFilter()"><i class="bi bi-person-dash"></i> Уходящие</button></div><button class="round-add-btn" onclick="showAddClientModal()">+</button></div><div class="search-wrapper"><input type="text" class="search-input" id="clientsSearch" placeholder="Поиск по имени..." value="${clientsSearch}" oninput="renderClientsTableContent()" autocomplete="off"></div><div class="clients-table-section" id="clientsTableContent"></div>`; await renderClientsTableContent(); }
