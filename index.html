@@ -94,11 +94,10 @@
 
     <script>
         // ============ ИСПРАВЛЕНИЯ В ЭТОЙ ВЕРСИИ ============
-        // 1. Массовое изменение цены через редактирование группы теперь работает корректно
-        // 2. Поля закупки и продажи показывают текущие значения группы
-        // 3. Добавлена проверка на валидность чисел
-        // 4. Кнопка "Удалить" в модалке продажи исправлена
-        // 5. Проверка на дубликат клиента при ручном добавлении и импорте
+        // 1. Статистика по категориям корректно учитывает все товары в продаже (items)
+        // 2. Категории суммируются по profit (режим "Сумма") и по quantity (режим "Кол-во")
+        // 3. Обратная совместимость: старые продажи без items учитываются как раньше
+        // 4. Все предыдущие исправления сохранены
 
         const GROUP_DATA = {};
         const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 42;
@@ -151,7 +150,37 @@
         async function getSalesInRange2(s,e){const a=await db.all('sales');return a.filter(x=>x.date>=s&&x.date<=e);}
         function gdd(s,e){return Math.ceil((new Date(e)-new Date(s))/86400000)+1;}
         function getDailyData(sales,s,e){const sm=gdd(s,e)>31,m=new Map();sales.forEach(x=>{const d=new Date(x.date);let k;if(sm){k=`${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear().toString().slice(2)}`;}else{k=`${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`;}m.set(k,(m.get(k)||0)+(x.profit||0));});return[...m.keys()].sort((a,b)=>{const[pa,pb]=[a.split('.'),b.split('.')];if(sm){return(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}else{return(pa[1]+pa[0]).localeCompare(pb[1]+pb[0]);}}).map(k=>({label:k,value:m.get(k)}));}
-        function getCategoryData(sales,mode){const map={};CATEGORIES.forEach(c=>map[c]=0);sales.forEach(x=>{const cat=x.category||'liquid';if(map[cat]!==undefined){map[cat]+=(mode==='sum'?(x.profit||0):1);}});return CATEGORIES.map(c=>({category:c,name:CATEGORY_NAMES[c],value:map[c]||0}));}
+
+        /**
+         * Группирует продажи по категориям с учётом items (мультитоварные продажи)
+         * @param {Sale[]} sales
+         * @param {'sum'|'count'} mode
+         * @returns {Array<{category: string, name: string, value: number}>}
+         */
+        function getCategoryData(sales,mode){
+            const map={};
+            CATEGORIES.forEach(c=>map[c]=0);
+            sales.forEach(x=>{
+                const items = x.items || [];
+                if (items.length > 0) {
+                    // Мультитоварная продажа — суммируем по категориям из items
+                    for (const it of items) {
+                        const cat = it.category || 'liquid';
+                        if (map[cat] !== undefined) {
+                            map[cat] += (mode === 'sum' ? (it.profit || 0) : (it.quantity || 0));
+                        }
+                    }
+                } else {
+                    // Старая продажа с одним товаром
+                    const cat = x.category || 'liquid';
+                    if (map[cat] !== undefined) {
+                        map[cat] += (mode === 'sum' ? (x.profit || 0) : 1);
+                    }
+                }
+            });
+            return CATEGORIES.map(c=>({category:c,name:CATEGORY_NAMES[c],value:map[c]||0}));
+        }
+
         function ssd(p,s,e){if(p==='today')return false;if(p==='custom')return gdd(s,e)>=2;return true;}
         async function getNewClientsCount(s, e) { const allSales = await db.all('sales'); const clientFirstSale = new Map(); for (const sale of allSales) { const name = norm(sale.client); if (!name) continue; if (!clientFirstSale.has(name) || sale.date < clientFirstSale.get(name)) { clientFirstSale.set(name, sale.date); } } let count = 0; for (const [name, date] of clientFirstSale) { if (date >= s && date <= e) count++; } return count; }
         async function getLeavingClientsCount() { const allSales = await db.all('sales'); const clientLastSale = new Map(); for (const sale of allSales) { const name = norm(sale.client); if (!name) continue; if (!clientLastSale.has(name) || sale.date > clientLastSale.get(name)) { clientLastSale.set(name, sale.date); } } const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30); const threshold = thirtyDaysAgo.toISOString().split('T')[0]; let count = 0; for (const [name, date] of clientLastSale) { if (date < threshold) count++; } return count; }
@@ -194,7 +223,6 @@
         function showEditGroupModal(cat, level, keys) {
             const gb=CATEGORY_GROUPS[cat];const fieldName=gb[level];const fieldLabel=COL_LABELS[fieldName]||fieldName;
             const oldValue=keys[keys.length-1];const isLastLevel=(level+1>=gb.length);
-            // Находим первый товар группы для отображения текущих цен
             const allP = cachedProducts.length > 0 ? cachedProducts : [];
             const groupProducts = allP.filter(p => p.category === cat && keys.every((k, i) => norm(p[gb[i]]) === norm(k)));
             const firstProduct = groupProducts[0];
@@ -312,4 +340,4 @@
         document.addEventListener('DOMContentLoaded',init);
     </script>
 </body>
-</html> 
+</html>
