@@ -359,8 +359,8 @@
 
         const CATEGORIES = ['liquid','supplies','pods','disposable','snus'];
         const CATEGORY_NAMES = {'liquid':'Жидкости','supplies':'Расходники','pods':'Поды','disposable':'Одноразки','snus':'Снюс'};
-        // FIX: bi-flask-florence не существует в Bootstrap Icons 1.11.3 — используем bi-flask
-        const CATEGORY_ICONS = {'liquid':'bi-flask','supplies':'bi-nut','pods':'bi-pc','disposable':'bi-highlighter','snus':'bi-life-preserver'};
+        // Иконки, точно существующие в Bootstrap Icons 1.11.3
+        const CATEGORY_ICONS = {'liquid':'bi-droplet-fill','supplies':'bi-nut','pods':'bi-pc','disposable':'bi-highlighter','snus':'bi-life-preserver'};
         const CATEGORY_CLASS = {'liquid':'liquid','supplies':'supplies','pods':'pods','disposable':'disposable','snus':'snus'};
         const CATEGORY_EXTRA_FIELDS = {'liquid':[{key:'flavor',label:'Вкус'}],'supplies':[],'pods':[{key:'color',label:'Цвет'}],'disposable':[{key:'flavor',label:'Вкус'}],'snus':[{key:'flavor',label:'Вкус'}]};
         const CATEGORY_TABLE_COLS = {'liquid':['flavor','quantity','purchase','selling'],'supplies':['lineup','quantity','purchase','selling'],'pods':['color','quantity','purchase','selling'],'disposable':['flavor','quantity','purchase','selling'],'snus':['flavor','quantity','purchase','selling']};
@@ -372,7 +372,6 @@
         const STOCK_FILTER_ICONS = { all: 'bi-box-seam', in_stock: 'bi-check-circle-fill', out_of_stock: 'bi-x-circle-fill' };
         const STOCK_FILTER_MODES = ['all', 'in_stock', 'out_of_stock'];
 
-        // Иконка подарка — везде используется это, никаких эмодзи
         function giftIcon() { return '<i class="bi bi-gift-fill prize-gift"></i>'; }
         function giftIconSnackbar() { return '<i class="bi bi-gift-fill"></i>'; }
 
