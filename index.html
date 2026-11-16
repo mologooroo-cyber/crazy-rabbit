@@ -362,10 +362,10 @@
         // Иконки, точно существующие в Bootstrap Icons 1.11.3
         const CATEGORY_ICONS = {'liquid':'bi-droplet-fill','supplies':'bi-nut','pods':'bi-pc','disposable':'bi-highlighter','snus':'bi-life-preserver'};
         const CATEGORY_CLASS = {'liquid':'liquid','supplies':'supplies','pods':'pods','disposable':'disposable','snus':'snus'};
-        const CATEGORY_EXTRA_FIELDS = {'liquid':[],'supplies':[],'pods':[],'disposable':[],'snus':[]};
-        const CATEGORY_TABLE_COLS = {'liquid':['quantity','purchase','selling'],'supplies':['lineup','quantity','purchase','selling'],'pods':['quantity','purchase','selling'],'disposable':['quantity','purchase','selling'],'snus':['quantity','purchase','selling']};
+        const CATEGORY_EXTRA_FIELDS = {liquid:[],supplies:[],pods:[],disposable:[],snus:[]};
+        const CATEGORY_TABLE_COLS = {'liquid':['quantity','purchase','selling'],'supplies':['quantity','purchase','selling'],'pods':['quantity','purchase','selling'],'disposable':['quantity','purchase','selling'],'snus':['quantity','purchase','selling']};
         const COL_LABELS = {'manufacturer':'Производитель','lineup':'Линейка','quantity':'Кол-во','purchase':'Закупка','selling':'Продажа'};
-        const CATEGORY_GROUPS = {'liquid':['manufacturer','lineup'],'supplies':['manufacturer'],'pods':['manufacturer','lineup'],'disposable':['manufacturer','lineup'],'snus':['manufacturer','lineup']};
+        const CATEGORY_GROUPS = {'liquid':['manufacturer'],'supplies':['manufacturer'],'pods':['manufacturer'],'disposable':['manufacturer'],'snus':['manufacturer']};
         const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 
         let stockFilter = 'all';
@@ -391,7 +391,9 @@
         function vibrate(pattern) { if (navigator.vibrate) { try { navigator.vibrate(pattern); } catch(e) {} } }
         function showSkeleton(type) { if(type==='statistics')return`<h2 class="tab-title"><span class="tab-title-icon"><i class="bi bi-file-bar-graph"></i></span>Статистика</h2><div class="stats-cards"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div><div class="summary-row"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div><div class="skeleton skeleton-chart"></div><div class="skeleton skeleton-chart"></div>`;if(type==='warehouse')return`<h2 class="tab-title"><span class="tab-title-icon"><i class="bi bi-boxes"></i></span>Склад</h2><div class="warehouse-cards">${[...Array(5)].map(()=>'<div class="skeleton skeleton-card"></div>').join('')}</div>`;if(type==='sales'||type==='clients')return`<h2 class="tab-title"><span class="tab-title-icon"><i class="bi ${type==='sales'?'bi-bag-check':'bi-people'}"></i></span>${type==='sales'?'Продажи':'Клиенты'}</h2><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div>`;return''; }
         document.addEventListener('selectstart', function(e) { if (e.target.closest('.warehouse-table-section')||e.target.closest('.sales-table-section')||e.target.closest('.clients-table-section')) { e.preventDefault(); } });
-        async function findProductByName(productName) { const products = await db.all('products'); return products.find(p => { const name = (p.manufacturer + ' ' + p.lineup + (p.flavor ? ' ' + p.flavor : '') + (p.color ? ' ' + p.color : '')).trim(); return name === productName || norm(name) === norm(productName); }); }
+        async function findProductByName(productName) {
+        const products = await db.all('products');
+        return products.find(p => norm(p.manufacturer + ' ' + p.lineup) === norm(productName));}
         async function clientExists(clientName) { const clients = await db.all('clients'); return clients.some(c => norm(c.name) === norm(clientName)); }
         async function autoAddClient(clientName) { if (!clientName.trim()) return; const exists = await clientExists(clientName); if (!exists) { await db.add('clients', { name: clientName.trim(), created: new Date().toISOString().split('T')[0] }); } }
         function animateValue(element, start, end, duration, suffix) { if (Math.abs(start-end) < 0.001){element.textContent=fn(end)+suffix;return;} const startTime=performance.now(); function update(currentTime){const elapsed=currentTime-startTime;const progress=Math.min(elapsed/duration,1);const eased=1-Math.pow(1-progress,3);const current=start+(end-start)*eased; element.textContent=fn(current)+suffix; if(progress<1)requestAnimationFrame(update);} requestAnimationFrame(update); }
