@@ -523,7 +523,22 @@
         function showFilterModal(){showModal('Фильтры','bi-funnel-fill','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="flt_client" value="${salesFilter.client}" placeholder="Любое"></div><div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="flt_product" value="${salesFilter.product}" placeholder="Любой"></div><div class="form-group"><label class="form-label">Дата с</label><input type="date" class="form-input" id="flt_dateFrom" value="${salesFilter.dateFrom}"></div><div class="form-group"><label class="form-label">Дата по</label><input type="date" class="form-input" id="flt_dateTo" value="${salesFilter.dateTo}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="flt_note"><option value="">Все</option><option value="бронь" ${salesFilter.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${salesFilter.note==='долг'?'selected':''}>Долг</option><option value="приз" ${salesFilter.note==='приз'?'selected':''}>Приз</option><option value="без заметки" ${salesFilter.note==='без заметки'?'selected':''}>Без заметки</option></select></div>`,`<button class="btn btn-reset" onclick="resetFilters()">Сброс</button><button class="btn btn-save" onclick="applyFilters()">Применить</button>`);}
         function resetFilters(){salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''};cachedSales=[];salesPage=1;closeModal();renderSalesTable();}
         function applyFilters(){salesFilter.client=document.getElementById('flt_client').value.trim();salesFilter.product=document.getElementById('flt_product').value.trim();salesFilter.dateFrom=document.getElementById('flt_dateFrom').value;salesFilter.dateTo=document.getElementById('flt_dateTo').value;salesFilter.note=document.getElementById('flt_note').value;cachedSales=[];salesPage=1;closeModal();renderSalesTable();}
-        async function getProductListForSelect(currentProductName=null){const products=await db.all('products');const productMap=new Map();products.forEach(p=>{if(p.manufacturer&&p.lineup){let name=p.manufacturer+' '+p.lineup;if(p.flavor)name+=' '+p.flavor;if(p.color)name+=' '+p.color;const inStock=(p.quantity||0)>0;if(inStock){productMap.set(name,{name,inStock:true,selling:p.selling||0});}else if(currentProductName&&norm(name)===norm(currentProductName)){productMap.set(name,{name,inStock:false,selling:p.selling||0});}}});return[...productMap.values()].sort((a,b)=>a.name.localeCompare(b.name));}
+        async function getProductListForSelect(currentProductName=null){
+            const products = await db.all('products');
+            const productMap = new Map();
+            products.forEach(p=>{
+                if(p.manufacturer && p.lineup){
+                    const name = p.manufacturer + ' ' + p.lineup;
+                    const inStock = (p.quantity||0) > 0;
+                    if(inStock){
+                        productMap.set(name,{name,inStock:true,selling:p.selling||0});
+                    } else if(currentProductName && norm(name)===norm(currentProductName)){
+                        productMap.set(name,{name,inStock:false,selling:p.selling||0});
+                    }
+                }
+            });
+            return [...productMap.values()].sort((a,b)=>a.name.localeCompare(b.name));
+        }
         function addItemToSaleList(){const sel=document.getElementById('saleItemSelect');if(!sel||!sel.value)return;const productName=sel.value;if(saleModalItems.some(it=>it.product===productName)){showSnackbar('Этот товар уже добавлен');return;}const found=saleModalProductList.find(p=>p.name===productName);if(!found||!found.inStock){showSnackbar('Товара нет в наличии');return;}saleModalItems.push({product:productName,quantity:1,price:found.selling||0});sel.value='';renderSaleItemsList();updateSaleTotal();}
         function removeItemFromSaleList(index){saleModalItems.splice(index,1);renderSaleItemsList();updateSaleTotal();}
         function updateItemField(index,field,value){if(index<0||index>=saleModalItems.length)return;if(field==='quantity'){const q=parseInt(value)||1;saleModalItems[index].quantity=Math.max(1,q);}if(field==='price'){const p=parseFloat(value)||0;saleModalItems[index].price=Math.max(0,p);}updateSaleTotal();}
