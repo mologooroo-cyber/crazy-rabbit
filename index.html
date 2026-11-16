@@ -362,15 +362,9 @@
         // Иконки, точно существующие в Bootstrap Icons 1.11.3
         const CATEGORY_ICONS = {'liquid':'bi-droplet-fill','supplies':'bi-nut','pods':'bi-pc','disposable':'bi-highlighter','snus':'bi-life-preserver'};
         const CATEGORY_CLASS = {'liquid':'liquid','supplies':'supplies','pods':'pods','disposable':'disposable','snus':'snus'};
-        const CATEGORY_EXTRA_FIELDS = {'liquid':[{key:'flavor',label:'Вкус'}],'supplies':[],'pods':[{key:'color',label:'Цвет'}],'disposable':[{key:'flavor',label:'Вкус'}],'snus':[{key:'flavor',label:'Вкус'}]};
-        const CATEGORY_TABLE_COLS = {
-  'liquid':['quantity','purchase','selling'],
-  'supplies':['lineup','quantity','purchase','selling'],
-  'pods':['quantity','purchase','selling'],
-  'disposable':['quantity','purchase','selling'],
-  'snus':['quantity','purchase','selling']
-};
-        const COL_LABELS = {'manufacturer':'Производитель','lineup':'Линейка','flavor':'Вкус','color':'Цвет','quantity':'Кол-во','purchase':'Закупка','selling':'Продажа'};
+        const CATEGORY_EXTRA_FIELDS = {'liquid':[],'supplies':[],'pods':[],'disposable':[],'snus':[]};
+        const CATEGORY_TABLE_COLS = {'liquid':['quantity','purchase','selling'],'supplies':['lineup','quantity','purchase','selling'],'pods':['quantity','purchase','selling'],'disposable':['quantity','purchase','selling'],'snus':['quantity','purchase','selling']};
+        const COL_LABELS = {'manufacturer':'Производитель','lineup':'Линейка','quantity':'Кол-во','purchase':'Закупка','selling':'Продажа'};
         const CATEGORY_GROUPS = {'liquid':['manufacturer','lineup'],'supplies':['manufacturer'],'pods':['manufacturer','lineup'],'disposable':['manufacturer','lineup'],'snus':['manufacturer','lineup']};
         const MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 
