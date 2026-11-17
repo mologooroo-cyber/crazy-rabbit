@@ -354,7 +354,71 @@
     <script>
     const GROUP_DATA = {};
     const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 43;
-    class Database { constructor() { this.db = null; } async init() { return new Promise((resolve, reject) => { const r = indexedDB.open(DB_NAME, DB_VERSION); r.onerror = () => reject(r.error); r.onsuccess = () => { this.db = r.result; resolve(); }; r.onupgradeneeded = (e) => { const d = e.target.result; if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' }); if (!d.objectStoreNames.contains('sales')) { const s = d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true }); s.createIndex('date', 'date', { unique: false }); s.createIndex('client', 'client', { unique: false }); } if (!d.objectStoreNames.contains('products')) { const p = d.createObjectStore('products', { keyPath: 'id', autoIncrement: true }); p.createIndex('category', 'category', { unique: false }); } if (!d.objectStoreNames.contains('clients')) { const c = d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true }); c.createIndex('name', 'name', { unique: false }); } if (d.objectStoreNames.contains('products')) { const store = e.target.transaction.objectStore('products'); store.openCursor().onsuccess = (ev) => { const cur = ev.target.result; if (!cur) return; const p = cur.value; let changed = false; if ('flavor' in p) { delete p.flavor; changed = true; } if ('color' in p) { delete p.color; changed = true; } if (changed) cur.update(p); cur.continue(); }; } }; }); } async g(s, k) { return this.p(this.db.transaction([s],'readonly').objectStore(s).get(k)); } async pu(s, d) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).put(d)); } async all(s) { return this.p(this.db.transaction([s],'readonly').objectStore(s).getAll()); } async add(s, d) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).add(d)); } async del(s, id) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).delete(id)); } async clear(s) { return this.p(this.db.transaction([s],'readwrite').objectStore(s).clear()); } p(r) { return new Promise((rs, rj) => { r.onsuccess = () => rs(r.result); r.onerror = () => rj(r.error); }); } }
+
+    // ===== XSS-хелперы =====
+    function esc(s) {
+        if (s === null || s === undefined) return '';
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+    function escAttr(s) { return esc(s).replace(/\n/g, ' '); }
+
+    class Database {
+        constructor() { this.db = null; }
+        async init() {
+            return new Promise((resolve, reject) => {
+                const r = indexedDB.open(DB_NAME, DB_VERSION);
+                r.onerror = () => reject(r.error);
+                r.onblocked = () => reject(new Error('База данных занята другой вкладкой. Закройте все вкладки приложения и обновите страницу.'));
+                r.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' });
+                    if (!d.objectStoreNames.contains('sales')) {
+                        const s = d.createObjectStore('sales', { keyPath: 'id', autoIncrement: true });
+                        s.createIndex('date', 'date', { unique: false });
+                        s.createIndex('client', 'client', { unique: false });
+                    }
+                    if (!d.objectStoreNames.contains('products')) {
+                        const p = d.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+                        p.createIndex('category', 'category', { unique: false });
+                    }
+                    if (!d.objectStoreNames.contains('clients')) {
+                        const c = d.createObjectStore('clients', { keyPath: 'id', autoIncrement: true });
+                        c.createIndex('name', 'name', { unique: false });
+                    }
+                    if (d.objectStoreNames.contains('products')) {
+                        const store = e.target.transaction.objectStore('products');
+                        store.openCursor().onsuccess = (ev) => {
+                            const cur = ev.target.result;
+                            if (!cur) return;
+                            const p = cur.value;
+                            let changed = false;
+                            if ('flavor' in p) { delete p.flavor; changed = true; }
+                            if ('color' in p) { delete p.color; changed = true; }
+                            if (changed) cur.update(p);
+                            cur.continue();
+                        };
+                    }
+                };
+                r.onsuccess = () => {
+                    this.db = r.result;
+                    this.db.onversionchange = () => { this.db.close(); showAlert('Приложение обновлено в другой вкладке. Обновите страницу.', 'info'); };
+                    resolve();
+                };
+            });
+        }
+        async g(s, k) { return this.p(this.db.transaction([s], 'readonly').objectStore(s).get(k)); }
+        async pu(s, d) { return this.p(this.db.transaction([s], 'readwrite').objectStore(s).put(d)); }
+        async all(s) { return this.p(this.db.transaction([s], 'readonly').objectStore(s).getAll()); }
+        async add(s, d) { return this.p(this.db.transaction([s], 'readwrite').objectStore(s).add(d)); }
+        async del(s, id) { return this.p(this.db.transaction([s], 'readwrite').objectStore(s).delete(id)); }
+        async clear(s) { return this.p(this.db.transaction([s], 'readwrite').objectStore(s).clear()); }
+        p(r) { return new Promise((rs, rj) => { r.onsuccess = () => rs(r.result); r.onerror = () => rj(r.error); }); }
+    }
     const db = new Database();
 
     const CATEGORIES = ['liquid','supplies','pods','disposable','snus'];
@@ -381,21 +445,143 @@
     function fn(n) { if(!n&&n!==0)return'0'; if(typeof n==='number'&&!Number.isInteger(n))return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,' '); return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
     function fp(p) { if(p===null||p===undefined)return null;return`${p>=0?'+':''}${p.toFixed(1)}%`; }
     function fmtDate(d) { if(!d||d==='-')return'-';const p=d.split('-');if(p.length!==3)return d;return`${p[2]}.${p[1]}.${p[0].slice(2)}`; }
+
     function showModal(title,icon,color,body,footer) { document.getElementById('modalContainer').innerHTML=`<div class="modal-overlay" onclick="closeModal(event)"><div class="modal-dialog-custom" onclick="event.stopPropagation()"><div class="modal-header-custom"><i class="${icon}" style="color:${color};"></i><h3 style="color:${color};">${title}</h3></div><div class="modal-body-custom">${body}</div>${footer?`<div class="modal-footer-custom">${footer}</div>`:''}</div></div>`; }
     function closeModal(event) { if(!event||event.target.classList.contains('modal-overlay'))document.getElementById('modalContainer').innerHTML=''; }
-    function showAlert(message, type = 'info') { const icons = { error: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' }; const colors = { error: 'var(--yellow)', info: 'var(--accent)' }; return new Promise(resolve => { showModal('Внимание',icons[type]||'bi-info-circle-fill',colors[type]||'var(--accent)',`<div class="dialog-icon-wrap"><div class="dialog-icon-circle ${type}"><i class="bi ${icons[type]}"></i></div></div><p class="dialog-text">${message}</p>`,`<button class="btn btn-save" id="alertOkBtn">OK</button>`); setTimeout(()=>{const btn=document.getElementById('alertOkBtn');if(btn)btn.addEventListener('click',()=>{closeModal();resolve(true);});},50); }); }
-    function showConfirm(message) { return new Promise(resolve => { showModal('Подтверждение','bi-trash-fill','var(--red)',`<div class="dialog-icon-wrap"><div class="dialog-icon-circle warning"><i class="bi bi-trash-fill"></i></div></div><p class="dialog-text">${message}</p>`,`<button class="btn btn-cancel" id="confirmNoBtn">Отмена</button><button class="btn btn-delete" id="confirmYesBtn">Удалить</button>`); setTimeout(()=>{document.getElementById('confirmYesBtn')?.addEventListener('click',()=>{closeModal();resolve(true);});document.getElementById('confirmNoBtn')?.addEventListener('click',()=>{closeModal();resolve(false);});},50); }); }
-    function showSnackbar(message, undoCallback, isPrize = false) { const container=document.getElementById('snackbarContainer');const id='snack_'+Date.now(); const positionClass = isPrize ? 'top prize' : 'bottom'; const iconHtml = isPrize ? `<span class="snackbar-gift">${giftIconSnackbar()}</span>` : ''; container.innerHTML=`<div class="snackbar ${positionClass}" id="${id}">${iconHtml}${message} ${undoCallback?'<button class="snackbar-undo" onclick="window.snackbarUndo(\''+id+'\')">Отменить</button>':''}</div>`;window.snackbarUndo=function(sid){if(sid===id&&undoCallback)undoCallback();document.getElementById(sid)?.remove();};setTimeout(()=>{const el=document.getElementById(id);if(el)el.remove();},3000); }
+
+    function showAlert(message, type = 'info') {
+        const icons = { error: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' };
+        const colors = { error: 'var(--yellow)', info: 'var(--accent)' };
+        return new Promise(resolve => {
+            showModal('Внимание', icons[type] || 'bi-info-circle-fill', colors[type] || 'var(--accent)',
+                `<div class="dialog-icon-wrap"><div class="dialog-icon-circle ${type}"><i class="bi ${icons[type]}"></i></div></div><p class="dialog-text">${esc(message)}</p>`,
+                `<button class="btn btn-save" id="alertOkBtn">OK</button>`);
+            setTimeout(() => {
+                const btn = document.getElementById('alertOkBtn');
+                if (btn) btn.addEventListener('click', () => { closeModal(); resolve(true); });
+            }, 50);
+        });
+    }
+    function showConfirm(message) {
+        return new Promise(resolve => {
+            showModal('Подтверждение', 'bi-trash-fill', 'var(--red)',
+                `<div class="dialog-icon-wrap"><div class="dialog-icon-circle warning"><i class="bi bi-trash-fill"></i></div></div><p class="dialog-text">${esc(message)}</p>`,
+                `<button class="btn btn-cancel" id="confirmNoBtn">Отмена</button><button class="btn btn-delete" id="confirmYesBtn">Удалить</button>`);
+            setTimeout(() => {
+                document.getElementById('confirmYesBtn')?.addEventListener('click', () => { closeModal(); resolve(true); });
+                document.getElementById('confirmNoBtn')?.addEventListener('click', () => { closeModal(); resolve(false); });
+            }, 50);
+        });
+    }
+    function showSnackbar(message, undoCallback, isPrize = false) {
+        const container = document.getElementById('snackbarContainer');
+        const id = 'snack_' + Date.now();
+        const positionClass = isPrize ? 'top prize' : 'bottom';
+        const iconHtml = isPrize ? `<span class="snackbar-gift">${giftIconSnackbar()}</span>` : '';
+        container.innerHTML = `<div class="snackbar ${positionClass}" id="${id}">${iconHtml}${esc(message)} ${undoCallback ? '<button class="snackbar-undo" onclick="window.snackbarUndo(\'' + id + '\')">Отменить</button>' : ''}</div>`;
+        window.snackbarUndo = function(sid) {
+            if (sid === id && undoCallback) undoCallback();
+            document.getElementById(sid)?.remove();
+        };
+        setTimeout(() => {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }, 3000);
+    }
     function vibrate(pattern) { if (navigator.vibrate) { try { navigator.vibrate(pattern); } catch(e) {} } }
     function showSkeleton(type) { if(type==='statistics')return`<h2 class="tab-title"><span class="tab-title-icon"><i class="bi bi-file-bar-graph"></i></span>Статистика</h2><div class="stats-cards"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div><div class="summary-row"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div><div class="skeleton skeleton-chart"></div><div class="skeleton skeleton-chart"></div>`;if(type==='warehouse')return`<h2 class="tab-title"><span class="tab-title-icon"><i class="bi bi-boxes"></i></span>Склад</h2><div class="warehouse-cards">${[...Array(5)].map(()=>'<div class="skeleton skeleton-card"></div>').join('')}</div>`;if(type==='sales'||type==='clients')return`<h2 class="tab-title"><span class="tab-title-icon"><i class="bi ${type==='sales'?'bi-bag-check':'bi-people'}"></i></span>${type==='sales'?'Продажи':'Клиенты'}</h2><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div><div class="skeleton skeleton-row"></div>`;return''; }
     document.addEventListener('selectstart', function(e) { if (e.target.closest('.warehouse-table-section')||e.target.closest('.sales-table-section')||e.target.closest('.clients-table-section')) { e.preventDefault(); } });
+
     async function findProductByName(productName) { const products = await db.all('products'); return products.find(p => norm(p.manufacturer + ' ' + p.lineup) === norm(productName)); }
+    async function restoreSaleStock(sale) {
+        if (!sale) return;
+        const items = Array.isArray(sale.items) && sale.items.length > 0
+            ? sale.items
+            : (sale.product ? [{ product: sale.product, quantity: sale.quantity || 0 }] : []);
+        for (const it of items) {
+            const found = await findProductByName(it.product);
+            if (found) {
+                found.quantity = (found.quantity || 0) + (it.quantity || 0);
+                await db.pu('products', found);
+            }
+        }
+    }
     async function clientExists(clientName) { const clients = await db.all('clients'); return clients.some(c => norm(c.name) === norm(clientName)); }
     async function autoAddClient(clientName) { if (!clientName.trim()) return; const exists = await clientExists(clientName); if (!exists) { await db.add('clients', { name: clientName.trim(), created: new Date().toISOString().split('T')[0] }); } }
     function animateValue(element, start, end, duration, suffix) { if (Math.abs(start-end) < 0.001){element.textContent=fn(end)+suffix;return;} const startTime=performance.now(); function update(currentTime){const elapsed=currentTime-startTime;const progress=Math.min(elapsed/duration,1);const eased=1-Math.pow(1-progress,3);const current=start+(end-start)*eased; element.textContent=fn(current)+suffix; if(progress<1)requestAnimationFrame(update);} requestAnimationFrame(update); }
     async function exportData() { const products = await db.all('products'); const sales = await db.all('sales'); const clients = await db.all('clients'); const data = { products, sales, clients, exportedAt: new Date().toISOString() }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `crazy-rabbit-backup-${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); showSnackbar('Данные экспортированы'); }
     function importData() { document.getElementById('importFileInput').click(); }
-    async function handleFileImport(event) { const file = event.target.files[0]; if (!file) return; try { const text = await file.text(); const data = JSON.parse(text); if (!data.products && !data.sales && !data.clients) { await showAlert('Файл не содержит данных', 'error'); event.target.value = ''; return; } const confirmed = await showConfirm('Все текущие данные будут удалены и заменены данными из файла. Продолжить?'); if (!confirmed) { event.target.value = ''; return; } await db.clear('products'); await db.clear('sales'); await db.clear('clients'); if (data.products) for (const p of data.products) { const cp = {...p}; delete cp.id; delete cp.flavor; delete cp.color; await db.add('products', cp); } if (data.sales) for (const s of data.sales) { const cs = {...s}; delete cs.id; await db.add('sales', cs); } if (data.clients) { const seen = new Set(); for (const c of data.clients) { const n = norm(c.name); if (!seen.has(n)) { seen.add(n); const cc = {...c}; delete cc.id; await db.add('clients', cc); } } } showSnackbar('Данные импортированы'); const activeTab = document.querySelector('.nav-item.active')?.dataset.tab || 'statistics'; await switchTab(activeTab); } catch (e) { await showAlert('Ошибка чтения файла', 'error'); } event.target.value = ''; }
+
+    async function handleFileImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            if (!data.products && !data.sales && !data.clients) {
+                await showAlert('Файл не содержит данных', 'error');
+                event.target.value = '';
+                return;
+            }
+            const confirmed = await showConfirm('Все текущие данные будут удалены и заменены данными из файла. Продолжить?');
+            if (!confirmed) { event.target.value = ''; return; }
+            await db.clear('products');
+            await db.clear('sales');
+            await db.clear('clients');
+            let skippedProducts = 0, skippedSales = 0, skippedClients = 0;
+            if (Array.isArray(data.products)) {
+                for (const p of data.products) {
+                    if (!p || typeof p.manufacturer !== 'string' || typeof p.lineup !== 'string') { skippedProducts++; continue; }
+                    const cp = { ...p };
+                    delete cp.id; delete cp.flavor; delete cp.color;
+                    cp.manufacturer = cp.manufacturer.trim();
+                    cp.lineup = cp.lineup.trim();
+                    cp.quantity = Math.max(0, parseInt(cp.quantity) || 0);
+                    cp.purchase = Math.max(0, parseFloat(cp.purchase) || 0);
+                    cp.selling = Math.max(0, parseFloat(cp.selling) || 0);
+                    if (!cp.manufacturer || !cp.lineup) { skippedProducts++; continue; }
+                    await db.add('products', cp);
+                }
+            }
+            if (Array.isArray(data.sales)) {
+                for (const s of data.sales) {
+                    if (!s || typeof s.client !== 'string' || typeof s.date !== 'string') { skippedSales++; continue; }
+                    const cs = { ...s };
+                    delete cs.id;
+                    cs.items = Array.isArray(cs.items) ? cs.items.filter(it => it && typeof it.product === 'string').map(it => ({
+                        product: it.product,
+                        quantity: Math.max(1, parseInt(it.quantity) || 1),
+                        price: Math.max(0, parseFloat(it.price) || 0),
+                        cost: Math.max(0, parseFloat(it.cost) || 0),
+                        profit: parseFloat(it.profit) || 0,
+                        category: it.category || 'liquid'
+                    })) : [];
+                    await db.add('sales', cs);
+                }
+            }
+            if (Array.isArray(data.clients)) {
+                const seen = new Set();
+                for (const c of data.clients) {
+                    if (!c || typeof c.name !== 'string' || !c.name.trim()) { skippedClients++; continue; }
+                    const n = norm(c.name);
+                    if (seen.has(n)) { skippedClients++; continue; }
+                    seen.add(n);
+                    const cc = { ...c }; delete cc.id;
+                    cc.name = cc.name.trim();
+                    await db.add('clients', cc);
+                }
+            }
+            let msg = 'Данные импортированы';
+            const skipped = skippedProducts + skippedSales + skippedClients;
+            if (skipped > 0) msg += ` (пропущено ${skipped} битых записей)`;
+            showSnackbar(msg);
+            const activeTab = document.querySelector('.nav-item.active')?.dataset.tab || 'statistics';
+            await switchTab(activeTab);
+        } catch (e) {
+            await showAlert('Ошибка чтения файла', 'error');
+        }
+        event.target.value = '';
+    }
 
     // ============ СТАТИСТИКА ============
     let cp='today', ccm='sum', csd=null, ced=null;
@@ -450,10 +636,63 @@
     }
     async function setCategoryMode(m){ccm=m;await renderStatistics(cp);}
     function updateCustomDates(){csd=document.getElementById('startDate').value;ced=document.getElementById('endDate').value;if(csd&&ced)renderStatistics('custom');}
-    async function showBookingModal(){const allSales=await db.all('sales');const bs=allSales.filter(s=>s.note==='бронь');showModal('Бронь','bi-bookmark-check-fill','var(--green)',bs.length===0?'<p style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:13px;">Нет броней</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.3">Клиент</div><div class="sale-col" style="flex:0.7">Товар</div></div>${bs.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.3">${s.client||'-'}</div><div class="sale-col" style="flex:0.7">${s.product||'-'}</div></div>`).join('')}`,'');}
-    async function showDebtModal(){const allSales=await db.all('sales');const ds=allSales.filter(s=>s.note==='долг');showModal('Долги','bi-exclamation-diamond-fill','var(--red)',ds.length===0?'<p style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:13px;">Нет долгов</p>':`<div class="sale-table-header"><div class="sale-col" style="flex:0.5">Клиент</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">Сумма</div><div class="sale-col" style="flex:0.3">Дата</div></div>${ds.map(s=>`<div class="sale-row"><div class="sale-col" style="flex:0.5">${s.client||'-'}</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">${fn(s.total||0)}₽</div><div class="sale-col" style="flex:0.3">${fmtDate(s.date)}</div></div>`).join('')}`,'');}
-    async function showNewClientsModal(){const{s,e}=getDateRange(cp);const allSales=await db.all('sales');const clientFirstSale=new Map();for(const sale of allSales){const name=norm(sale.client);if(!name)continue;if(!clientFirstSale.has(name)||sale.date<clientFirstSale.get(name)){clientFirstSale.set(name,sale.date);}}const nc=[];for(const[name,date]of clientFirstSale){if(date>=s&&date<=e)nc.push({name,date});}nc.sort((a,b)=>b.date.localeCompare(a.date));showModal('Новые клиенты','bi-person-plus-fill','var(--accent)',nc.length===0?'<p style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:13px;">Нет новых клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Первая покупка</div></div>${nc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.date)}</div></div>`).join('')}`,'');}
-    async function showLeavingClientsModal(){const allSales=await db.all('sales');const clientLastSale=new Map();for(const sale of allSales){const name=norm(sale.client);if(!name)continue;if(!clientLastSale.has(name)||sale.date>clientLastSale.get(name)){clientLastSale.set(name,sale.date);}}const thirtyDaysAgo=new Date();thirtyDaysAgo.setDate(thirtyDaysAgo.getDate()-30);const threshold=thirtyDaysAgo.toISOString().split('T')[0];const lc=[];for(const[name,date]of clientLastSale){if(date<threshold)lc.push({name,date});}lc.sort((a,b)=>b.date.localeCompare(a.date));showModal('Уходящие клиенты','bi-person-dash-fill','var(--yellow)',lc.length===0?'<p style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:13px;">Нет уходящих клиентов</p>':`<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c=>`<div class="sale-row"><div class="sale-col">${c.name}</div><div class="sale-col">${fmtDate(c.date)}</div></div>`).join('')}`,'');}
+
+    async function showBookingModal() {
+        const allSales = await db.all('sales');
+        const bs = allSales.filter(s => s.note === 'бронь');
+        showModal('Бронь', 'bi-bookmark-check-fill', 'var(--green)',
+            bs.length === 0
+                ? '<p style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:13px;">Нет броней</p>'
+                : `<div class="sale-table-header"><div class="sale-col" style="flex:0.3">Клиент</div><div class="sale-col" style="flex:0.7">Товар</div></div>${bs.map(s => `<div class="sale-row"><div class="sale-col" style="flex:0.3">${esc(s.client || '-')}</div><div class="sale-col" style="flex:0.7">${esc(s.product || '-')}</div></div>`).join('')}`,
+            '');
+    }
+    async function showDebtModal() {
+        const allSales = await db.all('sales');
+        const ds = allSales.filter(s => s.note === 'долг');
+        showModal('Долги', 'bi-exclamation-diamond-fill', 'var(--red)',
+            ds.length === 0
+                ? '<p style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:13px;">Нет долгов</p>'
+                : `<div class="sale-table-header"><div class="sale-col" style="flex:0.5">Клиент</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">Сумма</div><div class="sale-col" style="flex:0.3">Дата</div></div>${ds.map(s => `<div class="sale-row"><div class="sale-col" style="flex:0.5">${esc(s.client || '-')}</div><div class="sale-col price" style="flex:0.2;text-align:right;padding-right:12px;">${fn(s.total || 0)}₽</div><div class="sale-col" style="flex:0.3">${fmtDate(s.date)}</div></div>`).join('')}`,
+            '');
+    }
+    async function showNewClientsModal() {
+        const { s, e } = getDateRange(cp);
+        const allSales = await db.all('sales');
+        const clientFirstSale = new Map();
+        for (const sale of allSales) {
+            const name = norm(sale.client);
+            if (!name) continue;
+            if (!clientFirstSale.has(name) || sale.date < clientFirstSale.get(name)) clientFirstSale.set(name, sale.date);
+        }
+        const nc = [];
+        for (const [name, date] of clientFirstSale) if (date >= s && date <= e) nc.push({ name, date });
+        nc.sort((a, b) => b.date.localeCompare(a.date));
+        showModal('Новые клиенты', 'bi-person-plus-fill', 'var(--accent)',
+            nc.length === 0
+                ? '<p style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:13px;">Нет новых клиентов</p>'
+                : `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Первая покупка</div></div>${nc.map(c => `<div class="sale-row"><div class="sale-col">${esc(c.name)}</div><div class="sale-col">${fmtDate(c.date)}</div></div>`).join('')}`,
+            '');
+    }
+    async function showLeavingClientsModal() {
+        const allSales = await db.all('sales');
+        const clientLastSale = new Map();
+        for (const sale of allSales) {
+            const name = norm(sale.client);
+            if (!name) continue;
+            if (!clientLastSale.has(name) || sale.date > clientLastSale.get(name)) clientLastSale.set(name, sale.date);
+        }
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const threshold = thirtyDaysAgo.toISOString().split('T')[0];
+        const lc = [];
+        for (const [name, date] of clientLastSale) if (date < threshold) lc.push({ name, date });
+        lc.sort((a, b) => b.date.localeCompare(a.date));
+        showModal('Уходящие клиенты', 'bi-person-dash-fill', 'var(--yellow)',
+            lc.length === 0
+                ? '<p style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:13px;">Нет уходящих клиентов</p>'
+                : `<div class="sale-table-header"><div class="sale-col">Имя</div><div class="sale-col">Последняя покупка</div></div>${lc.map(c => `<div class="sale-row"><div class="sale-col">${esc(c.name)}</div><div class="sale-col">${fmtDate(c.date)}</div></div>`).join('')}`,
+            '');
+    }
 
     // ============ ОБЩИЙ МОДУЛЬ ВЫДЕЛЕНИЯ ============
     const SELECT_MODE_CONFIG = { warehouse: { selectMode: false, selectedIds: new Set(), prefix: 'wh' }, sales: { selectMode: false, selectedIds: new Set(), prefix: 'sale' } };
@@ -472,7 +711,7 @@
         const fieldLabel = COL_LABELS[fieldName] || fieldName;
         const oldValue = keys[keys.length - 1];
         showModal('Редактировать группу','bi-pencil-fill','var(--accent)',
-          `<div class="form-group"><label class="form-label">${fieldLabel}</label><input type="text" class="form-input" id="edit_group_name" value="${oldValue.replace(/"/g,'&quot;')}"></div>`,
+          `<div class="form-group"><label class="form-label">${fieldLabel}</label><input type="text" class="form-input" id="edit_group_name" value="${escAttr(oldValue)}"></div>`,
           `<button class="btn btn-delete" style="flex:0.4;margin-right:auto;" onclick="window._deleteGroup()"><i class="bi bi-trash-fill"></i> Удалить</button>
            <button class="btn btn-cancel" onclick="closeModal()">Отмена</button>
            <button class="btn btn-save" onclick="window._saveEditGroup()">Сохранить</button>`);
@@ -536,42 +775,43 @@
     async function openWarehouseCategory(c){cwc=c;og=new Set();stockFilter='all';whExitSelectMode();cachedProducts=[];await renderWarehouseTable(c);}
     function groupProductsNested(products,groupBy){if(groupBy.length===0)return{_root:products};const root={};products.forEach(p=>{let current=root;for(let i=0;i<groupBy.length;i++){const field=groupBy[i];const key=norm(p[field]);if(!current[key])current[key]=i===groupBy.length-1?[]:{};if(i===groupBy.length-1)current[key].push(p);else current=current[key];}});return root;}
     function getGroupId(cat,level,keys){return['grp',cat,...keys.slice(0,level+1)].join('_');}
-    function buildAccordionHTML(groups,groupBy,level,cat,parentKeys){
-        if(level>=groupBy.length)return'';
-        let h='';
-        const entries=Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0]));
-        const isLastLevel=(level+1>=groupBy.length);
-        entries.forEach(([key,value])=>{
-            const currentLevelKeys=[...parentKeys,key];
-            const gid=getGroupId(cat,level,currentLevelKeys);
-            const items=isLastLevel?value:[];
-            const firstItem=isLastLevel?value[0]:Object.values(value)[0]?.[0];
-            const fieldName=groupBy[level];
-            const label=firstItem?firstItem[fieldName]:key;
-            const tab=level>0?'&emsp;&emsp;':'';
-            GROUP_DATA[gid]={cat,level,keys:currentLevelKeys};
-            const addBtn=`<button class="group-add-btn" data-gid="${gid}" title="Добавить в группу"><i class="bi bi-plus-lg"></i></button>`;
-            h+=`<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}" data-gid="${gid}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${label}</span><div class="accordion-header-actions">${addBtn}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;
-            if(!isLastLevel){
-                h+=buildAccordionHTML(value,groupBy,level+1,cat,currentLevelKeys);
-            }else{
-                const cols=CATEGORY_TABLE_COLS[cwc];
-                h+=`<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col=>`<div class="product-col${col==='quantity'?' qty':(col==='purchase'||col==='selling'?' price':'')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
-                items.forEach(item=>{
-                    h+=`<div class="product-row-wrapper${(item.quantity||0)<=0?' out-of-stock':''}"><div class="swipe-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="product-row" data-pid="${item.id}" ondblclick="if(!whIsSelectMode())editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="whToggleSelect(${item.id})" onclick="event.stopPropagation()"></div>`;
-                    cols.forEach(col=>{
-                        let v=item[col]||'';
-                        if(col==='quantity'){
-                            h+=`<div class="product-col qty"><div class="qty-controls"><button class="qty-btn minus" onclick="event.stopPropagation();event.preventDefault();changeQuantity(${item.id},-1)" style="opacity:${(item.quantity||0)<=0?'0.3':'1'}">−</button><span class="qty-value">${item.quantity||0}</span><button class="qty-btn plus" onclick="event.stopPropagation();event.preventDefault();changeQuantity(${item.id},1)">+</button></div></div>`;
-                        }else{
-                            if(col==='purchase'||col==='selling')v=fn(v)+'₽';
-                            h+=`<div class="product-col${col==='purchase'||col==='selling'?' price':''}">${v}</div>`;
+
+    function buildAccordionHTML(groups, groupBy, level, cat, parentKeys) {
+        if (level >= groupBy.length) return '';
+        let h = '';
+        const entries = Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+        const isLastLevel = (level + 1 >= groupBy.length);
+        entries.forEach(([key, value]) => {
+            const currentLevelKeys = [...parentKeys, key];
+            const gid = getGroupId(cat, level, currentLevelKeys);
+            const items = isLastLevel ? value : [];
+            const firstItem = isLastLevel ? value[0] : Object.values(value)[0]?.[0];
+            const fieldName = groupBy[level];
+            const label = firstItem ? firstItem[fieldName] : key;
+            const tab = level > 0 ? '&emsp;&emsp;' : '';
+            GROUP_DATA[gid] = { cat, level, keys: currentLevelKeys };
+            const addBtn = `<button class="group-add-btn" data-gid="${gid}" title="Добавить в группу"><i class="bi bi-plus-lg"></i></button>`;
+            h += `<div class="accordion-group"><div class="accordion-header" id="hdr_${gid}" data-gid="${gid}"><span class="accordion-header-left" onclick="window.toggleAcc('${gid}')">${tab}${esc(label)}</span><div class="accordion-header-actions">${addBtn}<i class="bi bi-chevron-down accordion-arrow" onclick="window.toggleAcc('${gid}')"></i></div></div><div class="accordion-body" id="${gid}">`;
+            if (!isLastLevel) {
+                h += buildAccordionHTML(value, groupBy, level + 1, cat, currentLevelKeys);
+            } else {
+                const cols = CATEGORY_TABLE_COLS[cwc];
+                h += `<div class="table-header-row"><div class="product-col checkbox-col"></div>${cols.map(col => `<div class="product-col${col === 'quantity' ? ' qty' : (col === 'purchase' || col === 'selling' ? ' price' : '')}">${COL_LABELS[col]}</div>`).join('')}<div class="product-col copy-btn"></div></div>`;
+                items.forEach(item => {
+                    h += `<div class="product-row-wrapper${(item.quantity || 0) <= 0 ? ' out-of-stock' : ''}"><div class="swipe-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="product-row" data-pid="${item.id}" ondblclick="if(!whIsSelectMode())editProduct(${item.id})"><div class="product-col checkbox-col"><input type="checkbox" class="select-checkbox" data-pid="${item.id}" onchange="whToggleSelect(${item.id})" onclick="event.stopPropagation()"></div>`;
+                    cols.forEach(col => {
+                        let v = item[col] || '';
+                        if (col === 'quantity') {
+                            h += `<div class="product-col qty"><div class="qty-controls"><button class="qty-btn minus" onclick="event.stopPropagation();event.preventDefault();changeQuantity(${item.id},-1)" style="opacity:${(item.quantity || 0) <= 0 ? '0.3' : '1'}">−</button><span class="qty-value">${item.quantity || 0}</span><button class="qty-btn plus" onclick="event.stopPropagation();event.preventDefault();changeQuantity(${item.id},1)">+</button></div></div>`;
+                        } else {
+                            if (col === 'purchase' || col === 'selling') v = fn(v) + '₽';
+                            h += `<div class="product-col${col === 'purchase' || col === 'selling' ? ' price' : ''}">${esc(v)}</div>`;
                         }
                     });
-                    h+=`<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;
+                    h += `<div class="product-col copy-btn" onclick="event.stopPropagation();copyProduct(${item.id})" title="Копировать"><i class="bi bi-copy"></i></div></div></div>`;
                 });
             }
-            h+=`</div></div>`;
+            h += `</div></div>`;
         });
         return h;
     }
@@ -610,8 +850,6 @@
         const gid=window._addToGroupGid;
         const gdata=GROUP_DATA[gid];if(!gdata)return;
         const{cat,level,keys}=gdata;
-        const gb=CATEGORY_GROUPS[cat];
-        const isLastLevel=(level+1>=gb.length);
         const lineup=document.getElementById('group_add_lineup').value.trim();
         if(!lineup){await showAlert('Введите название','error');return;}
         const quantity=parseInt(document.getElementById('group_add_quantity').value)||0;
@@ -629,6 +867,7 @@
     function setupWarehouseSwipe(){document.querySelectorAll('.product-row').forEach(row=>{setupLongPress(row,'warehouse',(r)=>parseInt(r.dataset.pid));setupSwipe(row,'warehouse',(r)=>parseInt(r.dataset.pid),async(pid)=>{const p=await db.g('products',pid);if(p){deletedProducts=[p];await db.del('products',pid);cachedProducts=[];}await renderWarehouseTableContent(cwc,document.getElementById('warehouseSearch')?.value||'');showSnackbar('Товар удалён',async()=>{for(const pp of deletedProducts){const cp={...pp};delete cp.id;await db.add('products',cp);}cachedProducts=[];await renderWarehouseTableContent(cwc,document.getElementById('warehouseSearch')?.value||'');deletedProducts=[];});});});document.querySelectorAll('.accordion-header').forEach(hdr=>{const gid=hdr.dataset.gid;if(gid&&GROUP_DATA[gid]){setupGroupLongPress(hdr,gid);}});document.querySelectorAll('.group-add-btn').forEach(btn=>{btn.addEventListener('click',(e)=>{e.stopPropagation();e.preventDefault();const gid=btn.dataset.gid;if(gid&&GROUP_DATA[gid]){showAddToGroupModal(gid);}});});}
     function setStockFilter(filter){stockFilter=filter;const btn=document.getElementById('stockFilterBtn');if(btn){btn.className='stock-filter-btn mode-'+filter;btn.querySelector('i').className='bi '+STOCK_FILTER_ICONS[filter];btn.style.transform='scale(0.85)';setTimeout(()=>{btn.style.transform='scale(1)';},150);}renderWarehouseTableContent(cwc,document.getElementById('warehouseSearch')?.value||'');}
     function toggleStockFilter(){const idx=STOCK_FILTER_MODES.indexOf(stockFilter);const next=STOCK_FILTER_MODES[(idx+1)%STOCK_FILTER_MODES.length];setStockFilter(next);}
+
     async function renderWarehouseTableContent(cat,sq){
         let ap;
         if(cachedProducts.length>0){ap=cachedProducts;}else{ap=await db.all('products');cachedProducts=ap;}
@@ -659,7 +898,7 @@
     }
     async function renderWarehouseTable(cat,sq=''){
         cwc=cat;const searchValue=sq||'';
-        document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash-fill"></i> Удалить</button><button class="wh-add-btn" onclick="showMassAddProductModal()">+</button></div></div><div class="search-row"><input type="text" class="search-input" id="warehouseSearch" placeholder="Поиск..." value="${searchValue}" oninput="renderWarehouseTableContent(cwc,this.value)" autocomplete="off"><button class="stock-filter-btn mode-${stockFilter}" id="stockFilterBtn" onclick="toggleStockFilter()" title="${stockFilter==='all'?'Все':stockFilter==='in_stock'?'В наличии':'Нет в наличии'}"><i class="bi ${STOCK_FILTER_ICONS[stockFilter]}"></i></button></div><div id="warehouseTableContent"></div></div>`;
+        document.getElementById('contentBody').innerHTML=`<div class="warehouse-table-section"><div class="wh-header"><button class="wh-back-btn" onclick="renderWarehouseCards()"><i class="bi bi-arrow-left"></i></button><span class="wh-category-title">${CATEGORY_NAMES[cat]}</span><div style="display:flex;gap:8px;"><button class="wh-cancel-select-btn" onclick="whExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn" onclick="deleteSelectedProducts()"><i class="bi bi-trash-fill"></i> Удалить</button><button class="wh-add-btn" onclick="showMassAddProductModal()">+</button></div></div><div class="search-row"><input type="text" class="search-input" id="warehouseSearch" placeholder="Поиск..." value="${escAttr(searchValue)}" oninput="renderWarehouseTableContent(cwc,this.value)" autocomplete="off"><button class="stock-filter-btn mode-${stockFilter}" id="stockFilterBtn" onclick="toggleStockFilter()" title="${stockFilter==='all'?'Все':stockFilter==='in_stock'?'В наличии':'Нет в наличии'}"><i class="bi ${STOCK_FILTER_ICONS[stockFilter]}"></i></button></div><div id="warehouseTableContent"></div></div>`;
         await renderWarehouseTableContent(cat,searchValue);
     }
     async function copyProduct(pid){const p=await db.g('products',pid);if(!p)return;const cp={...p};delete cp.id;const nid=await db.add('products',cp);cachedProducts=[];await renderWarehouseTableContent(cwc,document.getElementById('warehouseSearch')?.value||'');setTimeout(()=>{const r=document.querySelector(`.product-row[data-pid="${nid}"]`);if(r)r.classList.add('pop-anim');},100);}
@@ -693,8 +932,8 @@
         const p=await db.g('products',pid);if(!p)return;
         cwc=p.category;
         showModal('Редактировать товар','bi '+CATEGORY_ICONS[p.category],'var(--accent)',
-          `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="edit_prod_manufacturer" value="${(p.manufacturer||'').replace(/"/g,'&quot;')}"></div>
-           <div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="edit_prod_lineup" value="${(p.lineup||'').replace(/"/g,'&quot;')}"></div>
+          `<div class="form-group"><label class="form-label">Производитель</label><input type="text" class="form-input" id="edit_prod_manufacturer" value="${escAttr(p.manufacturer||'')}"></div>
+           <div class="form-group"><label class="form-label">Линейка</label><input type="text" class="form-input" id="edit_prod_lineup" value="${escAttr(p.lineup||'')}"></div>
            <div class="form-group"><label class="form-label">Количество</label><input type="number" class="form-input" id="edit_prod_quantity" value="${p.quantity||0}" min="0"></div>
            <div class="form-group"><label class="form-label">Закупка (₽)</label><input type="number" class="form-input" id="edit_prod_purchase" value="${p.purchase||''}" step="0.01"></div>
            <div class="form-group"><label class="form-label">Продажа (₽)</label><input type="number" class="form-input" id="edit_prod_selling" value="${p.selling||''}" step="0.01"></div>`,
@@ -728,14 +967,111 @@
     function salesToggleSelect(id){toggleSelectItem('sales',id);}function salesUpdateSelectUI(){updateSelectUI('sales');}
     function salesIsSelectMode(){return SELECT_MODE_CONFIG.sales.selectMode;}
     function salesGetSelectedIds(){return SELECT_MODE_CONFIG.sales.selectedIds;}
-    async function deleteSelectedSales(){const selectedIds=salesGetSelectedIds();if(selectedIds.size===0)return;const confirmed=await showConfirm(`Удалить ${selectedIds.size} продаж?`);if(!confirmed)return;vibrate([20,50,20]);deletedSales=[];const wrappers=[];for(const id of selectedIds){const s=await db.g('sales',id);if(s){deletedSales.push(s);}const row=document.querySelector(`.sale-row[data-sid="${id}"]`);if(row&&row.parentElement)wrappers.push(row.parentElement);}wrappers.forEach(w=>w.classList.add('removing'));setTimeout(async()=>{for(const s of deletedSales){await db.del('sales',s.id);}cachedSales=[];salesExitSelectMode();await renderSalesTable();showSnackbar(`Удалено ${deletedSales.length} продаж`,async()=>{for(const s of deletedSales){const cp={...s};delete cp.id;await db.add('sales',cp);}cachedSales=[];await renderSalesTable();deletedSales=[];});},450);}
+
+    async function deleteSelectedSales() {
+        const selectedIds = salesGetSelectedIds();
+        if (selectedIds.size === 0) return;
+        const confirmed = await showConfirm(`Удалить ${selectedIds.size} продаж? Товары вернутся на склад.`);
+        if (!confirmed) return;
+        vibrate([20, 50, 20]);
+        deletedSales = [];
+        const wrappers = [];
+        for (const id of selectedIds) {
+            const s = await db.g('sales', id);
+            if (s) deletedSales.push(s);
+            const row = document.querySelector(`.sale-row[data-sid="${id}"]`);
+            if (row && row.parentElement) wrappers.push(row.parentElement);
+        }
+        wrappers.forEach(w => w.classList.add('removing'));
+        setTimeout(async () => {
+            for (const s of deletedSales) {
+                await restoreSaleStock(s);
+                await db.del('sales', s.id);
+            }
+            cachedProducts = [];
+            cachedSales = [];
+            cachedClientStats = [];
+            salesExitSelectMode();
+            await renderSalesTable();
+            showSnackbar(`Удалено ${deletedSales.length} продаж`, async () => {
+                for (const s of deletedSales) {
+                    await db.del('sales', s.id);
+                    const cp = { ...s }; delete cp.id;
+                    await db.add('sales', cp);
+                }
+                cachedProducts = [];
+                cachedSales = [];
+                cachedClientStats = [];
+                await renderSalesTable();
+                deletedSales = [];
+            });
+        }, 450);
+    }
     async function getFilteredSales(){if(cachedSales.length>0)return cachedSales;let sales=await db.all('sales');if(salesFilter.client){const q=salesFilter.client.toLowerCase();sales=sales.filter(s=>(s.client||'').toLowerCase().includes(q));}if(salesFilter.product){const q=salesFilter.product.toLowerCase();sales=sales.filter(s=>(s.product||'').toLowerCase().includes(q));}if(salesFilter.dateFrom){sales=sales.filter(s=>s.date>=salesFilter.dateFrom);}if(salesFilter.dateTo){sales=sales.filter(s=>s.date<=salesFilter.dateTo);}if(salesFilter.note){sales=sales.filter(s=>(s.note||'')===salesFilter.note);}sales.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);cachedSales=sales;return sales;}
     function hasActiveFilters(){return!!(salesFilter.client||salesFilter.product||salesFilter.dateFrom||salesFilter.dateTo||salesFilter.note);}
-    function setupSalesSwipe(){document.querySelectorAll('.sale-row').forEach(row=>{setupLongPress(row,'sales',(r)=>parseInt(r.dataset.sid));setupSwipe(row,'sales',(r)=>parseInt(r.dataset.sid),async(sid)=>{const s=await db.g('sales',sid);if(s){deletedSales=[s];await db.del('sales',sid);cachedSales=[];}await renderSalesTable();showSnackbar('Продажа удалена',async()=>{for(const ds of deletedSales){const cp={...ds};delete cp.id;await db.add('sales',cp);}cachedSales=[];await renderSalesTable();deletedSales=[];});});});}
+
+    function setupSalesSwipe() {
+        document.querySelectorAll('.sale-row').forEach(row => {
+            setupLongPress(row, 'sales', (r) => parseInt(r.dataset.sid));
+            setupSwipe(row, 'sales', (r) => parseInt(r.dataset.sid), async (sid) => {
+                const s = await db.g('sales', sid);
+                if (!s) { await renderSalesTable(); return; }
+                deletedSales = [s];
+                await restoreSaleStock(s);
+                await db.del('sales', sid);
+                cachedProducts = [];
+                cachedSales = [];
+                cachedClientStats = [];
+                await renderSalesTable();
+                showSnackbar('Продажа удалена', async () => {
+                    for (const ds of deletedSales) {
+                        const cp = { ...ds }; delete cp.id;
+                        await db.add('sales', cp);
+                    }
+                    cachedSales = [];
+                    cachedClientStats = [];
+                    await renderSalesTable();
+                    deletedSales = [];
+                });
+            });
+        });
+    }
     function formatDateDivider(dateStr){const d=new Date(dateStr+'T00:00:00');const now=new Date();now.setHours(0,0,0,0);const yesterday=new Date(now);yesterday.setDate(now.getDate()-1);const today=new Date(now);const saleDate=new Date(d);saleDate.setHours(0,0,0,0);if(saleDate.getTime()===today.getTime())return'сегодня';if(saleDate.getTime()===yesterday.getTime())return'вчера';const day=d.getDate();const month=MONTHS[d.getMonth()];const year=d.getFullYear();const currentYear=new Date().getFullYear();if(year===currentYear)return`${day} ${month}`;return`${day} ${month} ${year}`;}
-    async function renderSalesTable(){const allSales=await getFilteredSales();const totalPages=Math.ceil(allSales.length/PAGE_SIZE)||1;if(salesPage>totalPages)salesPage=totalPages;const start=(salesPage-1)*PAGE_SIZE;const pageSales=allSales.slice(start,start+PAGE_SIZE);const filterActive=hasActiveFilters();let paginationHTML='';if(totalPages>1){paginationHTML=`<div class="pagination"><button onclick="goToSalesPage(${salesPage-1})" ${salesPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;for(let i=1;i<=totalPages;i++){if(i===1||i===totalPages||(i>=salesPage-1&&i<=salesPage+1)){paginationHTML+=`<button class="${i===salesPage?'active':''}" onclick="goToSalesPage(${i})">${i}</button>`;}else if(i===salesPage-2||i===salesPage+2){paginationHTML+='<span class="page-info">…</span>';}}paginationHTML+=`<button onclick="goToSalesPage(${salesPage+1})" ${salesPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;}let salesHTML='';let currentDateGroup='';for(const s of pageSales){const dateLabel=formatDateDivider(s.date);if(dateLabel!==currentDateGroup){currentDateGroup=dateLabel;salesHTML+=`<div class="date-divider"><span>${currentDateGroup}</span></div>`;}let noteClass='';if(s.note==='бронь')noteClass='booking';else if(s.note==='долг')noteClass='debt';else if(s.note==='приз')noteClass='prize';const items=s.items||[];let productDisplay=s.product||'-';if(items.length>1){productDisplay=items[0].product+' + ещё '+(items.length-1);}else if(items.length===1){productDisplay=items[0].product;}const totalQty=items.length>0?items.reduce((sum,it)=>sum+(it.quantity||0),0):(s.quantity||0);salesHTML+=`<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesIsSelectMode())editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="salesToggleSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${s.client||'-'}</div><div class="sale-col" style="color:var(--text-secondary);">${productDisplay}</div><div class="sale-col qty">${totalQty}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col" style="font-size:12px;color:var(--text-tertiary);">${s.note||'—'}</div></div></div>`;}document.getElementById('contentBody').innerHTML=`<div class="tab-header"><h2 class="tab-title" onclick="openSidebar()"><span class="tab-title-icon"><i class="bi bi-bag-check"></i></span>Продажи</h2><div class="tab-subtitle">${allSales.length} ${allSales.length===1?'запись':'записей'}</div></div><div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterActive?'active':''}" onclick="showFilterModal()"><i class="bi bi-funnel-fill"></i> Фильтры</button>${filterActive?`<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i></button>`:''}</div><button class="round-add-btn" onclick="showAddSaleModal()"><i class="bi bi-plus-lg"></i></button></div><div class="sales-table-section"><div class="wh-header" style="margin-bottom:12px;"><span style="font-weight:600;color:var(--text-secondary);font-size:12px;">${allSales.length} продаж</span><div style="display:flex;gap:6px;"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="salesExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash-fill"></i> Удалить</button></div></div><div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p style="text-align:center;color:var(--text-tertiary);padding:24px 0;font-size:13px;">Нет продаж</p>':salesHTML}${paginationHTML}</div>`;setTimeout(()=>{if(salesIsSelectMode())salesUpdateSelectUI();setupSalesSwipe();},50);}
+
+    async function renderSalesTable(){
+        const allSales=await getFilteredSales();
+        const totalPages=Math.ceil(allSales.length/PAGE_SIZE)||1;
+        if(salesPage>totalPages)salesPage=totalPages;
+        const start=(salesPage-1)*PAGE_SIZE;
+        const pageSales=allSales.slice(start,start+PAGE_SIZE);
+        const filterActive=hasActiveFilters();
+        let paginationHTML='';
+        if(totalPages>1){
+            paginationHTML=`<div class="pagination"><button onclick="goToSalesPage(${salesPage-1})" ${salesPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;
+            for(let i=1;i<=totalPages;i++){
+                if(i===1||i===totalPages||(i>=salesPage-1&&i<=salesPage+1)){paginationHTML+=`<button class="${i===salesPage?'active':''}" onclick="goToSalesPage(${i})">${i}</button>`;}
+                else if(i===salesPage-2||i===salesPage+2){paginationHTML+='<span class="page-info">…</span>';}
+            }
+            paginationHTML+=`<button onclick="goToSalesPage(${salesPage+1})" ${salesPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${salesPage}/${totalPages}</span></div>`;
+        }
+        let salesHTML='';
+        let currentDateGroup='';
+        for(const s of pageSales){
+            const dateLabel=formatDateDivider(s.date);
+            if(dateLabel!==currentDateGroup){currentDateGroup=dateLabel;salesHTML+=`<div class="date-divider"><span>${currentDateGroup}</span></div>`;}
+            let noteClass='';
+            if(s.note==='бронь')noteClass='booking';else if(s.note==='долг')noteClass='debt';else if(s.note==='приз')noteClass='prize';
+            const items=s.items||[];
+            let productDisplay=s.product||'-';
+            if(items.length>1){productDisplay=items[0].product+' + ещё '+(items.length-1);}else if(items.length===1){productDisplay=items[0].product;}
+            const totalQty=items.length>0?items.reduce((sum,it)=>sum+(it.quantity||0),0):(s.quantity||0);
+            salesHTML+=`<div class="sale-row-wrapper"><div class="sales-delete-bg"></div><i class="bi bi-trash-fill swipe-delete-icon"></i><div class="sale-row ${noteClass}" data-sid="${s.id}" ondblclick="if(!salesIsSelectMode())editSale(${s.id})"><div class="product-col checkbox-col sale-checkbox-col"><input type="checkbox" class="select-checkbox" data-sid="${s.id}" onchange="salesToggleSelect(${s.id})" onclick="event.stopPropagation()"></div><div class="sale-col">${esc(s.client||'-')}</div><div class="sale-col" style="color:var(--text-secondary);">${esc(productDisplay)}</div><div class="sale-col qty">${totalQty}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col" style="font-size:12px;color:var(--text-tertiary);">${esc(s.note||'—')}</div></div></div>`;
+        }
+        document.getElementById('contentBody').innerHTML=`<div class="tab-header"><h2 class="tab-title" onclick="openSidebar()"><span class="tab-title-icon"><i class="bi bi-bag-check"></i></span>Продажи</h2><div class="tab-subtitle">${allSales.length} ${allSales.length===1?'запись':'записей'}</div></div><div class="sales-header"><div class="sales-header-left"><button class="sales-header-btn ${filterActive?'active':''}" onclick="showFilterModal()"><i class="bi bi-funnel-fill"></i> Фильтры</button>${filterActive?`<button class="sales-header-btn filter" onclick="resetFilters()"><i class="bi bi-x-lg"></i></button>`:''}</div><button class="round-add-btn" onclick="showAddSaleModal()"><i class="bi bi-plus-lg"></i></button></div><div class="sales-table-section"><div class="wh-header" style="margin-bottom:12px;"><span style="font-weight:600;color:var(--text-secondary);font-size:12px;">${allSales.length} продаж</span><div style="display:flex;gap:6px;"><button class="wh-cancel-select-btn sales-cancel-select-btn" onclick="salesExitSelectMode()"><i class="bi bi-x-lg"></i> Отмена</button><button class="wh-delete-selected-btn sales-delete-selected-btn" onclick="deleteSelectedSales()"><i class="bi bi-trash-fill"></i> Удалить</button></div></div><div class="sale-table-header"><div class="product-col checkbox-col sale-checkbox-col"></div><div class="sale-col">Имя</div><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p style="text-align:center;color:var(--text-tertiary);padding:24px 0;font-size:13px;">Нет продаж</p>':salesHTML}${paginationHTML}</div>`;
+        setTimeout(()=>{if(salesIsSelectMode())salesUpdateSelectUI();setupSalesSwipe();},50);
+    }
     function goToSalesPage(p){salesPage=p;renderSalesTable();}
-    function showFilterModal(){showModal('Фильтры','bi-funnel-fill','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="flt_client" value="${salesFilter.client}" placeholder="Любое"></div><div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="flt_product" value="${salesFilter.product}" placeholder="Любой"></div><div class="form-group"><label class="form-label">Дата с</label><input type="date" class="form-input" id="flt_dateFrom" value="${salesFilter.dateFrom}"></div><div class="form-group"><label class="form-label">Дата по</label><input type="date" class="form-input" id="flt_dateTo" value="${salesFilter.dateTo}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="flt_note"><option value="">Все</option><option value="бронь" ${salesFilter.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${salesFilter.note==='долг'?'selected':''}>Долг</option><option value="приз" ${salesFilter.note==='приз'?'selected':''}>Приз</option><option value="без заметки" ${salesFilter.note==='без заметки'?'selected':''}>Без заметки</option></select></div>`,`<button class="btn btn-reset" onclick="resetFilters()">Сброс</button><button class="btn btn-save" onclick="applyFilters()">Применить</button>`);}
+    function showFilterModal(){showModal('Фильтры','bi-funnel-fill','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="flt_client" value="${escAttr(salesFilter.client)}" placeholder="Любое"></div><div class="form-group"><label class="form-label">Товар</label><input type="text" class="form-input" id="flt_product" value="${escAttr(salesFilter.product)}" placeholder="Любой"></div><div class="form-group"><label class="form-label">Дата с</label><input type="date" class="form-input" id="flt_dateFrom" value="${salesFilter.dateFrom}"></div><div class="form-group"><label class="form-label">Дата по</label><input type="date" class="form-input" id="flt_dateTo" value="${salesFilter.dateTo}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="flt_note"><option value="">Все</option><option value="бронь" ${salesFilter.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${salesFilter.note==='долг'?'selected':''}>Долг</option><option value="приз" ${salesFilter.note==='приз'?'selected':''}>Приз</option><option value="без заметки" ${salesFilter.note==='без заметки'?'selected':''}>Без заметки</option></select></div>`,`<button class="btn btn-reset" onclick="resetFilters()">Сброс</button><button class="btn btn-save" onclick="applyFilters()">Применить</button>`);}
     function resetFilters(){salesFilter={client:'',product:'',dateFrom:'',dateTo:'',note:''};cachedSales=[];salesPage=1;closeModal();renderSalesTable();}
     function applyFilters(){salesFilter.client=document.getElementById('flt_client').value.trim();salesFilter.product=document.getElementById('flt_product').value.trim();salesFilter.dateFrom=document.getElementById('flt_dateFrom').value;salesFilter.dateTo=document.getElementById('flt_dateTo').value;salesFilter.note=document.getElementById('flt_note').value;cachedSales=[];salesPage=1;closeModal();renderSalesTable();}
     async function getProductListForSelect(currentProductName=null){const products=await db.all('products');const productMap=new Map();products.forEach(p=>{if(p.manufacturer&&p.lineup){const name=p.manufacturer+' '+p.lineup;const inStock=(p.quantity||0)>0;if(inStock){productMap.set(name,{name,inStock:true,selling:p.selling||0});}else if(currentProductName&&norm(name)===norm(currentProductName)){productMap.set(name,{name,inStock:false,selling:p.selling||0});}}});return[...productMap.values()].sort((a,b)=>a.name.localeCompare(b.name));}
@@ -743,13 +1079,118 @@
     function removeItemFromSaleList(index){saleModalItems.splice(index,1);renderSaleItemsList();updateSaleTotal();}
     function updateItemField(index,field,value){if(index<0||index>=saleModalItems.length)return;if(field==='quantity'){const q=parseInt(value)||1;saleModalItems[index].quantity=Math.max(1,q);}if(field==='price'){const p=parseFloat(value)||0;saleModalItems[index].price=Math.max(0,p);}updateSaleTotal();}
     function updateSaleTotal(){const totalEl=document.getElementById('saleTotalDisplay');if(!totalEl)return;const total=saleModalItems.reduce((sum,it)=>sum+it.quantity*it.price,0);totalEl.textContent=fn(total)+'₽';}
-    function renderSaleItemsList(){const container=document.getElementById('saleItemsContainer');if(!container)return;if(saleModalItems.length===0){container.innerHTML='<div style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:12px;">Нет добавленных товаров</div>';return;}container.innerHTML=saleModalItems.map((item,i)=>`<div class="sale-item-card"><div class="sale-item-row"><span class="sale-item-product">${item.product}</span><button class="sale-item-remove" onclick="removeItemFromSaleList(${i})" title="Удалить"><i class="bi bi-x-lg"></i></button></div><div class="sale-item-row"><div class="sale-item-qty"><input type="number" value="${item.quantity}" min="1" onchange="updateItemField(${i},'quantity',this.value)" oninput="updateItemField(${i},'quantity',this.value)"></div><div class="sale-item-price"><input type="number" value="${item.price}" min="0" step="0.01" onchange="updateItemField(${i},'price',this.value)" oninput="updateItemField(${i},'price',this.value)"></div><span class="sale-item-sum">${fn(item.quantity*item.price)}₽</span></div></div>`).join('');}
+    function renderSaleItemsList(){const container=document.getElementById('saleItemsContainer');if(!container)return;if(saleModalItems.length===0){container.innerHTML='<div style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:12px;">Нет добавленных товаров</div>';return;}container.innerHTML=saleModalItems.map((item,i)=>`<div class="sale-item-card"><div class="sale-item-row"><span class="sale-item-product">${esc(item.product)}</span><button class="sale-item-remove" onclick="removeItemFromSaleList(${i})" title="Удалить"><i class="bi bi-x-lg"></i></button></div><div class="sale-item-row"><div class="sale-item-qty"><input type="number" value="${item.quantity}" min="1" onchange="updateItemField(${i},'quantity',this.value)" oninput="updateItemField(${i},'quantity',this.value)"></div><div class="sale-item-price"><input type="number" value="${item.price}" min="0" step="0.01" onchange="updateItemField(${i},'price',this.value)" oninput="updateItemField(${i},'price',this.value)"></div><span class="sale-item-sum">${fn(item.quantity*item.price)}₽</span></div></div>`).join('');}
     function setupItemSelectComboBox(){const input=document.getElementById('saleItemSelect');const dropdown=document.getElementById('itemSelectDropdown');if(!input||!dropdown)return;const renderOptions=(filterText)=>{const val=(filterText||input.value).toLowerCase();let visible=0;dropdown.querySelectorAll('.combo-option').forEach(opt=>{if(val===''||opt.textContent.toLowerCase().includes(val)){opt.style.display='block';visible++;}else{opt.style.display='none';}});dropdown.classList.toggle('open',visible>0&&document.activeElement===input);};input.addEventListener('input',()=>renderOptions());input.addEventListener('focus',()=>renderOptions());input.addEventListener('blur',()=>{setTimeout(()=>dropdown.classList.remove('open'),200);});dropdown.querySelectorAll('.combo-option').forEach(opt=>{opt.addEventListener('click',()=>{input.value=opt.getAttribute('data-name')||opt.textContent;dropdown.classList.remove('open');});});input.addEventListener('keydown',(e)=>{if(e.key==='Enter'){e.preventDefault();addItemToSaleList();}});}
-    async function showAddSaleModal(sale=null){const isEdit=!!sale;if(isEdit){saleModalItems=(sale.items&&sale.items.length>0)?sale.items.map(it=>({product:it.product,quantity:it.quantity,price:it.price})):[{product:sale.product,quantity:sale.quantity,price:sale.total/Math.max(1,sale.quantity)}];}else{saleModalItems=[];}const currentProductName=sale?sale.product:null;saleModalProductList=await getProductListForSelect(currentProductName);const productOptions=saleModalProductList.map(p=>{const cls=p.inStock?'':' out-of-stock';const label=p.inStock?p.name:`${p.name} (нет в наличии)`;return`<div class="combo-option${cls}" data-name="${p.name.replace(/"/g,'&quot;')}">${label}</div>`;}).join('');const saveBtnText=isEdit?'Сохранить':'Добавить';showModal(isEdit?'Редактировать продажу':'Добавить продажу','bi-bag-check-fill','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="sale_client" value="${sale?.client||''}"></div><div class="form-group"><label class="form-label">Товары</label><div class="sale-items-container" id="saleItemsContainer"></div><div class="item-selector-row"><div class="combo-box" style="flex:1;"><input type="text" class="form-input" id="saleItemSelect" placeholder="Выберите товар..." autocomplete="off"><i class="bi bi-chevron-down combo-arrow"></i><div class="combo-dropdown" id="itemSelectDropdown">${productOptions}</div></div><button class="btn-confirm" onclick="addItemToSaleList()"><i class="bi bi-plus-lg"></i></button></div></div><div class="sale-total-summary"><span class="total-label">Общая сумма</span><span class="total-value" id="saleTotalDisplay">0₽</span></div><div class="form-group"><label class="form-label">Дата</label><input type="date" class="form-input" id="sale_date" value="${sale?.date||new Date().toISOString().split('T')[0]}"></div><div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="sale_note"><option value="без заметки" ${(sale?.note||'без заметки')==='без заметки'?'selected':''}>Без заметки</option><option value="бронь" ${sale?.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${sale?.note==='долг'?'selected':''}>Долг</option><option value="приз" ${sale?.note==='приз'?'selected':''}>Приз</option></select></div><input type="hidden" id="sale_id" value="${sale?.id||''}">`,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>${isEdit?`<button class="btn btn-delete" onclick="deleteSaleFromModal()">Удалить</button>`:''}<button class="btn btn-save" onclick="saveSale()">${saveBtnText}</button>`);setTimeout(()=>{renderSaleItemsList();updateSaleTotal();setupItemSelectComboBox();},50);}
-    async function saveSale(){const id=document.getElementById('sale_id').value;const note=document.getElementById('sale_note').value;const client=document.getElementById('sale_client').value.trim();const date=document.getElementById('sale_date').value;if(!client){await showAlert('Введите имя клиента','error');return;}if(saleModalItems.length===0){await showAlert('Добавьте хотя бы один товар','error');return;}const isEdit=!!id;let oldSale=null;if(isEdit){oldSale=await db.g('sales',parseInt(id));if(!oldSale){await showAlert('Продажа не найдена','error');return;}}const items=[];let totalCost=0;let totalProfit=0;let mainProduct='';let mainCategory='liquid';for(const item of saleModalItems){if(!item.product||item.quantity<1){await showAlert('Проверьте все товары','error');return;}const found=await findProductByName(item.product);if(!found){await showAlert(`Товар "${item.product}" не найден на складе`,'error');return;}if(isEdit&&oldSale){const oldItems=oldSale.items||[];const oldItem=oldItems.find(oi=>oi.product===item.product);const oldQty=oldItem?oldItem.quantity:0;const delta=oldQty-item.quantity;const newQty=found.quantity+delta;if(newQty<0){await showAlert(`Недостаточно "${item.product}" на складе (есть ${found.quantity}, нужно ещё ${-delta})`,'error');return;}found.quantity=newQty;await db.pu('products',found);}else{if(found.quantity<item.quantity){await showAlert(`Недостаточно "${item.product}" на складе (есть ${found.quantity})`,'error');return;}found.quantity=Math.max(0,(found.quantity||0)-item.quantity);await db.pu('products',found);}const cost=(found.purchase||0)*item.quantity;const profit=item.quantity*item.price-cost;items.push({product:item.product,quantity:item.quantity,price:item.price,cost,profit,category:found.category});totalCost+=cost;totalProfit+=profit;if(!mainProduct){mainProduct=item.product;mainCategory=found.category;}}if(isEdit&&oldSale){const oldItems=oldSale.items||[];const oldSingleItem=oldItems.length===0&&oldSale.product?[{product:oldSale.product,quantity:oldSale.quantity}]:[];const allOldItems=oldItems.length>0?oldItems:oldSingleItem;for(const oi of allOldItems){const stillExists=saleModalItems.some(mi=>mi.product===oi.product);if(!stillExists){const found=await findProductByName(oi.product);if(found){found.quantity=(found.quantity||0)+(oi.quantity||0);await db.pu('products',found);}}}}if(note==='приз'){items.forEach(it=>{it.price=0;it.profit=-it.cost;});totalProfit=items.reduce((s,it)=>s+it.profit,0);}const total=note==='приз'?0:items.reduce((s,it)=>s+it.quantity*it.price,0);const sale={client,product:mainProduct,quantity:items.reduce((s,it)=>s+it.quantity,0),total,date,note:note==='без заметки'?'':note,cost:totalCost,profit:totalProfit,category:mainCategory,items};cachedProducts=[];if(id){sale.id=parseInt(id);await db.pu('sales',sale);}else{await db.add('sales',sale);}cachedSales=[];cachedClientStats=[];await autoAddClient(client);closeModal();salesPage=1;await renderSalesTable();await checkPrizeProgress(client);}
-    async function checkPrizeProgress(clientName){const allSales=await db.all('sales');const clientSales=allSales.filter(s=>norm(s.client)===norm(clientName));const count=getLiquidCount(clientSales);if(count===7){showSnackbar(`${clientName} — 2 жижи до приза`);}else if(count===8){showSnackbar(`${clientName} — 1 жижа до приза`);}else if(count>=9){showSnackbar(`${clientName} — ПРИЗ`,null,true);}}
+
+    async function showAddSaleModal(sale=null){
+        const isEdit=!!sale;
+        if(isEdit){saleModalItems=(sale.items&&sale.items.length>0)?sale.items.map(it=>({product:it.product,quantity:it.quantity,price:it.price})):[{product:sale.product,quantity:sale.quantity,price:sale.total/Math.max(1,sale.quantity)}];}
+        else{saleModalItems=[];}
+        const currentProductName=sale?sale.product:null;
+        saleModalProductList=await getProductListForSelect(currentProductName);
+        const productOptions=saleModalProductList.map(p=>{const cls=p.inStock?'':' out-of-stock';const label=p.inStock?p.name:`${p.name} (нет в наличии)`;return`<div class="combo-option${cls}" data-name="${escAttr(p.name)}">${esc(label)}</div>`;}).join('');
+        const saveBtnText=isEdit?'Сохранить':'Добавить';
+        showModal(isEdit?'Редактировать продажу':'Добавить продажу','bi-bag-check-fill','var(--accent)',
+          `<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="sale_client" value="${escAttr(sale?.client||'')}"></div>
+           <div class="form-group"><label class="form-label">Товары</label><div class="sale-items-container" id="saleItemsContainer"></div><div class="item-selector-row"><div class="combo-box" style="flex:1;"><input type="text" class="form-input" id="saleItemSelect" placeholder="Выберите товар..." autocomplete="off"><i class="bi bi-chevron-down combo-arrow"></i><div class="combo-dropdown" id="itemSelectDropdown">${productOptions}</div></div><button class="btn-confirm" onclick="addItemToSaleList()"><i class="bi bi-plus-lg"></i></button></div></div>
+           <div class="sale-total-summary"><span class="total-label">Общая сумма</span><span class="total-value" id="saleTotalDisplay">0₽</span></div>
+           <div class="form-group"><label class="form-label">Дата</label><input type="date" class="form-input" id="sale_date" value="${sale?.date||new Date().toISOString().split('T')[0]}"></div>
+           <div class="form-group"><label class="form-label">Заметка</label><select class="form-select" id="sale_note"><option value="без заметки" ${(sale?.note||'без заметки')==='без заметки'?'selected':''}>Без заметки</option><option value="бронь" ${sale?.note==='бронь'?'selected':''}>Бронь</option><option value="долг" ${sale?.note==='долг'?'selected':''}>Долг</option><option value="приз" ${sale?.note==='приз'?'selected':''}>Приз</option></select></div>
+           <input type="hidden" id="sale_id" value="${sale?.id||''}">`,
+          `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button>${isEdit?`<button class="btn btn-delete" onclick="deleteSaleFromModal()">Удалить</button>`:''}<button class="btn btn-save" onclick="saveSale()">${saveBtnText}</button>`);
+        setTimeout(()=>{renderSaleItemsList();updateSaleTotal();setupItemSelectComboBox();},50);
+    }
+    async function saveSale(){
+        const id=document.getElementById('sale_id').value;
+        const note=document.getElementById('sale_note').value;
+        const client=document.getElementById('sale_client').value.trim();
+        const date=document.getElementById('sale_date').value;
+        if(!client){await showAlert('Введите имя клиента','error');return;}
+        if(saleModalItems.length===0){await showAlert('Добавьте хотя бы один товар','error');return;}
+        const isEdit=!!id;
+        let oldSale=null;
+        if(isEdit){oldSale=await db.g('sales',parseInt(id));if(!oldSale){await showAlert('Продажа не найдена','error');return;}}
+        const items=[];
+        let totalCost=0;
+        let totalProfit=0;
+        let mainProduct='';
+        let mainCategory='liquid';
+        for(const item of saleModalItems){
+            if(!item.product||item.quantity<1){await showAlert('Проверьте все товары','error');return;}
+            const found=await findProductByName(item.product);
+            if(!found){await showAlert(`Товар "${item.product}" не найден на складе`,'error');return;}
+            if(isEdit&&oldSale){
+                const oldItems=oldSale.items||[];
+                const oldItem=oldItems.find(oi=>oi.product===item.product);
+                const oldQty=oldItem?oldItem.quantity:0;
+                const delta=oldQty-item.quantity;
+                const newQty=found.quantity+delta;
+                if(newQty<0){await showAlert(`Недостаточно "${item.product}" на складе (есть ${found.quantity}, нужно ещё ${-delta})`,'error');return;}
+                found.quantity=newQty;
+                await db.pu('products',found);
+            }else{
+                if(found.quantity<item.quantity){await showAlert(`Недостаточно "${item.product}" на складе (есть ${found.quantity})`,'error');return;}
+                found.quantity=Math.max(0,(found.quantity||0)-item.quantity);
+                await db.pu('products',found);
+            }
+            const cost=(found.purchase||0)*item.quantity;
+            const profit=item.quantity*item.price-cost;
+            items.push({product:item.product,quantity:item.quantity,price:item.price,cost,profit,category:found.category});
+            totalCost+=cost;
+            totalProfit+=profit;
+            if(!mainProduct){mainProduct=item.product;mainCategory=found.category;}
+        }
+        if(isEdit&&oldSale){
+            const oldItems=oldSale.items||[];
+            const oldSingleItem=oldItems.length===0&&oldSale.product?[{product:oldSale.product,quantity:oldSale.quantity}]:[];
+            const allOldItems=oldItems.length>0?oldItems:oldSingleItem;
+            for(const oi of allOldItems){
+                const stillExists=saleModalItems.some(mi=>mi.product===oi.product);
+                if(!stillExists){
+                    const found=await findProductByName(oi.product);
+                    if(found){found.quantity=(found.quantity||0)+(oi.quantity||0);await db.pu('products',found);}
+                }
+            }
+        }
+        if(note==='приз'){items.forEach(it=>{it.price=0;it.profit=-it.cost;});totalProfit=items.reduce((s,it)=>s+it.profit,0);}
+        const total=note==='приз'?0:items.reduce((s,it)=>s+it.quantity*it.price,0);
+        const sale={client,product:mainProduct,quantity:items.reduce((s,it)=>s+it.quantity,0),total,date,note:note==='без заметки'?'':note,cost:totalCost,profit:totalProfit,category:mainCategory,items};
+        cachedProducts=[];
+        if(id){sale.id=parseInt(id);await db.pu('sales',sale);}
+        else{await db.add('sales',sale);}
+        cachedSales=[];
+        cachedClientStats=[];
+        await autoAddClient(client);
+        closeModal();
+        salesPage=1;
+        await renderSalesTable();
+        await checkPrizeProgress(client);
+    }
+    async function checkPrizeProgress(clientName){
+        const allSales=await db.all('sales');
+        const clientSales=allSales.filter(s=>norm(s.client)===norm(clientName));
+        const count=getLiquidCount(clientSales);
+        if(count===7){showSnackbar(`${clientName} — 2 жижи до приза`);}
+        else if(count===8){showSnackbar(`${clientName} — 1 жижа до приза`);}
+        else if(count>=9){showSnackbar(`${clientName} — ПРИЗ`,null,true);}
+    }
     async function editSale(sid){const s=await db.g('sales',sid);if(!s)return;showAddSaleModal(s);}
-    async function deleteSaleFromModal(){const id=document.getElementById('sale_id').value;if(!id){closeModal();return;}const confirmed=await showConfirm('Удалить продажу?');if(!confirmed)return;const sale=await db.g('sales',parseInt(id));if(sale){const items=sale.items||[];if(items.length>0){for(const it of items){const found=await findProductByName(it.product);if(found){found.quantity=(found.quantity||0)+(it.quantity||0);await db.pu('products',found);}}}else{const found=await findProductByName(sale.product);if(found){found.quantity=(found.quantity||0)+(sale.quantity||0);await db.pu('products',found);}}}await db.del('sales',parseInt(id));cachedProducts=[];cachedSales=[];cachedClientStats=[];closeModal();salesPage=1;await renderSalesTable();}
+    async function deleteSaleFromModal(){
+        const id=document.getElementById('sale_id').value;
+        if(!id){closeModal();return;}
+        const confirmed=await showConfirm('Удалить продажу? Товары вернутся на склад.');
+        if(!confirmed)return;
+        const sale=await db.g('sales',parseInt(id));
+        if(sale){await restoreSaleStock(sale);}
+        await db.del('sales',parseInt(id));
+        cachedProducts=[];
+        cachedSales=[];
+        cachedClientStats=[];
+        closeModal();
+        salesPage=1;
+        await renderSalesTable();
+        if(sale)await checkPrizeProgress(sale.client);
+    }
 
     // ============ КЛИЕНТЫ ============
     let clientsSearch='',clientsPage=1,clientsFilter='all';
@@ -757,22 +1198,142 @@
     function isLeaving(lastDate){if(!lastDate||lastDate==='-')return false;return(new Date()-new Date(lastDate))/86400000>30;}
     function getLiquidCount(clientSales){let count=0;const sorted=[...clientSales].sort((a,b)=>a.date.localeCompare(b.date));for(const s of sorted){if(s.note==='приз'){count=0;continue;}const items=s.items||[];if(items.length>0){for(const it of items){if(it.category==='liquid')count+=it.quantity||0;}}else{if(s.category==='liquid')count+=s.quantity||0;}if(count>=9)count=9;}return count;}
     async function getClientStats(){if(cachedClientStats.length>0)return cachedClientStats;const clients=await db.all('clients');const sales=await db.all('sales');const stats=[];for(const c of clients){const clientSales=sales.filter(s=>norm(s.client)===norm(c.name));clientSales.sort((a,b)=>b.date.localeCompare(a.date));const totalSum=clientSales.reduce((s,x)=>s+(x.total||0),0);const lastSale=clientSales[0]||null;const firstSale=clientSales[clientSales.length-1]||null;const liquidCount=getLiquidCount(clientSales);stats.push({id:c.id,name:c.name,created:c.created||(firstSale?firstSale.date:'-'),count:clientSales.length,lastDate:lastSale?lastSale.date:'-',totalSum:totalSum,liquidCount:liquidCount,leaving:isLeaving(lastSale?lastSale.date:null)});}stats.sort((a,b)=>b.lastDate.localeCompare(a.lastDate));cachedClientStats=stats;return stats;}
-    async function renderClientsTableContent(){let stats=await getClientStats();const searchValue=document.getElementById('clientsSearch')?.value||'';if(searchValue){const q=searchValue.toLowerCase();stats=stats.filter(s=>s.name.toLowerCase().includes(q));}if(clientsFilter==='leaving'){stats=stats.filter(s=>s.leaving);}const totalPages=Math.ceil(stats.length/PAGE_SIZE)||1;if(clientsPage>totalPages)clientsPage=totalPages;const start=(clientsPage-1)*PAGE_SIZE;const pageStats=stats.slice(start,start+PAGE_SIZE);let paginationHTML='';if(totalPages>1){paginationHTML=`<div class="pagination"><button onclick="goToClientsPage(${clientsPage-1})" ${clientsPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;for(let i=1;i<=totalPages;i++){if(i===1||i===totalPages||(i>=clientsPage-1&&i<=clientsPage+1)){paginationHTML+=`<button class="${i===clientsPage?'active':''}" onclick="goToClientsPage(${i})">${i}</button>`;}else if(i===clientsPage-2||i===clientsPage+2){paginationHTML+='<span class="page-info">…</span>';}}paginationHTML+=`<button onclick="goToClientsPage(${clientsPage+1})" ${clientsPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${clientsPage}/${totalPages}</span></div>`;}const tableArea=document.getElementById('clientsTableContent');if(tableArea){tableArea.innerHTML=`<div class="client-table-header"><div class="client-col">Имя</div><div class="client-col">Дата</div><div class="client-col prize-progress">До приза</div><div class="client-col">Последняя покупка</div><div class="client-col price">Общая сумма</div></div>${pageStats.length===0?'<p style="text-align:center;color:var(--text-tertiary);padding:24px 0;font-size:13px;">Нет клиентов</p>':pageStats.map(s=>{const prizeText=s.liquidCount>=9?giftIcon():`<span class="prize-text">${s.liquidCount}/9</span>`;const prizeClass=s.liquidCount>=9?' prize-ready':'';return`<div class="client-row ${s.leaving?'leaving':''}${prizeClass}" onclick="showClientModal(${s.id},'${s.name.replace(/'/g,"\\'")}')"><div class="client-col" style="font-weight:500;">${s.name}</div><div class="client-col" style="color:var(--text-tertiary);font-size:12px;">${fmtDate(s.created)}</div><div class="client-col prize-progress">${prizeText}</div><div class="client-col" style="color:var(--text-tertiary);font-size:12px;">${fmtDate(s.lastDate)}</div><div class="client-col price">${fn(s.totalSum)}₽</div></div>`;}).join('')}${paginationHTML}`;}}
-    async function renderClientsTable(){const leavingBtnClass=clientsFilter==='leaving'?'active':'filter';document.getElementById('contentBody').innerHTML=`<div class="tab-header"><h2 class="tab-title" onclick="openSidebar()"><span class="tab-title-icon"><i class="bi bi-people"></i></span>Клиенты</h2><div class="tab-subtitle">Управление базой клиентов</div></div><div class="clients-header"><div class="clients-header-left"><button class="sales-header-btn ${leavingBtnClass}" id="clientsFilterBtn" onclick="toggleClientsFilter()"><i class="bi bi-person-dash-fill"></i> Уходящие</button></div><button class="round-add-btn" onclick="showAddClientModal()"><i class="bi bi-plus-lg"></i></button></div><div style="margin-bottom:16px;"><input type="text" class="search-input" id="clientsSearch" placeholder="Поиск по имени..." value="${clientsSearch}" oninput="renderClientsTableContent()" autocomplete="off"></div><div class="clients-table-section" id="clientsTableContent"></div>`;await renderClientsTableContent();}
+
+    async function renderClientsTableContent(){
+        let stats=await getClientStats();
+        const searchValue=document.getElementById('clientsSearch')?.value||'';
+        if(searchValue){const q=searchValue.toLowerCase();stats=stats.filter(s=>s.name.toLowerCase().includes(q));}
+        if(clientsFilter==='leaving'){stats=stats.filter(s=>s.leaving);}
+        const totalPages=Math.ceil(stats.length/PAGE_SIZE)||1;
+        if(clientsPage>totalPages)clientsPage=totalPages;
+        const start=(clientsPage-1)*PAGE_SIZE;
+        const pageStats=stats.slice(start,start+PAGE_SIZE);
+        let paginationHTML='';
+        if(totalPages>1){
+            paginationHTML=`<div class="pagination"><button onclick="goToClientsPage(${clientsPage-1})" ${clientsPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button>`;
+            for(let i=1;i<=totalPages;i++){
+                if(i===1||i===totalPages||(i>=clientsPage-1&&i<=clientsPage+1)){paginationHTML+=`<button class="${i===clientsPage?'active':''}" onclick="goToClientsPage(${i})">${i}</button>`;}
+                else if(i===clientsPage-2||i===clientsPage+2){paginationHTML+='<span class="page-info">…</span>';}
+            }
+            paginationHTML+=`<button onclick="goToClientsPage(${clientsPage+1})" ${clientsPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button><span class="page-info">${clientsPage}/${totalPages}</span></div>`;
+        }
+        const tableArea=document.getElementById('clientsTableContent');
+        if(tableArea){
+            tableArea.innerHTML=`<div class="client-table-header"><div class="client-col">Имя</div><div class="client-col">Дата</div><div class="client-col prize-progress">До приза</div><div class="client-col">Последняя покупка</div><div class="client-col price">Общая сумма</div></div>${pageStats.length===0?'<p style="text-align:center;color:var(--text-tertiary);padding:24px 0;font-size:13px;">Нет клиентов</p>':pageStats.map(s=>{const prizeText=s.liquidCount>=9?giftIcon():`<span class="prize-text">${s.liquidCount}/9</span>`;const prizeClass=s.liquidCount>=9?' prize-ready':'';return`<div class="client-row ${s.leaving?'leaving':''}${prizeClass}" onclick="showClientModal(${s.id})"><div class="client-col" style="font-weight:500;">${esc(s.name)}</div><div class="client-col" style="color:var(--text-tertiary);font-size:12px;">${fmtDate(s.created)}</div><div class="client-col prize-progress">${prizeText}</div><div class="client-col" style="color:var(--text-tertiary);font-size:12px;">${fmtDate(s.lastDate)}</div><div class="client-col price">${fn(s.totalSum)}₽</div></div>`;}).join('')}${paginationHTML}`;
+        }
+    }
+    async function renderClientsTable(){
+        const leavingBtnClass=clientsFilter==='leaving'?'active':'filter';
+        document.getElementById('contentBody').innerHTML=`<div class="tab-header"><h2 class="tab-title" onclick="openSidebar()"><span class="tab-title-icon"><i class="bi bi-people"></i></span>Клиенты</h2><div class="tab-subtitle">Управление базой клиентов</div></div><div class="clients-header"><div class="clients-header-left"><button class="sales-header-btn ${leavingBtnClass}" id="clientsFilterBtn" onclick="toggleClientsFilter()"><i class="bi bi-person-dash-fill"></i> Уходящие</button></div><button class="round-add-btn" onclick="showAddClientModal()"><i class="bi bi-plus-lg"></i></button></div><div style="margin-bottom:16px;"><input type="text" class="search-input" id="clientsSearch" placeholder="Поиск по имени..." value="${escAttr(clientsSearch)}" oninput="renderClientsTableContent()" autocomplete="off"></div><div class="clients-table-section" id="clientsTableContent"></div>`;
+        await renderClientsTableContent();
+    }
     async function toggleClientsFilter(){clientsFilter=clientsFilter==='leaving'?'all':'leaving';cachedClientStats=[];clientsPage=1;const btn=document.getElementById('clientsFilterBtn');if(btn){btn.classList.toggle('active',clientsFilter==='leaving');btn.classList.toggle('filter',clientsFilter==='all');}await renderClientsTableContent();}
     function goToClientsPage(p){clientsPage=p;renderClientsTableContent();}
     function showAddClientModal(){showModal('Добавить клиента','bi-person-plus-fill','var(--accent)',`<div class="form-group"><label class="form-label">Имя клиента</label><input type="text" class="form-input" id="new_client_name" placeholder="Имя"></div>`,`<button class="btn btn-cancel" onclick="closeModal()">Отменить</button><button class="btn btn-save" onclick="addClient()">Добавить</button>`);}
     async function addClient(){const name=document.getElementById('new_client_name').value.trim();if(!name){await showAlert('Введите имя','error');return;}if(await clientExists(name)){await showAlert('Клиент с таким именем уже существует','error');return;}await db.add('clients',{name:name,created:new Date().toISOString().split('T')[0]});cachedClientStats=[];closeModal();clientsPage=1;await renderClientsTable();}
-    let clientModalPage=1;
-    async function showClientModal(clientId,clientName){clientModalPage=1;const sales=await db.all('sales');const clientSales=sales.filter(s=>norm(s.client)===norm(clientName));clientSales.sort((a,b)=>b.date.localeCompare(a.date));renderClientModal(clientId,clientName,clientSales);}
-    function renderClientModal(clientId,clientName,clientSales){const totalPages=Math.ceil(clientSales.length/5)||1;if(clientModalPage>totalPages)clientModalPage=totalPages;const start=(clientModalPage-1)*5;const pageSales=clientSales.slice(start,start+5);let paginationHTML='';if(totalPages>1){paginationHTML=`<div class="pagination"><button onclick="clientModalGoToPage(${clientModalPage-1},${clientId},'${clientName.replace(/'/g,"\\'")}')" ${clientModalPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button><span class="page-info">${clientModalPage}/${totalPages}</span><button onclick="clientModalGoToPage(${clientModalPage+1},${clientId},'${clientName.replace(/'/g,"\\'")}')" ${clientModalPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button></div>`;}showModal(clientName,'bi-person-fill','var(--accent)',`<div class="sale-table-header"><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:13px;">Нет покупок</p>':pageSales.map(s=>`<div class="sale-row"><div class="sale-col">${s.product||'-'}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${s.note||'—'}</div></div>`).join('')}${paginationHTML}`,`<button class="btn btn-cancel" onclick="editClientName(${clientId},'${clientName.replace(/'/g,"\\'")}')"><i class="bi bi-pencil-fill"></i> Имя</button><button class="btn btn-delete" onclick="deleteClient(${clientId},'${clientName.replace(/'/g,"\\'")}')"><i class="bi bi-trash-fill"></i> Удалить</button>`);}
-    function clientModalGoToPage(p,clientId,clientName){clientModalPage=p;db.all('sales').then(s=>{const cs=s.filter(x=>norm(x.client)===norm(clientName));cs.sort((a,b)=>b.date.localeCompare(a.date));renderClientModal(clientId,clientName,cs);});}
-    function editClientName(clientId,oldName){showModal('Редактировать имя','bi-pencil-fill','var(--accent)',`<div class="form-group"><label class="form-label">Новое имя</label><input type="text" class="form-input" id="edit_client_name" value="${oldName}"></div>`,`<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveClientName(${clientId},'${oldName.replace(/'/g,"\\'")}')">Сохранить</button>`);}
-    async function saveClientName(clientId,oldName){const newName=document.getElementById('edit_client_name').value.trim();if(!newName){await showAlert('Введите имя','error');return;}if(norm(newName)!==norm(oldName)&&await clientExists(newName)){await showAlert('Клиент с таким именем уже существует','error');return;}const client=await db.g('clients',clientId);if(client){client.name=newName;await db.pu('clients',client);}const sales=await db.all('sales');for(const s of sales){if(norm(s.client)===norm(oldName)){s.client=newName;await db.pu('sales',s);}}cachedClientStats=[];cachedSales=[];closeModal();clientsPage=1;await renderClientsTable();}
-    async function deleteClient(clientId,clientName){const confirmed=await showConfirm(`Удалить клиента "${clientName}"? Продажи останутся.`);if(!confirmed)return;await db.del('clients',clientId);cachedClientStats=[];closeModal();clientsPage=1;await renderClientsTable();}
 
-    async function switchTab(tab){document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));const body=document.getElementById('contentBody');const tabNames={'statistics':'statistics','warehouse':'warehouse','sales':'sales','clients':'clients'};const skeletonType=tabNames[tab]||'sales';body.innerHTML=showSkeleton(skeletonType);body.classList.remove('fade-in');cachedProducts=[];cachedSales=[];cachedClientStats=[];setTimeout(async()=>{if(tab==='statistics')await renderStatistics(cp);else if(tab==='warehouse')await renderWarehouseCards();else if(tab==='sales')await renderSalesTable();else if(tab==='clients')await renderClientsTable();else body.innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Вкладка</h2><p style="text-align:center;color:var(--text-tertiary);padding:40px 0;font-size:13px;">Вкладка пока пустая</p>`;body.classList.add('fade-in');},250);closeSidebar();}
-    async function init(){try{await db.init();await renderStatistics('today');if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');}catch(e){console.error(e);}}
+    let clientModalPage=1;
+    async function showClientModal(clientId){
+        clientModalPage=1;
+        const client=await db.g('clients',clientId);
+        if(!client)return;
+        const clientName=client.name;
+        const sales=await db.all('sales');
+        const clientSales=sales.filter(s=>norm(s.client)===norm(clientName));
+        clientSales.sort((a,b)=>b.date.localeCompare(a.date));
+        renderClientModal(clientId,clientName,clientSales);
+    }
+    function renderClientModal(clientId,clientName,clientSales){
+        const totalPages=Math.ceil(clientSales.length/5)||1;
+        if(clientModalPage>totalPages)clientModalPage=totalPages;
+        const start=(clientModalPage-1)*5;
+        const pageSales=clientSales.slice(start,start+5);
+        let paginationHTML='';
+        if(totalPages>1){
+            paginationHTML=`<div class="pagination"><button onclick="clientModalGoToPage(${clientModalPage-1},${clientId})" ${clientModalPage<=1?'disabled':''}><i class="bi bi-chevron-left"></i></button><span class="page-info">${clientModalPage}/${totalPages}</span><button onclick="clientModalGoToPage(${clientModalPage+1},${clientId})" ${clientModalPage>=totalPages?'disabled':''}><i class="bi bi-chevron-right"></i></button></div>`;
+        }
+        showModal(esc(clientName),'bi-person-fill','var(--accent)',
+          `<div class="sale-table-header"><div class="sale-col">Товар</div><div class="sale-col qty">Кол-во</div><div class="sale-col price">Сумма</div><div class="sale-col">Дата</div><div class="sale-col">Заметка</div></div>${pageSales.length===0?'<p style="text-align:center;color:var(--text-tertiary);padding:16px 0;font-size:13px;">Нет покупок</p>':pageSales.map(s=>`<div class="sale-row"><div class="sale-col">${esc(s.product||'-')}</div><div class="sale-col qty">${s.quantity||0}</div><div class="sale-col price">${fn(s.total||0)}₽</div><div class="sale-col">${fmtDate(s.date)}</div><div class="sale-col">${esc(s.note||'—')}</div></div>`).join('')}${paginationHTML}`,
+          `<button class="btn btn-cancel" onclick="editClientName(${clientId})"><i class="bi bi-pencil-fill"></i> Имя</button><button class="btn btn-delete" onclick="deleteClient(${clientId})"><i class="bi bi-trash-fill"></i> Удалить</button>`);
+    }
+    function clientModalGoToPage(p,clientId){
+        clientModalPage=p;
+        db.g('clients',clientId).then(client=>{
+            if(!client)return;
+            db.all('sales').then(s=>{
+                const cs=s.filter(x=>norm(x.client)===norm(client.name));
+                cs.sort((a,b)=>b.date.localeCompare(a.date));
+                renderClientModal(clientId,client.name,cs);
+            });
+        });
+    }
+    async function editClientName(clientId){
+        const client=await db.g('clients',clientId);
+        if(!client)return;
+        const oldName=client.name;
+        showModal('Редактировать имя','bi-pencil-fill','var(--accent)',
+          `<div class="form-group"><label class="form-label">Новое имя</label><input type="text" class="form-input" id="edit_client_name" value="${escAttr(oldName)}"></div>`,
+          `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveClientName(${clientId})">Сохранить</button>`);
+    }
+    async function saveClientName(clientId){
+        const client=await db.g('clients',clientId);
+        if(!client)return;
+        const oldName=client.name;
+        const newName=document.getElementById('edit_client_name').value.trim();
+        if(!newName){await showAlert('Введите имя','error');return;}
+        if(norm(newName)!==norm(oldName)&&await clientExists(newName)){await showAlert('Клиент с таким именем уже существует','error');return;}
+        client.name=newName;
+        await db.pu('clients',client);
+        const sales=await db.all('sales');
+        for(const s of sales){if(norm(s.client)===norm(oldName)){s.client=newName;await db.pu('sales',s);}}
+        cachedClientStats=[];
+        cachedSales=[];
+        closeModal();
+        clientsPage=1;
+        await renderClientsTable();
+    }
+    async function deleteClient(clientId){
+        const client=await db.g('clients',clientId);
+        if(!client)return;
+        const confirmed=await showConfirm(`Удалить клиента "${client.name}"? Продажи останутся.`);
+        if(!confirmed)return;
+        await db.del('clients',clientId);
+        cachedClientStats=[];
+        closeModal();
+        clientsPage=1;
+        await renderClientsTable();
+    }
+
+    async function switchTab(tab){
+        document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.tab===tab));
+        const body=document.getElementById('contentBody');
+        const tabNames={'statistics':'statistics','warehouse':'warehouse','sales':'sales','clients':'clients'};
+        const skeletonType=tabNames[tab]||'sales';
+        body.innerHTML=showSkeleton(skeletonType);
+        body.classList.remove('fade-in');
+        cachedProducts=[];
+        cachedSales=[];
+        cachedClientStats=[];
+        setTimeout(async()=>{
+            if(tab==='statistics')await renderStatistics(cp);
+            else if(tab==='warehouse')await renderWarehouseCards();
+            else if(tab==='sales')await renderSalesTable();
+            else if(tab==='clients')await renderClientsTable();
+            else body.innerHTML=`<h2 class="tab-title" onclick="openSidebar()">Вкладка</h2><p style="text-align:center;color:var(--text-tertiary);padding:40px 0;font-size:13px;">Вкладка пока пустая</p>`;
+            body.classList.add('fade-in');
+        },250);
+        closeSidebar();
+    }
+    async function init(){
+        try{
+            await db.init();
+            await renderStatistics('today');
+            if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+        }catch(e){
+            console.error(e);
+            document.getElementById('contentBody').innerHTML=`<div style="padding:40px 20px;text-align:center;"><p style="color:var(--text-secondary);font-size:14px;line-height:1.6;">${esc(e.message||'Не удалось открыть базу данных')}</p><button class="btn btn-save" style="max-width:200px;margin:20px auto 0;" onclick="location.reload()">Обновить</button></div>`;
+        }
+    }
     document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
