@@ -350,7 +350,7 @@
     <div id="modalContainer"></div><div id="snackbarContainer"></div>
     <input type="file" id="importFileInput" style="display:none" accept=".json" onchange="handleFileImport(event)">
 
-<script>
+    <script>
     const GROUP_DATA = {};
     const DB_NAME = 'CrazyRabbitDB'; const DB_VERSION = 43;
 
@@ -405,7 +405,7 @@
                 };
                 r.onsuccess = () => {
                     this.db = r.result;
-                    this.db.onversionchange = () => { this.db.close(); showAlert('Приложение обновлено в другой вкладке. Обновите страницу.', 'info'); };
+                    this.db.onversionchange = () => { try { this.db.close(); } catch {} showAlert('Приложение обновлено в другой вкладке. Обновите страницу.', 'info'); };
                     resolve();
                 };
             });
@@ -517,9 +517,54 @@
             }
         }
     }
+    // п.1: обратная операция — списать товар при undo удаления продажи
+    async function consumeSaleStock(sale) {
+        if (!sale) return { ok: true };
+        const items = Array.isArray(sale.items) && sale.items.length > 0
+            ? sale.items
+            : (sale.product ? [{ product: sale.product, quantity: sale.quantity || 0 }] : []);
+        const plan = [];
+        for (const it of items) {
+            const found = await findProductByName(it.product);
+            if (!found) return { ok: false, missing: it.product };
+            if ((found.quantity || 0) < (it.quantity || 0)) return { ok: false, insufficient: it.product, have: found.quantity, need: it.quantity };
+            plan.push({ found, qty: it.quantity || 0 });
+        }
+        for (const { found, qty } of plan) {
+            found.quantity = Math.max(0, (found.quantity || 0) - qty);
+            await db.pu('products', found);
+        }
+        return { ok: true };
+    }
     async function clientExists(clientName) { const clients = await db.all('clients'); return clients.some(c => norm(c.name) === norm(clientName)); }
     async function autoAddClient(clientName) { if (!clientName.trim()) return; const exists = await clientExists(clientName); if (!exists) { await db.add('clients', { name: clientName.trim(), created: new Date().toISOString().split('T')[0] }); } }
-    function animateValue(element, start, end, duration, suffix) { if (Math.abs(start-end) < 0.001){element.textContent=fn(end)+suffix;return;} const startTime=performance.now(); function update(currentTime){const elapsed=currentTime-startTime;const progress=Math.min(elapsed/duration,1);const eased=1-Math.pow(1-progress,3);const current=start+(end-start)*eased; element.textContent=fn(current)+suffix; if(progress<1)requestAnimationFrame(update);} requestAnimationFrame(update); }
+
+    // п.6: отмена предыдущей анимации
+    const animHandles = new WeakMap();
+    function animateValue(element, start, end, duration, suffix) {
+        const prev = animHandles.get(element);
+        if (prev) cancelAnimationFrame(prev);
+        if (Math.abs(start - end) < 0.001) {
+            element.textContent = fn(end) + suffix;
+            animHandles.delete(element);
+            return;
+        }
+        const startTime = performance.now();
+        function update(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = start + (end - start) * eased;
+            element.textContent = fn(current) + suffix;
+            if (progress < 1) {
+                animHandles.set(element, requestAnimationFrame(update));
+            } else {
+                animHandles.delete(element);
+            }
+        }
+        animHandles.set(element, requestAnimationFrame(update));
+    }
+
     async function exportData() { const products = await db.all('products'); const sales = await db.all('sales'); const clients = await db.all('clients'); const data = { products, sales, clients, exportedAt: new Date().toISOString() }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `crazy-rabbit-backup-${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); showSnackbar('Данные экспортированы'); }
     function importData() { document.getElementById('importFileInput').click(); }
 
@@ -777,13 +822,18 @@
             return p.category === cat && norm(p.manufacturer) === norm(manufacturer) && norm(p.lineup) === norm(lineup);
         });
     }
-    async function productsReferencedBySales(productName) {
+    async function productsReferencedBySales(productNames) {
         const sales = await db.all('sales');
-        const target = norm(productName);
-        return sales.filter(s => {
+        const targets = new Set(productNames.map(n => norm(n)));
+        const map = new Map();
+        for (const s of sales) {
             const items = Array.isArray(s.items) && s.items.length > 0 ? s.items : (s.product ? [{ product: s.product }] : []);
-            return items.some(it => norm(it.product) === target);
-        });
+            for (const it of items) {
+                const n = norm(it.product);
+                if (targets.has(n)) map.set(n, (map.get(n) || 0) + 1);
+            }
+        }
+        return map;
     }
 
     // ============ СКЛАД ============
@@ -794,7 +844,6 @@
     function whIsSelectMode(){return SELECT_MODE_CONFIG.warehouse.selectMode;}
     function whGetSelectedIds(){return SELECT_MODE_CONFIG.warehouse.selectedIds;}
 
-    // п.3: очередь по pid — быстрые клики не теряются
     async function changeQuantity(pid, delta) {
         return withProductLock(pid, async () => {
             const p = await db.g('products', pid);
@@ -824,15 +873,17 @@
         });
     }
 
-    // п.2: предупреждение, если с товаром есть продажи
+    // п.3: один проход по sales на весь пакет
     async function confirmDeleteProducts(products) {
-        let withSales = [];
+        const names = products.map(p => ((p.manufacturer || '') + ' ' + (p.lineup || '')).trim());
+        const refs = await productsReferencedBySales(names);
+        const withSales = [];
         for (const p of products) {
-            const name = (p.manufacturer || '') + ' ' + (p.lineup || '');
-            const refs = await productsReferencedBySales(name.trim());
-            if (refs.length > 0) withSales.push({ name: name.trim(), count: refs.length });
+            const name = ((p.manufacturer || '') + ' ' + (p.lineup || '')).trim();
+            const cnt = refs.get(norm(name)) || 0;
+            if (cnt > 0) withSales.push({ name, count: cnt });
         }
-        let msg = products.length === 1 ? `Удалить товар "${(products[0].manufacturer||'')} ${(products[0].lineup||'')}"?` : `Удалить ${products.length} товаров?`;
+        let msg = products.length === 1 ? `Удалить товар "${names[0]}"?` : `Удалить ${products.length} товаров?`;
         if (withSales.length > 0) {
             const lines = withSales.slice(0, 5).map(w => `• ${w.name} — ${w.count} продаж`).join('\n');
             const more = withSales.length > 5 ? `\n…и ещё ${withSales.length - 5}` : '';
@@ -1101,6 +1152,7 @@
     function salesIsSelectMode(){return SELECT_MODE_CONFIG.sales.selectMode;}
     function salesGetSelectedIds(){return SELECT_MODE_CONFIG.sales.selectedIds;}
 
+    // п.1: undo теперь списывает товар обратно
     async function deleteSelectedSales() {
         const selectedIds = salesGetSelectedIds();
         if (selectedIds.size === 0) return;
@@ -1127,8 +1179,14 @@
             salesExitSelectMode();
             await renderSalesTable();
             showSnackbar(`Удалено ${deletedSales.length} продаж`, async () => {
+                let warned = false;
                 for (const s of deletedSales) {
-                    await db.del('sales', s.id);
+                    const res = await consumeSaleStock(s);
+                    if (!res.ok && !warned) {
+                        warned = true;
+                        if (res.missing) showSnackbar(`Не удалось вернуть: товар "${res.missing}" не найден`, null);
+                        else if (res.insufficient) showSnackbar(`Недостаточно "${res.insufficient}" на складе (есть ${res.have}, нужно ${res.need})`, null);
+                    }
                     const cp = { ...s }; delete cp.id;
                     await db.add('sales', cp);
                 }
@@ -1143,6 +1201,7 @@
     async function getFilteredSales(){if(cachedSales.length>0)return cachedSales;let sales=await db.all('sales');if(salesFilter.client){const q=salesFilter.client.toLowerCase();sales=sales.filter(s=>(s.client||'').toLowerCase().includes(q));}if(salesFilter.product){const q=salesFilter.product.toLowerCase();sales=sales.filter(s=>(s.product||'').toLowerCase().includes(q));}if(salesFilter.dateFrom){sales=sales.filter(s=>s.date>=salesFilter.dateFrom);}if(salesFilter.dateTo){sales=sales.filter(s=>s.date<=salesFilter.dateTo);}if(salesFilter.note){sales=sales.filter(s=>(s.note||'')===salesFilter.note);}sales.sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);cachedSales=sales;return sales;}
     function hasActiveFilters(){return!!(salesFilter.client||salesFilter.product||salesFilter.dateFrom||salesFilter.dateTo||salesFilter.note);}
 
+    // п.1: undo теперь списывает товар обратно
     function setupSalesSwipe() {
         document.querySelectorAll('.sale-row').forEach(row => {
             setupLongPress(row, 'sales', (r) => parseInt(r.dataset.sid));
@@ -1157,10 +1216,14 @@
                 cachedClientStats = [];
                 await renderSalesTable();
                 showSnackbar('Продажа удалена', async () => {
-                    for (const ds of deletedSales) {
-                        const cp = { ...ds }; delete cp.id;
-                        await db.add('sales', cp);
+                    const res = await consumeSaleStock(s);
+                    if (!res.ok) {
+                        if (res.missing) showSnackbar(`Не удалось вернуть: товар "${res.missing}" не найден`, null);
+                        else if (res.insufficient) showSnackbar(`Недостаточно "${res.insufficient}" на складе (есть ${res.have}, нужно ${res.need})`, null);
                     }
+                    const cp = { ...s }; delete cp.id;
+                    await db.add('sales', cp);
+                    cachedProducts = [];
                     cachedSales = [];
                     cachedClientStats = [];
                     await renderSalesTable();
@@ -1234,7 +1297,6 @@
         setTimeout(()=>{renderSaleItemsList();updateSaleTotal();setupItemSelectComboBox();},50);
     }
 
-    // п.1: валидация всех товаров ДО списания; при edit — сначала возврат, потом списание
     async function saveSale(){
         const id=document.getElementById('sale_id').value;
         const note=document.getElementById('sale_note').value;
@@ -1248,8 +1310,8 @@
         if(isEdit){oldSale=await db.g('sales',parseInt(id));if(!oldSale){await showAlert('Продажа не найдена','error');return;}}
 
         // 1) Валидация: проверяем каждый товар и считаем, сколько нужно списать
-        const plan=[]; // {item, found, cost, profit, category}
-        const neededQty=new Map(); // name -> qty (суммарно к списанию)
+        const plan=[];
+        const neededQty=new Map();
         for(const item of saleModalItems){
             if(!item.product||item.quantity<1){await showAlert('Проверьте все товары','error');return;}
             const found=await findProductByName(item.product);
@@ -1259,7 +1321,7 @@
             plan.push({item,found,cost,profit});
             neededQty.set(found.id,(neededQty.get(found.id)||0)+item.quantity);
         }
-        // Старые количества по товарам (для edit): id -> qty из старой продажи
+        // Старые количества по товарам (для edit)
         const oldQtyById=new Map();
         if(isEdit&&oldSale){
             const oldItems=(Array.isArray(oldSale.items)&&oldSale.items.length>0)?oldSale.items:(oldSale.product?[{product:oldSale.product,quantity:oldSale.quantity}]:[]);
@@ -1268,13 +1330,11 @@
                 if(f){oldQtyById.set(f.id,(oldQtyById.get(f.id)||0)+(oi.quantity||0));}
             }
         }
-        // Проверка на отрицательный остаток после списания
+        // Проверка на отрицательный остаток
         for(const [pid,need] of neededQty){
             const f=await db.g('products',pid);
             if(!f)continue;
             const oldQty=oldQtyById.get(pid)||0;
-            const newQty=f.quantity-oldQty+0; // сначала вернём старые
-            // фактически: after = f.quantity - (need - oldQty)
             const after=f.quantity - (need - oldQty);
             if(after<0){await showAlert(`Недостаточно "${f.manufacturer} ${f.lineup}" на складе (есть ${f.quantity}, нужно ${need - oldQty} ещё)`,'error');return;}
         }
@@ -1417,6 +1477,7 @@
           `<div class="form-group"><label class="form-label">Новое имя</label><input type="text" class="form-input" id="edit_client_name" value="${escAttr(oldName)}"></div>`,
           `<button class="btn btn-cancel" onclick="closeModal()">Отмена</button><button class="btn btn-save" onclick="saveClientName(${clientId})">Сохранить</button>`);
     }
+    // п.5: обновляем salesFilter.client при переименовании
     async function saveClientName(clientId){
         const client=await db.g('clients',clientId);
         if(!client)return;
@@ -1428,16 +1489,22 @@
         await db.pu('clients',client);
         const sales=await db.all('sales');
         for(const s of sales){if(norm(s.client)===norm(oldName)){s.client=newName;await db.pu('sales',s);}}
+        if(norm(salesFilter.client)===norm(oldName)) salesFilter.client=newName;
         cachedClientStats=[];
         cachedSales=[];
         closeModal();
         clientsPage=1;
         await renderClientsTable();
     }
+    // п.4: предупреждение, если у клиента есть продажи
     async function deleteClient(clientId){
         const client=await db.g('clients',clientId);
         if(!client)return;
-        const confirmed=await showConfirm(`Удалить клиента "${client.name}"? Продажи останутся.`);
+        const sales=await db.all('sales');
+        const cnt=sales.filter(s=>norm(s.client)===norm(client.name)).length;
+        let msg=`Удалить клиента "${client.name}"?`;
+        if(cnt>0) msg+=`\n\nУ клиента ${cnt} продаж. Они останутся, но карточка клиента будет удалена.`;
+        const confirmed=await showConfirm(msg);
         if(!confirmed)return;
         await db.del('clients',clientId);
         cachedClientStats=[];
